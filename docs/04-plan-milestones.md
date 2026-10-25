@@ -61,14 +61,14 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 **Gotowe gdy:** dyspozytor z danymi demo planuje jutro (40 punktów, 6 aut) w < 15 minut, a system nie pozwala wydać przeciążonej trasy bez świadomego potwierdzenia.
 
 ## M4 — Aplikacja kierowcy PWA (3 tydz.)
-- [ ] M4.1 PWA na terminalu Zebra: logowanie **kierowca + PIN** (współdzielone urządzenie), wybór pojazdu, licznik start, wybór trasy dnia, pobranie całej trasy do IndexedDB
+- [~] M4.1 PWA na terminalu Zebra: logowanie **kierowca + PIN** (współdzielone urządzenie), wybór pojazdu, licznik start, wybór trasy dnia ✅ (migracja `0007`; terminal przypisuje dyspozytor na `/driver/terminal`, PIN ustawia w kartotece kierowcy, blokada po 5 błędach na 10 min) — *pobranie trasy do IndexedDB w M4 cz. 2*
 - [ ] M4.2 Kolejka zdarzeń offline + `POST /api/driver/sync` (idempotencja po `client_event_id`, walidacja przynależności trasy do kierowcy)
 - [ ] M4.2a Pozycja GPS co kilka minut przy otwartej trasie (`driver_positions`), wysyłana w paczkach przy synchronizacji
-- [ ] M4.3 Ekran trasy: lista punktów z **szybką zmianą statusu na każdym punkcie** (Nie rozpoczęto · Teraz realizuję · Częściowo · Dostarczono; „Teraz realizuję” tylko na jednym punkcie naraz), nawigacja (Google Maps / Waze), start trasy z licznikiem km
-- [ ] M4.4 Ekran punktu: okno, telefon, opiekun, uwagi stałe i **aktualne tymczasowe**; przyciski „Zadzwoń do odbiorcy” i „Zadzwoń do opiekuna”; status w realizacji → dostarczono / częściowo / brak odbioru / **reklamacja (zdjęcie + przyczyna)** / **zwrot towaru (towar, ilość, przyczyna, zdjęcie)**, zdjęcie, podpis palcem, GPS w momencie potwierdzenia, komentarz
-- [ ] M4.5 Opakowania na punkcie: wydane i odebrane per typ (domyślnie podpowiedź z salda klienta)
-- [ ] M4.6 "Zgłoś problem / opóźnienie" (zdjęcie + opis); **gotówka: kwota do pobrania vs pobrano** na punkcie
-- [ ] M4.7 **Raport zmiany** (dostępny offline): na górze **wynagrodzenie za dziś** (składniki + suma miesiąca), dalej licznik/przebieg, punkty, terminowość, czas pracy, gotówka i opakowania do zdania. **Bez obrotu** (widzi go tylko biuro)
+- [x] M4.3 Ekran trasy: lista punktów z **szybką zmianą statusu na każdym punkcie** (Nie rozpoczęto · Teraz realizuję · Częściowo · Dostarczono; „Teraz realizuję” tylko na jednym punkcie naraz), start trasy z licznikiem km — *nawigacja odłożona (decyzja: bez map na tym etapie)*
+- [~] M4.4 Ekran punktu: okno, telefon, opiekun, uwagi stałe i **aktualne tymczasowe**; przyciski „Zadzwoń do odbiorcy” i „Zadzwoń do opiekuna”; status w realizacji → dostarczono / częściowo / brak odbioru / **reklamacja (zdjęcie + przyczyna)** / **zwrot towaru (towar, ilość, przyczyna, zdjęcie)**, zdjęcie, podpis palcem, GPS w momencie potwierdzenia, komentarz — ✅ wszystko poza zdjęciem, podpisem i GPS (M4 cz. 2)
+- [x] M4.5 Opakowania na punkcie: wydane i odebrane per typ (zapis jako korekty w rejestrze opakowań) — *podpowiedź z salda klienta w M5*
+- [~] M4.6 "Zgłoś problem / opóźnienie" (zdjęcie + opis); **gotówka: kwota do pobrania vs pobrano** na punkcie ✅ — *na razie komentarz dla dyspozytora; osobne zgłoszenie ze zdjęciem w cz. 2*
+- [~] M4.7 **Raport zmiany** (dostępny offline): na górze **wynagrodzenie za dziś** (składniki + suma miesiąca), dalej licznik/przebieg, punkty, terminowość, czas pracy, gotówka i opakowania do zdania. **Bez obrotu** (widzi go tylko biuro) — ✅ przebieg, punkty, terminowość, gotówka, opakowania; *kwota wynagrodzenia po M5 (stawki)*
 - [ ] M4.8 Test terenowy: tryb samolotowy na całej trasie, potem synchronizacja — zero utraconych zdarzeń
 
 **Gotowe gdy:** przejeżdżasz realną trasę testową z telefonem w trybie offline i po powrocie wszystko jest w panelu ze zdjęciami.

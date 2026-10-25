@@ -5,10 +5,12 @@ describe("isPublicPath", () => {
   it("traktuje logowanie i callback auth jako publiczne", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/auth/callback")).toBe(true);
+    expect(isPublicPath("/driver/login")).toBe(true);
   });
   it("chroni panel i aplikację kierowcy", () => {
     expect(isPublicPath("/pulpit")).toBe(false);
     expect(isPublicPath("/driver")).toBe(false);
+    expect(isPublicPath("/driver/trasa/1")).toBe(false);
     expect(isPublicPath("/loginx")).toBe(false);
     expect(isPublicPath("/")).toBe(false);
   });

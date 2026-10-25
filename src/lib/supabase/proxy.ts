@@ -33,6 +33,12 @@ export async function updateSession(request: NextRequest) {
 
   if (!userId && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
+    // Kierowca na terminalu → ekran PIN; przypisanie terminala robi dyspozytor (logowanie e-mailem).
+    if (pathname.startsWith("/driver") && !pathname.startsWith("/driver/terminal")) {
+      url.pathname = "/driver/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/login";
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);

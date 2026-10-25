@@ -864,7 +864,9 @@ export type Database = {
           is_active: boolean;
           last_name: string;
           phone: string | null;
+          pin_failed_count: number;
           pin_hash: string | null;
+          pin_locked_until: string | null;
           tenant_id: string;
           user_id: string | null;
         };
@@ -878,7 +880,9 @@ export type Database = {
           is_active?: boolean;
           last_name: string;
           phone?: string | null;
+          pin_failed_count?: number;
           pin_hash?: string | null;
+          pin_locked_until?: string | null;
           tenant_id: string;
           user_id?: string | null;
         };
@@ -891,7 +895,9 @@ export type Database = {
           is_active?: boolean;
           last_name?: string;
           phone?: string | null;
+          pin_failed_count?: number;
           pin_hash?: string | null;
+          pin_locked_until?: string | null;
           tenant_id?: string;
           user_id?: string | null;
         };
@@ -2014,6 +2020,7 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      driver_route_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
       dropgeometrycolumn:
         | {
             Args: {
@@ -2313,6 +2320,10 @@ export type Database = {
       };
       resequence_route: { Args: { p_route: string }; Returns: undefined };
       reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
+      set_driver_pin: {
+        Args: { p_driver: string; p_pin: string };
+        Returns: undefined;
+      };
       sort_route_by_window: { Args: { p_route: string }; Returns: undefined };
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown };
@@ -2984,6 +2995,10 @@ export type Database = {
           schema_name: string;
           table_name: string;
         };
+        Returns: string;
+      };
+      verify_driver_pin: {
+        Args: { p_driver: string; p_pin: string };
         Returns: string;
       };
     };

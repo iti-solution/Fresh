@@ -12,7 +12,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   management: "Zarząd",
 };
 
-const PUBLIC_PREFIXES = ["/login", "/auth/"];
+// /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
+const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));

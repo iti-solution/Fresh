@@ -11,9 +11,14 @@ test("niezalogowany użytkownik trafia z panelu na logowanie", async ({ page }) 
   await expect(page).toHaveURL(/\/login\?next=%2Fplanowanie/);
 });
 
-test("aplikacja kierowcy też wymaga logowania", async ({ page }) => {
+test("aplikacja kierowcy prowadzi na logowanie PIN-em", async ({ page }) => {
   await page.goto("/driver");
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/driver\/login/);
+});
+
+test("przypisanie terminala wymaga logowania biura", async ({ page }) => {
+  await page.goto("/driver/terminal");
+  await expect(page).toHaveURL(/\/login\?next=%2Fdriver%2Fterminal/);
 });
 
 test("błędny e-mail pokazuje komunikat", async ({ page }) => {
