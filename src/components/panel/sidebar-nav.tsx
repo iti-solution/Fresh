@@ -29,7 +29,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
                   )}
                 >
                   <span>{item.label}</span>
-                  {item.milestone !== "M0" && <span className="text-[10px] text-muted">{item.milestone}</span>}
+                  {!item.built && <span className="text-[10px] text-muted">{item.milestone}</span>}
                 </Link>
               );
             })}

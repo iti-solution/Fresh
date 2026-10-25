@@ -14,6 +14,7 @@ export type TenantContext = {
   tenantId: string;
   tenantName: string;
   role: Role;
+  isDemo: boolean;
   memberships: Membership[];
 };
 
@@ -66,6 +67,7 @@ export const requireTenantContext = cache(async (): Promise<TenantContext> => {
     tenantId: membership.tenantId,
     tenantName: membership.tenantName,
     role: membership.role,
+    isDemo: membership.isDemo,
     memberships: user.memberships,
   };
 });

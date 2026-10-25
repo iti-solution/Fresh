@@ -23,6 +23,7 @@ export type NavItem = {
   label: string;
   group: "Operacje" | "Kartoteki" | "Rozliczenia" | "Wzrost" | "System";
   milestone: string; // kamień milowy, w którym moduł powstaje
+  built?: boolean; // moduł już działa — bez oznaczenia etapu w menu
   roles: Role[];
 };
 
@@ -30,14 +31,15 @@ export type NavItem = {
 const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "management"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", roles: STAFF },
+  { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
   { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", roles: STAFF },
-  { href: "/zlecenia", label: "Zlecenia", group: "Operacje", milestone: "M1", roles: STAFF },
+  { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", roles: STAFF },
-  { href: "/kartoteki/klienci", label: "Klienci i punkty", group: "Kartoteki", milestone: "M1", roles: STAFF },
-  { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", roles: STAFF },
-  { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", roles: STAFF },
-  { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", roles: STAFF },
+  { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/przewoznicy", label: "Przewoźnicy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
   { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/audyt", label: "Audyt tras", group: "Wzrost", milestone: "M2", roles: ["admin", "dispatcher"] },
@@ -68,4 +70,9 @@ export function safeNextPath(next: string | null | undefined): string | null {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return null;
   if (isPublicPath(next)) return null;
   return next;
+}
+
+/** Kto może zmieniać kartoteki i zamówienia (zgodnie z RLS: admin i dyspozytor). */
+export function canEdit(role: Role): boolean {
+  return role === "admin" || role === "dispatcher";
 }

@@ -24,13 +24,14 @@ from tenants t join memberships m on m.tenant_id = t.id
 where m.user_id = 'a0000000-0000-0000-0000-00000000000a';
 
 do $$
-declare n int;
+declare n int; expected int;
 begin
+  select count(*) into expected from delivery_points;
   -- 1. BOK widzi punkty firmy A
   perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-00000000000b', true);
   set local role authenticated;
   select count(*) into n from delivery_points;
-  if n <> 40 then raise exception 'BOK powinien widzieć 40 punktów, widzi %', n; end if;
+  if n <> expected or n = 0 then raise exception 'BOK powinien widzieć % punktów, widzi %', expected, n; end if;
   -- 2. BOK nie może zmieniać danych
   update delivery_points set name = 'X';
   get diagnostics n = row_count;

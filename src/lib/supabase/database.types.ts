@@ -2299,6 +2299,7 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown };
         Returns: unknown;

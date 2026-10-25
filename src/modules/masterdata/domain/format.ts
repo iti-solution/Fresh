@@ -32,3 +32,14 @@ export function formatSeason(from: string | null, to: string | null): string {
   const f = (d: string | null) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}` : "…");
   return `${f(from)}–${f(to)}`;
 }
+
+export const BRANCH_LABELS: Record<string, string> = {
+  restaurant: "restauracja",
+  kitchen: "kuchnia",
+  bar: "bar",
+  warehouse: "magazyn",
+  hotel: "hotel",
+  other: "inny",
+};
+
+export const VEHICLE_STATUS_LABELS: Record<string, string> = { active: "aktywny", service: "serwis", inactive: "nieaktywny" };

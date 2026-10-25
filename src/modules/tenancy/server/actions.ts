@@ -55,3 +55,12 @@ export async function signOut() {
   (await cookies()).delete(TENANT_COOKIE);
   redirect("/login");
 }
+
+/** Usuwa firmę demo użytkownika i zakłada ją od nowa (świeże zamówienia na najbliższy dzień roboczy). */
+export async function resetDemoTenant(): Promise<void> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reset_demo_tenant");
+  if (error || !data) throw new Error("Nie udało się odświeżyć firmy demo.");
+  await setTenantCookie(data);
+  redirect("/pulpit?demo=odswiezone");
+}

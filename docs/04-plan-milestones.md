@@ -24,17 +24,18 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 
 ## M1 — Kartoteki i import zleceń (2,5 tydz.)
 - [x] M1.0 Migracje `0003` (słowniki) + `0004` (model) wg `02-zakres-mvp.md` §2a (skrzynki, oddziały, uwagi stałe/tymczasowe, opiekun, gotowość, przewoźnicy, koszty pojazdu, PIN, pozycje GPS, gotówka) + typy TS + testy RLS nowych tabel
-- [ ] M1.1 Klienci i punkty dostaw: lista z wyszukiwaniem, formularz, wiele punktów na klienta, okna per dzień tygodnia, dni dostaw, sezonowość, instrukcje dla kierowcy
-- [ ] M1.1a Typ oddziału (restauracja/kuchnia/bar/magazyn), uwagi stałe (dzwonić, wjazd, piętro, strefa rozładunku), uwagi tymczasowe z datą ważności, opiekun handlowy
-- [ ] M1.2 Geokodowanie: adapter `GeocodingProvider` (Google), geokodowanie przy zapisie i wsadowo, status `ambiguous/failed` → kolejka "do poprawy", **ręczne przesunięcie pinezki na mapie**
+- [x] M1.1 Klienci i punkty dostaw: lista z wyszukiwaniem, formularz, wiele punktów na klienta, okna per dzień tygodnia, dni dostaw, sezonowość, instrukcje dla kierowcy
+- [x] M1.1a Typ oddziału (restauracja/kuchnia/bar/magazyn), uwagi stałe (dzwonić, wjazd, piętro, strefa rozładunku), uwagi tymczasowe z datą ważności, opiekun handlowy
+- [ ] ~~M1.2~~ **Odłożone (decyzja 2026-10-25: bez map i pinezek na tym etapie)** — Geokodowanie: adapter `GeocodingProvider` (Google), geokodowanie przy zapisie i wsadowo, status `ambiguous/failed` → kolejka "do poprawy", **ręczne przesunięcie pinezki na mapie**
 - [ ] M1.3 Wyjątki i święta: kalendarz świąt PL (wbudowany) + zamknięcia per punkt
-- [ ] M1.4 Pojazdy i kierowcy: CRUD, pojemności, status, domyślne przypisania; zaproszenie kierowcy (konto do PWA)
-- [ ] M1.4a Przewoźnicy, pojemność skrzynek, koszty pojazdu (km, kierowca, dzień)
+- [x] M1.4 Pojazdy i kierowcy: CRUD, pojemności, status, domyślne przypisania; zaproszenie kierowcy (konto do PWA)
+- [x] M1.4a Przewoźnicy, pojemność skrzynek, koszty pojazdu (km, kierowca, dzień)
+- [x] M1.5-pre Lista zamówień na dzień (grupowanie po trasach stałych, sumy, filtr Skompletowane / Do realizacji, zmiana statusu, anulowanie) + ręczne zamówienie; pulpit z zajętością tras na najbliższy dzień
 - [ ] M1.5 Import zleceń CSV/XLSX: upload → podgląd → mapowanie kolumn (zapamiętane per tenant) → dopasowanie do punktu po `external_code`, potem po adresie → raport: OK / niedopasowane; ekran ręcznego dopasowania
 - [ ] M1.5a Pola zamówienia z warsztatów: wartość, skrzynki, uwagi handlowe/logistyczne, okno na zamówieniu, **status gotowości z WMS**; import nie nadpisuje zablokowanej pinezki
 - [ ] M1.6 API `POST /api/v1/orders` z kluczem API tenanta (te same reguły co import)
 - [ ] M1.7 Import kartoteki klientów/punktów z Excela (to samo narzędzie mapowania) — skraca onboarding klienta z dni do godzin
-- [ ] M1.8 Dane demo przeniesione w okolice Krakowa (kierunki jak u pilota: Kraków Zachód, Zakopane, Tarnów…) — lepsze pokazy
+- [x] M1.8 Dane demo przeniesione w okolice Krakowa (kierunki jak u pilota: Kraków Zachód, Zakopane, Tarnów…) — lepsze pokazy
 
 **Gotowe gdy:** wgrywasz eksport zamówień z ERP i widzisz zlecenia na jutro, każde przypięte do punktu na mapie.
 
