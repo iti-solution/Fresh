@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
+// Cache Components / Partial Prefetching celowo wyłączone (ADR-8): cała aplikacja jest za logowaniem
+// i renderowana dynamicznie per użytkownik/firma. Wrócimy do tematu, gdy pojawią się strony publiczne (M2).
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {

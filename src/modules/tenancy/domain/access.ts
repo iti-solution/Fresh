@@ -1,0 +1,67 @@
+// Czysta logika dostępu: role, ścieżki publiczne, menu panelu.
+// Bez importów z Next.js / Supabase — testowane jednostkowo.
+
+export type Role = "admin" | "dispatcher" | "driver" | "viewer";
+
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: "Administrator",
+  dispatcher: "Dyspozytor",
+  driver: "Kierowca",
+  viewer: "Podgląd",
+};
+
+const PUBLIC_PREFIXES = ["/login", "/auth/"];
+
+export function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));
+}
+
+export type NavItem = {
+  href: string;
+  label: string;
+  group: "Operacje" | "Kartoteki" | "Rozliczenia" | "Wzrost" | "System";
+  milestone: string; // kamień milowy, w którym moduł powstaje
+  roles: Role[];
+};
+
+const STAFF: Role[] = ["admin", "dispatcher", "viewer"];
+
+export const NAV_ITEMS: NavItem[] = [
+  { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", roles: STAFF },
+  { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", roles: STAFF },
+  { href: "/zlecenia", label: "Zlecenia", group: "Operacje", milestone: "M1", roles: STAFF },
+  { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", roles: STAFF },
+  { href: "/kartoteki/klienci", label: "Klienci i punkty", group: "Kartoteki", milestone: "M1", roles: STAFF },
+  { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", roles: STAFF },
+  { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", roles: STAFF },
+  { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", roles: STAFF },
+  { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
+  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
+  { href: "/audyt", label: "Audyt tras", group: "Wzrost", milestone: "M2", roles: ["admin", "dispatcher"] },
+  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", roles: ["admin"] },
+];
+
+export function navForRole(role: Role): NavItem[] {
+  return NAV_ITEMS.filter((item) => item.roles.includes(role));
+}
+
+/** Czy rola może wejść na ścieżkę panelu / aplikacji kierowcy. */
+export function canAccess(role: Role, pathname: string): boolean {
+  if (pathname === "/driver" || pathname.startsWith("/driver/")) {
+    return role === "driver" || role === "admin";
+  }
+  if (role === "driver") return false;
+  const item = NAV_ITEMS.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
+  return item ? item.roles.includes(role) : true;
+}
+
+export function homePathForRole(role: Role): string {
+  return role === "driver" ? "/driver" : "/pulpit";
+}
+
+/** Bezpieczny cel przekierowania po logowaniu: tylko ścieżki wewnętrzne. */
+export function safeNextPath(next: string | null | undefined): string | null {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return null;
+  if (isPublicPath(next)) return null;
+  return next;
+}
