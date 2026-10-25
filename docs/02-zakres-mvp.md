@@ -50,6 +50,8 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 | D15 | **Ewidencja zwrotu na punkcie** (uwaga 2026-10-25) | Wchodzi do MVP po stronie kierowcy: przycisk „Zwrot towaru” obok „Reklamacja” — towar/zamówienie, ilość, przyczyna, zdjęcie. Zapis jako zdarzenie `return_recorded` (bez nowej tabeli). Obsługa zwrotu w biurze (decyzja, ocena jakości, dokument) — P1. | M4 |
 | D16 | **Telefon do opiekuna handlowego** | Na ekranie punktu dwa przyciski: „Zadzwoń do odbiorcy” i „Zadzwoń do opiekuna”. | M4 |
 | D17 | **Raport zmiany kierowcy** | Kierowca **nie widzi obrotu** ani wartości zamówień. Na górze raportu, największym elementem, jest **wynagrodzenie za dziś** (z rozbiciem na składniki) i suma od początku miesiąca. U kierowców dowózkowych obrót jest liczony w tle i widzi go tylko biuro. | M4 / M5 |
+| D18 | **Osobny widok BOK** (uwaga 2026-10-25) | Centrum operacyjne dzieli się na: **dyspozytor** (trasy, alerty, zgłoszenia) i **obsługa klienta** — wyszukiwarka „Gdzie jest dostawa?” (kod/nazwa klienta, nr zamówienia, telefon) → status, przewidywany przyjazd vs okno, trasa, kierowca z telefonem, historia dnia; lista dzisiejszych dostaw z filtrami (opóźnione, problemy, dostarczone). Nowa rola **BOK** (podgląd + zgłoszenia, bez edycji tras). | M6 |
+| D19 | **Podsumowanie dnia dla zarządu** | Ten sam raport co w panelu BOK, także na telefonie: sprzedaż dostarczona (wartość zamówień) vs ten sam dzień tydzień temu, trend 6 dni, zamówienia, średnie zamówienie, dostawy w oknie, reklamacje/zwroty/dowózki z wartością, najwięksi klienci dnia, „do uwagi”. Nowa rola **Zarząd** (tylko odczyt). Uwaga: „sprzedaż” = wartość zamówień przekazanych do Fresh, nie faktury z ERP. | M6 |
 
 ### Zmiany w modelu danych (migracja `0003`, start M1)
 - `customers`: `sales_rep_name`, `sales_rep_phone`
@@ -59,6 +61,7 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 - nowa `carriers` (przewoźnicy); `vehicles`: `carrier_id`, `vehicle_type`, `capacity_crates`, `cost_per_km`, `driver_cost_per_day`, `fixed_cost_per_day`; `routes`: `carrier_id`, `odometer_start`, `odometer_end`, `kind` + `dowozka`, `extra_reason`
 - `stop_status`: + `in_progress`, `complaint`; przyczyny (odmowa, brak klienta…) w zdarzeniu
 - `drivers`: `pin_hash` (logowanie PIN-em na terminalu)
+- `member_role`: + `customer_service` (BOK), `management` (zarząd)
 - nowa `driver_positions` (append-only: kierowca, trasa, punkt GPS, czas)
 - gotówka: `cash_movements` (append-only: pobranie na punkcie, przekazanie dyspozytorowi, korekta) + saldo jako widok
 
