@@ -41,6 +41,7 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 | D7 | **Opiekun handlowy** | Imię i telefon opiekuna na kontrahencie, widoczne dla kierowcy. | M1 |
 | D8 | **Jakość adresów** | Ręcznie poprawiona pinezka jest „zablokowana” — import jej nie nadpisuje. Kolejka „adresy do poprawy”. | M1 |
 | D9 | **Logowanie kierowcy** | Współdzielone terminale Zebra → **kierowca + PIN** (nie magic link), wybór pojazdu, licznik start/stop. | M4 |
+| D10a | **Status z listy trasy** (uwaga 2026-10-25) | Kierowca zmienia status bezpośrednio na liście punktów: Nie rozpoczęto · Teraz realizuję · Częściowo · Dostarczono. „Teraz realizuję” — jeden punkt naraz. „Częściowo” otwiera wybór, czego nie dostarczono. Wyjątki (reklamacja, brak odbioru) — z ekranu punktu. | M4 |
 | D10 | **Statusy punktu** | nie rozpoczęty · w realizacji · dostarczono · częściowo · **reklamacja** · brak odbioru (+ odmowa jako przyczyna). Reklamacja w MVP = status + zdjęcie + przyczyna; proces decyzji — P1. | M4 |
 | D11 | **Modele wynagrodzeń** | Etatowy: dniówka + premia. Dowózkowy: % / stawka od **obrotu trasy**, za punkt, od **wartości dostaw**. Wymaga wartości zamówienia (D12). Przewoźnik — P1. | M5 |
 | D12 | **Pola zamówienia** | + wartość zamówienia, skrzynki, uwagi handlowe, uwagi logistyczne, okno dostawy na zamówieniu (nadpisuje okno oddziału), status gotowości. | M1 |

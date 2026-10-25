@@ -63,7 +63,7 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 - [ ] M4.1 PWA na terminalu Zebra: logowanie **kierowca + PIN** (współdzielone urządzenie), wybór pojazdu, licznik start, wybór trasy dnia, pobranie całej trasy do IndexedDB
 - [ ] M4.2 Kolejka zdarzeń offline + `POST /api/driver/sync` (idempotencja po `client_event_id`, walidacja przynależności trasy do kierowcy)
 - [ ] M4.2a Pozycja GPS co kilka minut przy otwartej trasie (`driver_positions`), wysyłana w paczkach przy synchronizacji
-- [ ] M4.3 Ekran trasy: lista punktów, nawigacja (otwarcie Google Maps / Waze), start trasy z licznikiem km
+- [ ] M4.3 Ekran trasy: lista punktów z **szybką zmianą statusu na każdym punkcie** (Nie rozpoczęto · Teraz realizuję · Częściowo · Dostarczono; „Teraz realizuję” tylko na jednym punkcie naraz), nawigacja (Google Maps / Waze), start trasy z licznikiem km
 - [ ] M4.4 Ekran punktu: okno, telefon, opiekun, uwagi stałe i **aktualne tymczasowe**; status w realizacji → dostarczono / częściowo / **reklamacja (zdjęcie + przyczyna)** / brak odbioru, zdjęcie, podpis palcem, GPS w momencie potwierdzenia, komentarz
 - [ ] M4.5 Opakowania na punkcie: wydane i odebrane per typ (domyślnie podpowiedź z salda klienta)
 - [ ] M4.6 "Zgłoś problem / opóźnienie" (zdjęcie + opis); **gotówka: kwota do pobrania vs pobrano** na punkcie
