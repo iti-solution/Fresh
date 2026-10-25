@@ -51,12 +51,12 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 
 ## M3 — Planowanie tras (3 tydz.)
 - [ ] M3.1 Szablony tras: lista, przypisanie punktów z domyślną kolejnością, dni tygodnia, domyślny pojazd/kierowca
-- [ ] M3.2 "Utwórz dzień": z szablonów na datę D powstają trasy, zlecenia dnia automatycznie trafiają na trasy wg przypisania punktu; reszta w kolumnie "niezaplanowane"
-- [ ] M3.3 Tablica planowania: kolumny tras + lista nieprzydzielonych (**bez mapy** — decyzja 2026-10-25); drag & drop zleceń między trasami, zmiana kolejności, podział/łączenie postojów
-- [ ] M3.4 Walidacje na żywo (czyste funkcje + testy): palety/kg/m³/**skrzynki** vs pojazd z paskiem % obciążenia, brak kierowcy/pojazdu, zamówienie bez trasy, niegotowe zamówienie z WMS (alarm przeciążenia), ETA vs okno (konflikt), punkt zamknięty w dniu/święto, zlecenie priorytetowe
-- [ ] M3.5 "Ułóż kolejność" dla trasy (VRP jednej trasy z oknami) + przeliczenie ETA, km, czasu
-- [ ] M3.6 Kursy dodatkowe: drugi kurs, **dowózka (z przyczyną)**, ekspres/awaryjny/weekendowy; zamówienia dodane po wydaniu trasy jako alert „nieprzydzielone”
-- [ ] M3.7 Kopiowanie dnia / trasy, przekazanie tras do załadunku (status **„Gotowa do załadunku”**), wydruk listy załadunkowej (PDF, kolejność odwrotna do dostaw)
+- [x] M3.2 "Utwórz dzień": z szablonów na datę D powstają trasy, zlecenia dnia automatycznie trafiają na trasy wg przypisania punktu; reszta w kolumnie "niezaplanowane"
+- [x] M3.3 Tablica planowania: kolumny tras + lista nieprzydzielonych (**bez mapy** — decyzja 2026-10-25); drag & drop zleceń między trasami, zmiana kolejności, podział/łączenie postojów
+- [x] M3.4 Walidacje na żywo (czyste funkcje + testy): palety/kg/m³/**skrzynki** vs pojazd z paskiem % obciążenia, brak kierowcy/pojazdu, zamówienie bez trasy, niegotowe zamówienie z WMS (alarm przeciążenia), ETA vs okno (konflikt), punkt zamknięty w dniu/święto, zlecenie priorytetowe
+- [ ] M3.5 "Ułóż kolejność" — **na razie „Sortuj wg okien” (bez współrzędnych); pełna optymalizacja po geokodowaniu (D20)** dla trasy (VRP jednej trasy z oknami) + przeliczenie ETA, km, czasu
+- [x] M3.6 Kursy dodatkowe: drugi kurs, **dowózka (z przyczyną)**, ekspres/awaryjny/weekendowy; zamówienia dodane po wydaniu trasy jako alert „nieprzydzielone”
+- [~] M3.7 (zrobione: „Gotowa do załadunku” z regułami i potwierdzeniem przeciążenia, przekazanie wszystkich tras; brakuje: kopiowanie dnia, lista załadunkowa PDF) Kopiowanie dnia / trasy, przekazanie tras do załadunku (status **„Gotowa do załadunku”**), wydruk listy załadunkowej (PDF, kolejność odwrotna do dostaw)
 
 **Gotowe gdy:** dyspozytor z danymi demo planuje jutro (40 punktów, 6 aut) w < 15 minut, a system nie pozwala wydać przeciążonej trasy bez świadomego potwierdzenia.
 

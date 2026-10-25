@@ -1995,6 +1995,14 @@ export type Database = {
             };
             Returns: string;
           };
+      assign_order_to_route: {
+        Args: { p_order: string; p_route: string };
+        Returns: undefined;
+      };
+      create_day_routes: {
+        Args: { p_date: string; p_tenant: string };
+        Returns: Json;
+      };
       create_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
       create_tenant: { Args: { p_name: string }; Returns: string };
       current_driver_ids: {
@@ -2157,6 +2165,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      move_stop: {
+        Args: { p_dir: number; p_stop: string };
+        Returns: undefined;
+      };
       pgp_armor_headers: {
         Args: { "": string };
         Returns: Record<string, unknown>[];
@@ -2299,7 +2311,9 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      resequence_route: { Args: { p_route: string }; Returns: undefined };
       reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
+      sort_route_by_window: { Args: { p_route: string }; Returns: undefined };
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown };
         Returns: unknown;
@@ -2959,6 +2973,8 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number };
         Returns: unknown;
       };
+      touch_route: { Args: { p_route: string }; Returns: undefined };
+      unassign_order: { Args: { p_order: string }; Returns: undefined };
       unlockrows: { Args: { "": string }; Returns: number };
       updategeometrysrid: {
         Args: {

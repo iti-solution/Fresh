@@ -32,7 +32,7 @@ const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "man
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
-  { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", roles: STAFF },
+  { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", roles: STAFF },
   { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
