@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { TENANT_COOKIE } from "@/lib/env";
 import type { FormState } from "@/lib/forms";
-import { createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
+import { adminKeyProblem, createAdminClient, hasAdminKey } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
@@ -15,9 +15,12 @@ const driverEmail = (driverId: string) => `kierowca-${driverId}@kierowcy.example
 
 /** Konto logowania kierowcy (bez e-maila — tylko PIN na terminalu) + członkostwo w firmie z rolą „kierowca”. */
 async function ensureDriverAccount(driverId: string, tenantId: string): Promise<string | null> {
+  const keyProblem = adminKeyProblem();
+  if (keyProblem) return `PIN zapisany, ale nie da się założyć konta kierowcy: ${keyProblem} Po zmianie zrób Redeploy w Vercel i ustaw PIN ponownie.`;
   const admin = createAdminClient();
-  const { data: d } = await admin.from("drivers").select("id, user_id, first_name, last_name").eq("id", driverId).eq("tenant_id", tenantId).maybeSingle();
-  if (!d) return "Nie znaleziono kierowcy.";
+  const { data: d, error: dErr } = await admin.from("drivers").select("id, user_id, first_name, last_name").eq("id", driverId).eq("tenant_id", tenantId).maybeSingle();
+  if (dErr) return `PIN zapisany, ale Supabase odrzucił klucz serwerowy (${dErr.message}). Sprawdź SUPABASE_SECRET_KEY w Vercel, zrób Redeploy i ustaw PIN ponownie.`;
+  if (!d) return "PIN zapisany, ale klucz serwerowy nie widzi kierowców — w SUPABASE_SECRET_KEY jest prawdopodobnie klucz publiczny zamiast sekretnego. Popraw go w Vercel, zrób Redeploy i ustaw PIN ponownie.";
   let userId = d.user_id;
   if (!userId) {
     const { data, error } = await admin.auth.admin.createUser({
@@ -25,7 +28,7 @@ async function ensureDriverAccount(driverId: string, tenantId: string): Promise<
       email_confirm: true,
       user_metadata: { driver_id: driverId, tenant_id: tenantId, name: `${d.first_name} ${d.last_name}` },
     });
-    if (error || !data.user) return "Nie udało się utworzyć konta kierowcy.";
+    if (error || !data.user) return `PIN zapisany, ale nie udało się utworzyć konta kierowcy${error ? ` (${error.message})` : ""}.`;
     userId = data.user.id;
     const { error: upErr } = await admin.from("drivers").update({ user_id: userId }).eq("id", driverId);
     if (upErr) return "Nie udało się podpiąć konta kierowcy.";
