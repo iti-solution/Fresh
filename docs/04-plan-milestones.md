@@ -13,14 +13,14 @@ Razem: ~14–15 tygodni do pilota. Audyt tras jest gotowy po ~4,5 tygodnia — s
 
 ---
 
-## M0 — Fundament (1 tydz.) ✅ kod gotowy 2026-10-25
+## M0 — Fundament (1 tydz.) ✅ zakończony 2026-10-25
 - [x] M0.1 Repo: Next.js 16 (App Router, TS strict), Tailwind, komponenty UI, ESLint/Prettier, Vitest, Playwright; struktura `src/modules/*` wg `01-architektura.md` §5
-- [ ] M0.2 Supabase (region EU): projekt **dev** + migracje `0001`, `0002`; typy TS wygenerowane ze schematu ✅ — *produkcyjny projekt Supabase przesunięty do M6*
+- [x] M0.2 Supabase (region EU): projekt **dev** + migracje `0001`, `0002`; typy TS wygenerowane ze schematu ✅ — *produkcyjny projekt Supabase przesunięty do M6*
 - [x] M0.3 Auth: logowanie linkiem e-mail, wybór/zakładanie firmy, proxy z sesją, dostęp według roli
 - [x] M0.4 Dane demo: funkcja `create_demo_tenant()` + przycisk „Utwórz firmę demo” (40 punktów Bielsko/Żywiec z oknami, 6 pojazdów, 6 kierowców, 3 typy opakowań, 5 szablonów tras, święta)
-- [ ] M0.5 CI (GitHub Actions: lint, typy, testy, build, e2e) ✅ + deploy Vercel — *Sentry przesunięty do M4*
+- [x] M0.5 CI (GitHub Actions: lint, typy, testy, build, e2e) ✅ + deploy Vercel — *Sentry przesunięty do M4*
 
-**Gotowe gdy:** logujesz się na adresie z Vercela, tworzysz firmę demo i widzisz w kartotekach 40 punktów, 6 pojazdów, 6 kierowców i 5 szablonów tras.
+**Gotowe gdy:** logujesz się na adresie z Vercela (https://fresh-drab.vercel.app), tworzysz firmę demo i widzisz w kartotekach 40 punktów, 6 pojazdów, 6 kierowców i 5 szablonów tras.
 
 ## M1 — Kartoteki i import zleceń (2 tydz.)
 - [ ] M1.1 Klienci i punkty dostaw: lista z wyszukiwaniem, formularz, wiele punktów na klienta, okna per dzień tygodnia, dni dostaw, sezonowość, instrukcje dla kierowcy
