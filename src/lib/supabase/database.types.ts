@@ -104,6 +104,133 @@ export type Database = {
           },
         ];
       };
+      carriers: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          nip: string | null;
+          phone: string | null;
+          tenant_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          nip?: string | null;
+          phone?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          nip?: string | null;
+          phone?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "carriers_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cash_movements: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          movement_group: string;
+          note: string | null;
+          order_id: string | null;
+          party_id: string | null;
+          party_type: Database["public"]["Enums"]["cash_party"];
+          reason: string;
+          route_id: string | null;
+          source_event_id: string | null;
+          stop_id: string | null;
+          tenant_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          movement_group: string;
+          note?: string | null;
+          order_id?: string | null;
+          party_id?: string | null;
+          party_type: Database["public"]["Enums"]["cash_party"];
+          reason: string;
+          route_id?: string | null;
+          source_event_id?: string | null;
+          stop_id?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          movement_group?: string;
+          note?: string | null;
+          order_id?: string | null;
+          party_id?: string | null;
+          party_type?: Database["public"]["Enums"]["cash_party"];
+          reason?: string;
+          route_id?: string | null;
+          source_event_id?: string | null;
+          stop_id?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cash_movements_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cash_movements_source_event_id_fkey";
+            columns: ["source_event_id"];
+            isOneToOne: false;
+            referencedRelation: "delivery_events";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cash_movements_stop_id_fkey";
+            columns: ["stop_id"];
+            isOneToOne: false;
+            referencedRelation: "route_stops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cash_movements_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customers: {
         Row: {
           category: string | null;
@@ -114,6 +241,8 @@ export type Database = {
           name: string;
           nip: string | null;
           notes: string | null;
+          sales_rep_name: string | null;
+          sales_rep_phone: string | null;
           tenant_id: string;
         };
         ComputedFields: never;
@@ -126,6 +255,8 @@ export type Database = {
           name: string;
           nip?: string | null;
           notes?: string | null;
+          sales_rep_name?: string | null;
+          sales_rep_phone?: string | null;
           tenant_id: string;
         };
         Update: {
@@ -137,6 +268,8 @@ export type Database = {
           name?: string;
           nip?: string | null;
           notes?: string | null;
+          sales_rep_name?: string | null;
+          sales_rep_phone?: string | null;
           tenant_id?: string;
         };
         Relationships: [
@@ -270,6 +403,55 @@ export type Database = {
           },
         ];
       };
+      delivery_point_notes: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          delivery_point_id: string;
+          id: string;
+          tenant_id: string;
+          text: string;
+          valid_from: string;
+          valid_to: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          delivery_point_id: string;
+          id?: string;
+          tenant_id: string;
+          text: string;
+          valid_from?: string;
+          valid_to?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          delivery_point_id?: string;
+          id?: string;
+          tenant_id?: string;
+          text?: string;
+          valid_from?: string;
+          valid_to?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "delivery_point_notes_delivery_point_id_fkey";
+            columns: ["delivery_point_id"];
+            isOneToOne: false;
+            referencedRelation: "delivery_points";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "delivery_point_notes_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       delivery_point_windows: {
         Row: {
           closes_at: string;
@@ -315,9 +497,12 @@ export type Database = {
       };
       delivery_points: {
         Row: {
+          access_instructions: string | null;
           active_from: string | null;
           active_to: string | null;
           address_line: string;
+          branch_type: Database["public"]["Enums"]["branch_type"];
+          call_instructions: string | null;
           city: string | null;
           contact_phone: string | null;
           created_at: string;
@@ -325,20 +510,26 @@ export type Database = {
           delivery_weekdays: number[];
           driver_instructions: string | null;
           external_code: string | null;
+          floor: string | null;
           geocode_status: Database["public"]["Enums"]["geocode_status"];
           id: string;
           is_active: boolean;
           location: unknown;
+          location_locked: boolean;
           name: string;
           postal_code: string | null;
           service_minutes: number;
           tenant_id: string;
+          unloading_zone: string | null;
         };
         ComputedFields: never;
         Insert: {
+          access_instructions?: string | null;
           active_from?: string | null;
           active_to?: string | null;
           address_line: string;
+          branch_type?: Database["public"]["Enums"]["branch_type"];
+          call_instructions?: string | null;
           city?: string | null;
           contact_phone?: string | null;
           created_at?: string;
@@ -346,19 +537,25 @@ export type Database = {
           delivery_weekdays?: number[];
           driver_instructions?: string | null;
           external_code?: string | null;
+          floor?: string | null;
           geocode_status?: Database["public"]["Enums"]["geocode_status"];
           id?: string;
           is_active?: boolean;
           location?: unknown;
+          location_locked?: boolean;
           name: string;
           postal_code?: string | null;
           service_minutes?: number;
           tenant_id: string;
+          unloading_zone?: string | null;
         };
         Update: {
+          access_instructions?: string | null;
           active_from?: string | null;
           active_to?: string | null;
           address_line?: string;
+          branch_type?: Database["public"]["Enums"]["branch_type"];
+          call_instructions?: string | null;
           city?: string | null;
           contact_phone?: string | null;
           created_at?: string;
@@ -366,14 +563,17 @@ export type Database = {
           delivery_weekdays?: number[];
           driver_instructions?: string | null;
           external_code?: string | null;
+          floor?: string | null;
           geocode_status?: Database["public"]["Enums"]["geocode_status"];
           id?: string;
           is_active?: boolean;
           location?: unknown;
+          location_locked?: boolean;
           name?: string;
           postal_code?: string | null;
           service_minutes?: number;
           tenant_id?: string;
+          unloading_zone?: string | null;
         };
         Relationships: [
           {
@@ -467,6 +667,62 @@ export type Database = {
           },
           {
             foreignKeyName: "driver_pay_rules_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      driver_positions: {
+        Row: {
+          accuracy_m: number | null;
+          driver_id: string;
+          id: number;
+          location: unknown;
+          received_at: string;
+          recorded_at: string;
+          route_id: string | null;
+          tenant_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accuracy_m?: number | null;
+          driver_id: string;
+          id?: number;
+          location: unknown;
+          received_at?: string;
+          recorded_at: string;
+          route_id?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          accuracy_m?: number | null;
+          driver_id?: string;
+          id?: number;
+          location?: unknown;
+          received_at?: string;
+          recorded_at?: string;
+          route_id?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "driver_positions_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "driver_positions_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "driver_positions_tenant_id_fkey";
             columns: ["tenant_id"];
             isOneToOne: false;
             referencedRelation: "tenants";
@@ -608,6 +864,7 @@ export type Database = {
           is_active: boolean;
           last_name: string;
           phone: string | null;
+          pin_hash: string | null;
           tenant_id: string;
           user_id: string | null;
         };
@@ -621,6 +878,7 @@ export type Database = {
           is_active?: boolean;
           last_name: string;
           phone?: string | null;
+          pin_hash?: string | null;
           tenant_id: string;
           user_id?: string | null;
         };
@@ -633,6 +891,7 @@ export type Database = {
           is_active?: boolean;
           last_name?: string;
           phone?: string | null;
+          pin_hash?: string | null;
           tenant_id?: string;
           user_id?: string | null;
         };
@@ -734,6 +993,7 @@ export type Database = {
       orders: {
         Row: {
           cod_amount: number | null;
+          crates: number;
           created_at: string;
           delivery_date: string;
           delivery_point_id: string | null;
@@ -741,19 +1001,26 @@ export type Database = {
           id: string;
           import_id: string | null;
           notes: string | null;
+          notes_logistics: string | null;
+          notes_sales: string | null;
+          order_value: number | null;
           pallets: number;
           parent_order_id: string | null;
           priority: number;
           raw_address: string | null;
+          readiness: Database["public"]["Enums"]["order_readiness"];
           status: Database["public"]["Enums"]["order_status"];
           tenant_id: string;
           type: Database["public"]["Enums"]["order_type"];
           volume_m3: number;
           weight_kg: number;
+          window_end: string | null;
+          window_start: string | null;
         };
         ComputedFields: never;
         Insert: {
           cod_amount?: number | null;
+          crates?: number;
           created_at?: string;
           delivery_date: string;
           delivery_point_id?: string | null;
@@ -761,18 +1028,25 @@ export type Database = {
           id?: string;
           import_id?: string | null;
           notes?: string | null;
+          notes_logistics?: string | null;
+          notes_sales?: string | null;
+          order_value?: number | null;
           pallets?: number;
           parent_order_id?: string | null;
           priority?: number;
           raw_address?: string | null;
+          readiness?: Database["public"]["Enums"]["order_readiness"];
           status?: Database["public"]["Enums"]["order_status"];
           tenant_id: string;
           type?: Database["public"]["Enums"]["order_type"];
           volume_m3?: number;
           weight_kg?: number;
+          window_end?: string | null;
+          window_start?: string | null;
         };
         Update: {
           cod_amount?: number | null;
+          crates?: number;
           created_at?: string;
           delivery_date?: string;
           delivery_point_id?: string | null;
@@ -780,15 +1054,21 @@ export type Database = {
           id?: string;
           import_id?: string | null;
           notes?: string | null;
+          notes_logistics?: string | null;
+          notes_sales?: string | null;
+          order_value?: number | null;
           pallets?: number;
           parent_order_id?: string | null;
           priority?: number;
           raw_address?: string | null;
+          readiness?: Database["public"]["Enums"]["order_readiness"];
           status?: Database["public"]["Enums"]["order_status"];
           tenant_id?: string;
           type?: Database["public"]["Enums"]["order_type"];
           volume_m3?: number;
           weight_kg?: number;
+          window_end?: string | null;
+          window_start?: string | null;
         };
         Relationships: [
           {
@@ -1229,16 +1509,20 @@ export type Database = {
       routes: {
         Row: {
           actual_km: number | null;
+          carrier_id: string | null;
           closed_at: string | null;
           closed_by: string | null;
           course_no: number;
           created_at: string;
           depot_id: string | null;
           driver_id: string | null;
+          extra_reason: string | null;
           geometry: unknown;
           id: string;
           kind: Database["public"]["Enums"]["route_kind"];
           name: string;
+          odometer_end: number | null;
+          odometer_start: number | null;
           planned_km: number | null;
           planned_minutes: number | null;
           planned_start: string | null;
@@ -1251,16 +1535,20 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           actual_km?: number | null;
+          carrier_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
           created_at?: string;
           depot_id?: string | null;
           driver_id?: string | null;
+          extra_reason?: string | null;
           geometry?: unknown;
           id?: string;
           kind?: Database["public"]["Enums"]["route_kind"];
           name: string;
+          odometer_end?: number | null;
+          odometer_start?: number | null;
           planned_km?: number | null;
           planned_minutes?: number | null;
           planned_start?: string | null;
@@ -1272,16 +1560,20 @@ export type Database = {
         };
         Update: {
           actual_km?: number | null;
+          carrier_id?: string | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
           created_at?: string;
           depot_id?: string | null;
           driver_id?: string | null;
+          extra_reason?: string | null;
           geometry?: unknown;
           id?: string;
           kind?: Database["public"]["Enums"]["route_kind"];
           name?: string;
+          odometer_end?: number | null;
+          odometer_start?: number | null;
           planned_km?: number | null;
           planned_minutes?: number | null;
           planned_start?: string | null;
@@ -1292,6 +1584,13 @@ export type Database = {
           vehicle_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "routes_carrier_id_fkey";
+            columns: ["carrier_id"];
+            isOneToOne: false;
+            referencedRelation: "carriers";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "routes_depot_id_fkey";
             columns: ["depot_id"];
@@ -1382,48 +1681,73 @@ export type Database = {
       vehicles: {
         Row: {
           body_type: string | null;
+          capacity_crates: number;
           capacity_kg: number;
           capacity_m3: number;
           capacity_pallets: number;
+          carrier_id: string | null;
+          cost_per_km: number | null;
           created_at: string;
           default_driver_id: string | null;
+          driver_cost_per_day: number | null;
+          fixed_cost_per_day: number | null;
           id: string;
           is_own: boolean;
           name: string | null;
           registration: string;
           status: Database["public"]["Enums"]["vehicle_status"];
           tenant_id: string;
+          vehicle_type: string | null;
         };
         ComputedFields: never;
         Insert: {
           body_type?: string | null;
+          capacity_crates?: number;
           capacity_kg?: number;
           capacity_m3?: number;
           capacity_pallets?: number;
+          carrier_id?: string | null;
+          cost_per_km?: number | null;
           created_at?: string;
           default_driver_id?: string | null;
+          driver_cost_per_day?: number | null;
+          fixed_cost_per_day?: number | null;
           id?: string;
           is_own?: boolean;
           name?: string | null;
           registration: string;
           status?: Database["public"]["Enums"]["vehicle_status"];
           tenant_id: string;
+          vehicle_type?: string | null;
         };
         Update: {
           body_type?: string | null;
+          capacity_crates?: number;
           capacity_kg?: number;
           capacity_m3?: number;
           capacity_pallets?: number;
+          carrier_id?: string | null;
+          cost_per_km?: number | null;
           created_at?: string;
           default_driver_id?: string | null;
+          driver_cost_per_day?: number | null;
+          fixed_cost_per_day?: number | null;
           id?: string;
           is_own?: boolean;
           name?: string | null;
           registration?: string;
           status?: Database["public"]["Enums"]["vehicle_status"];
           tenant_id?: string;
+          vehicle_type?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "vehicles_carrier_id_fkey";
+            columns: ["carrier_id"];
+            isOneToOne: false;
+            referencedRelation: "carriers";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "vehicles_default_driver_fk";
             columns: ["default_driver_id"];
@@ -1442,6 +1766,24 @@ export type Database = {
       };
     };
     Views: {
+      cash_balances: {
+        Row: {
+          balance: number | null;
+          party_id: string | null;
+          party_type: Database["public"]["Enums"]["cash_party"];
+          tenant_id: string;
+        };
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: "cash_movements_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       geography_columns: {
         Row: {
           coord_dimension: number | null;
@@ -2629,8 +2971,18 @@ export type Database = {
       };
     };
     Enums: {
+      branch_type:
+        "restaurant" | "kitchen" | "bar" | "warehouse" | "hotel" | "other";
+      cash_party: "customer" | "driver" | "office";
       geocode_status: "pending" | "ok" | "ambiguous" | "failed" | "manual";
-      member_role: "admin" | "dispatcher" | "driver" | "viewer";
+      member_role:
+        | "admin"
+        | "dispatcher"
+        | "driver"
+        | "viewer"
+        | "customer_service"
+        | "management";
+      order_readiness: "awaiting_warehouse" | "ready";
       order_status:
         | "new"
         | "unmatched"
@@ -2643,7 +2995,13 @@ export type Database = {
       order_type: "delivery" | "pickup";
       party_type: "customer" | "driver" | "carrier" | "depot";
       route_kind:
-        "regular" | "second" | "extra" | "emergency" | "weekend" | "express";
+        | "regular"
+        | "second"
+        | "extra"
+        | "emergency"
+        | "weekend"
+        | "express"
+        | "dowozka";
       route_status:
         | "draft"
         | "planned"
@@ -2660,7 +3018,9 @@ export type Database = {
         | "partial"
         | "refused"
         | "absent"
-        | "skipped";
+        | "skipped"
+        | "in_progress"
+        | "complaint";
       vehicle_status: "active" | "service" | "inactive";
     };
     CompositeTypes: {
@@ -2797,8 +3157,25 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      branch_type: [
+        "restaurant",
+        "kitchen",
+        "bar",
+        "warehouse",
+        "hotel",
+        "other",
+      ],
+      cash_party: ["customer", "driver", "office"],
       geocode_status: ["pending", "ok", "ambiguous", "failed", "manual"],
-      member_role: ["admin", "dispatcher", "driver", "viewer"],
+      member_role: [
+        "admin",
+        "dispatcher",
+        "driver",
+        "viewer",
+        "customer_service",
+        "management",
+      ],
+      order_readiness: ["awaiting_warehouse", "ready"],
       order_status: [
         "new",
         "unmatched",
@@ -2818,6 +3195,7 @@ export const Constants = {
         "emergency",
         "weekend",
         "express",
+        "dowozka",
       ],
       route_status: [
         "draft",
@@ -2837,6 +3215,8 @@ export const Constants = {
         "refused",
         "absent",
         "skipped",
+        "in_progress",
+        "complaint",
       ],
       vehicle_status: ["active", "service", "inactive"],
     },

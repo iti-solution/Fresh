@@ -35,6 +35,18 @@ describe("canAccess", () => {
   });
 });
 
+describe("BOK i zarząd", () => {
+  it("widzą panel, ale nie audyt tras ani ustawienia", () => {
+    for (const role of ["customer_service", "management"] as const) {
+      expect(canAccess(role, "/pulpit")).toBe(true);
+      expect(canAccess(role, "/centrum")).toBe(true);
+      expect(canAccess(role, "/audyt")).toBe(false);
+      expect(canAccess(role, "/ustawienia")).toBe(false);
+      expect(canAccess(role, "/driver")).toBe(false);
+    }
+  });
+});
+
 describe("menu i przekierowania", () => {
   it("kierowca nie ma menu panelu", () => {
     expect(navForRole("driver")).toHaveLength(0);

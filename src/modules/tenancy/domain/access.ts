@@ -1,13 +1,15 @@
 // Czysta logika dostępu: role, ścieżki publiczne, menu panelu.
 // Bez importów z Next.js / Supabase — testowane jednostkowo.
 
-export type Role = "admin" | "dispatcher" | "driver" | "viewer";
+export type Role = "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management";
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrator",
   dispatcher: "Dyspozytor",
   driver: "Kierowca",
   viewer: "Podgląd",
+  customer_service: "Obsługa klienta (BOK)",
+  management: "Zarząd",
 };
 
 const PUBLIC_PREFIXES = ["/login", "/auth/"];
@@ -24,7 +26,8 @@ export type NavItem = {
   roles: Role[];
 };
 
-const STAFF: Role[] = ["admin", "dispatcher", "viewer"];
+// Odczyt panelu: wszyscy poza kierowcą. Zapis kontroluje RLS (tylko admin i dyspozytor).
+const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "management"];
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", roles: STAFF },
@@ -56,7 +59,8 @@ export function canAccess(role: Role, pathname: string): boolean {
 }
 
 export function homePathForRole(role: Role): string {
-  return role === "driver" ? "/driver" : "/pulpit";
+  if (role === "driver") return "/driver";
+  return "/pulpit";
 }
 
 /** Bezpieczny cel przekierowania po logowaniu: tylko ścieżki wewnętrzne. */

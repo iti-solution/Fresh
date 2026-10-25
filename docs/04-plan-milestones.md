@@ -23,7 +23,7 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 **Gotowe gdy:** logujesz się na adresie z Vercela (https://fresh-drab.vercel.app), tworzysz firmę demo i widzisz w kartotekach 40 punktów, 6 pojazdów, 6 kierowców i 5 szablonów tras.
 
 ## M1 — Kartoteki i import zleceń (2,5 tydz.)
-- [ ] M1.0 Migracja `0003` wg `02-zakres-mvp.md` §2a (skrzynki, oddziały, uwagi stałe/tymczasowe, opiekun, gotowość, przewoźnicy, koszty pojazdu, PIN, pozycje GPS, gotówka) + typy TS + testy RLS nowych tabel
+- [x] M1.0 Migracje `0003` (słowniki) + `0004` (model) wg `02-zakres-mvp.md` §2a (skrzynki, oddziały, uwagi stałe/tymczasowe, opiekun, gotowość, przewoźnicy, koszty pojazdu, PIN, pozycje GPS, gotówka) + typy TS + testy RLS nowych tabel
 - [ ] M1.1 Klienci i punkty dostaw: lista z wyszukiwaniem, formularz, wiele punktów na klienta, okna per dzień tygodnia, dni dostaw, sezonowość, instrukcje dla kierowcy
 - [ ] M1.1a Typ oddziału (restauracja/kuchnia/bar/magazyn), uwagi stałe (dzwonić, wjazd, piętro, strefa rozładunku), uwagi tymczasowe z datą ważności, opiekun handlowy
 - [ ] M1.2 Geokodowanie: adapter `GeocodingProvider` (Google), geokodowanie przy zapisie i wsadowo, status `ambiguous/failed` → kolejka "do poprawy", **ręczne przesunięcie pinezki na mapie**

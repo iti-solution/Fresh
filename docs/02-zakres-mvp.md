@@ -53,7 +53,7 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 | D18 | **Osobny widok BOK** (uwaga 2026-10-25) | Centrum operacyjne dzieli się na: **dyspozytor** (trasy, alerty, zgłoszenia) i **obsługa klienta** — wyszukiwarka „Gdzie jest dostawa?” (kod/nazwa klienta, nr zamówienia, telefon) → status, przewidywany przyjazd vs okno, trasa, kierowca z telefonem, historia dnia; lista dzisiejszych dostaw z filtrami (opóźnione, problemy, dostarczone). Nowa rola **BOK** (podgląd + zgłoszenia, bez edycji tras). | M6 |
 | D19 | **Podsumowanie dnia dla zarządu** | Ten sam raport co w panelu BOK, także na telefonie: sprzedaż dostarczona (wartość zamówień) vs ten sam dzień tydzień temu, trend 6 dni, zamówienia, średnie zamówienie, dostawy w oknie, reklamacje/zwroty/dowózki z wartością, najwięksi klienci dnia, **opakowania** (per typ: wydano / wróciło dziś, saldo u klientów ze zmianą dnia, wartość kaucji u klientów, zalegające > 30 dni i największy dłużnik, różnice u kierowców), „do uwagi”. Nowa rola **Zarząd** (tylko odczyt). Uwaga: „sprzedaż” = wartość zamówień przekazanych do Fresh, nie faktury z ERP. | M6 |
 
-### Zmiany w modelu danych (migracja `0003`, start M1)
+### Zmiany w modelu danych (migracje `0003` + `0004`, zrobione w M1.0)
 - `customers`: `sales_rep_name`, `sales_rep_phone`
 - `delivery_points`: `branch_type` (restaurant/kitchen/bar/warehouse/other), `location_locked` (bool), stałe uwagi: `call_instructions`, `access_instructions`, `floor`, `unloading_zone`
 - nowa `delivery_point_notes` (uwagi tymczasowe): `text`, `valid_from`, `valid_to`, `created_by`
@@ -107,3 +107,4 @@ Do ustalenia z pilotem przed M3:
 - Czy kierowca musi **drukować** raport zmiany (drukarka Zebra), czy wystarczy ekran + PDF dla biura?
 - Zebra: model terminala i wersja Androida (PWA, aparat, GPS) — sprawdzić na jednym urządzeniu przed M4.
 - Gotówka: czy kierowca rozlicza się z dyspozytorem, czy z kasą/księgowością?
+- Opakowania: kaucja (wartość) za każdy typ oraz po ilu dniach opakowanie u klienta jest „zalegające” (makieta zakłada 30 dni).
