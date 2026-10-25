@@ -48,3 +48,6 @@ Szczegóły i decyzje: `02-zakres-mvp.md` §2a.
 Reklamacje jako proces z decyzją (odrzucenie / uznanie / dowózka) · analiza dowózek (przyczyna, odpowiedzialność, koszt, wpływ na premię) · komunikator BOK/dyspozytor/klient ↔ kierowca · integracja GPS Consalnet · natywne konektory WF-Mag/WMS · AI (sugestia auta/kierowcy, anomalie reklamacji, ocena kierowców) · dashboard zarządczy.
 
 W MVP zbieramy jednak **dane pod te funkcje**: status „reklamacja” ze zdjęciem i przyczyną, kursy typu „dowózka”, licznik km, koszty pojazdu — żeby Etap 2 miał na czym pracować od pierwszego dnia.
+
+## Makiety ekranów
+Kluczowe ekrany (tablica planowania, centrum operacyjne, aplikacja kierowcy: trasa, punkt, raport zmiany): https://claude.ai/artifact/Vxxt8r9P9r7cxZ6pcxqkSN
