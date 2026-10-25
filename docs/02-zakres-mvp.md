@@ -47,6 +47,9 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 | D12 | **Pola zamówienia** | + wartość zamówienia, skrzynki, uwagi handlowe, uwagi logistyczne, okno dostawy na zamówieniu (nadpisuje okno oddziału), status gotowości. | M1 |
 | D13 | **Flota** | + przewoźnik, typ pojazdu, pojemność skrzynek, koszt km, koszt kierowcy, koszt dzienny. KPI pustych przebiegów — dane zbieramy w MVP (licznik + km planowane), raport w P1. | M1 |
 | D14 | **Dynamiczne zmiany** | Zamówienie dodane po wydaniu trasy = alert „nieprzydzielone”; zmiana trasy trafia do kierowcy przy synchronizacji; dowózka/drugi kurs = typ kursu z przyczyną. | M3 / M4 |
+| D15 | **Ewidencja zwrotu na punkcie** (uwaga 2026-10-25) | Wchodzi do MVP po stronie kierowcy: przycisk „Zwrot towaru” obok „Reklamacja” — towar/zamówienie, ilość, przyczyna, zdjęcie. Zapis jako zdarzenie `return_recorded` (bez nowej tabeli). Obsługa zwrotu w biurze (decyzja, ocena jakości, dokument) — P1. | M4 |
+| D16 | **Telefon do opiekuna handlowego** | Na ekranie punktu dwa przyciski: „Zadzwoń do odbiorcy” i „Zadzwoń do opiekuna”. | M4 |
+| D17 | **Raport zmiany kierowcy** | Kierowca **nie widzi obrotu** ani wartości zamówień. Na górze raportu, największym elementem, jest **wynagrodzenie za dziś** (z rozbiciem na składniki) i suma od początku miesiąca. U kierowców dowózkowych obrót jest liczony w tle i widzi go tylko biuro. | M4 / M5 |
 
 ### Zmiany w modelu danych (migracja `0003`, start M1)
 - `customers`: `sales_rep_name`, `sales_rep_phone`
