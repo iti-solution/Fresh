@@ -86,7 +86,7 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 ## M6 — Centrum operacyjne i pilot (2 tydz.)
 - [ ] M6.1 Centrum operacyjne — **dyspozytor** (Realtime): postęp % per trasa, punkty spóźnione vs okno, trasy nierozpoczęte, brak potwierdzeń, alerty, zgłoszenia z trasy ze zdjęciami
 - [ ] M6.1a Widok **BOK**: wyszukiwarka „Gdzie jest dostawa?” (klient, zamówienie, telefon) → status, ETA vs okno, kierowca z telefonem, historia dnia; lista dostaw dnia z filtrami; rola `customer_service`
-- [ ] M6.1b **Podsumowanie dnia** (panel BOK + widok na telefon dla zarządu): sprzedaż dostarczona vs tydzień temu, trend, zamówienia, terminowość, reklamacje/zwroty/dowózki, najwięksi klienci; rola `management`
+- [ ] M6.1b **Podsumowanie dnia** (panel BOK + widok na telefon dla zarządu): sprzedaż dostarczona vs tydzień temu, trend, zamówienia, terminowość, reklamacje/zwroty/dowózki, najwięksi klienci, **opakowania** (wydano/wróciło, saldo u klientów i kaucja, zalegające > 30 dni, różnice u kierowców); rola `management`
 - [ ] M6.2 Mini-KPI: terminowość dostaw, km/punkt, punkty/trasę, czas obsługi punktu — dzień/tydzień
 - [ ] M6.3 Onboarding klienta: kreator (firma → import punktów → pojazdy → kierowcy → szablony tras) — cel: nowy klient gotowy w 1 dzień
 - [ ] M6.4 Hardening: kopie zapasowe, logi audytu zmian tras/rozliczeń, testy RLS (tenant A nie widzi B), test obciążenia 5 000 punktów/dzień
