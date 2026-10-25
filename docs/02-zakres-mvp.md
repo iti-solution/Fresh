@@ -51,7 +51,7 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 - `customers`: `sales_rep_name`, `sales_rep_phone`
 - `delivery_points`: `branch_type` (restaurant/kitchen/bar/warehouse/other), `location_locked` (bool), stałe uwagi: `call_instructions`, `access_instructions`, `floor`, `unloading_zone`
 - nowa `delivery_point_notes` (uwagi tymczasowe): `text`, `valid_from`, `valid_to`, `created_by`
-- `orders`: `order_value`, `crates`, `notes_sales`, `notes_logistics`, `window_start`, `window_end`, `readiness` (awaiting_warehouse / ready)
+- `orders`: `order_value`, `crates`, `notes_sales`, `notes_logistics`, `window_start`, `window_end`, `readiness` (awaiting_warehouse / ready — w UI: **„Do realizacji” / „Skompletowane”**)
 - nowa `carriers` (przewoźnicy); `vehicles`: `carrier_id`, `vehicle_type`, `capacity_crates`, `cost_per_km`, `driver_cost_per_day`, `fixed_cost_per_day`; `routes`: `carrier_id`, `odometer_start`, `odometer_end`, `kind` + `dowozka`, `extra_reason`
 - `stop_status`: + `in_progress`, `complaint`; przyczyny (odmowa, brak klienta…) w zdarzeniu
 - `drivers`: `pin_hash` (logowanie PIN-em na terminalu)
