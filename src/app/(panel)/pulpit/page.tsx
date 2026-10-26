@@ -4,12 +4,11 @@ import { Banknote, ChevronLeft, ChevronRight, RefreshCw, Route, Store } from "lu
 import { EmptyState, Meter, Notice, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Pill, Plate } from "@/components/ui/status";
-import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
+import { DATE_RE, formatPln, formatPlnCompact, toGrosze } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { isNoteActive } from "@/modules/masterdata/domain/schemas";
 import { formatDayLabel, shiftDay, summarizeOrders, todayInWarsaw } from "@/modules/orders/domain/orders";
-import { getDriverCash } from "@/modules/ops/server/queries";
 import { getDayOrders } from "@/modules/orders/server/queries";
 import { resetDemoTenant } from "@/modules/tenancy/server/actions";
 import { requireAccess } from "@/modules/tenancy/server/context";
@@ -32,7 +31,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
       .eq("is_active", true)
       .order("name"),
     supabase.from("delivery_point_notes").select("valid_from, valid_to").eq("tenant_id", ctx.tenantId),
-    getDriverCash(ctx.tenantId),
+    supabase
+      .from("cash_movements")
+      .select("amount, routes!inner(route_date)")
+      .eq("tenant_id", ctx.tenantId)
+      .eq("party_type", "driver")
+      .eq("reason", "cod_collected")
+      .eq("routes.route_date", day),
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("tenant_id", ctx.tenantId),
     supabase
       .from("routes")
@@ -54,8 +59,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
   const open = active.filter((o) => !["delivered", "partial", "failed"].includes(o.status));
   const toDeliver = summarizeOrders(open);
   const delivered = active.length - open.length;
-  const cashTotal = cash.reduce((a, c) => a + Math.max(0, c.cashGrosze), 0);
-  const cashDrivers = cash.filter((c) => c.cashGrosze > 0).length;
+  // pobrania: gotówka, którą kierowcy mają odebrać od klientów za zamówienia tego dnia
+  const codOrders = active.filter((o) => (o.cod_amount ?? 0) > 0);
+  const codTotal = codOrders.reduce((a, o) => a + toGrosze(o.cod_amount), 0);
+  const codCollected = (cash.data ?? []).reduce((a, m) => a + toGrosze(m.amount), 0);
   const dayLabel = day === today ? `dziś, ${formatDayLabel(day).split(", ")[1]}` : formatDayLabel(day);
 
   const byRoute = new Map<string, typeof active>();
@@ -181,10 +188,14 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
               tone={activeNotes ? "warning" : undefined}
             />
             <StatTile
-              href="/centrum"
-              label="Gotówka u kierowców"
-              value={formatPlnCompact(cashTotal)}
-              sub={cashDrivers ? `${cashDrivers} kierowców do rozliczenia` : "wszystko rozliczone"}
+              href={`/zlecenia?dzien=${day}`}
+              label="Gotówka do odebrania"
+              value={formatPlnCompact(codTotal)}
+              sub={
+                codOrders.length
+                  ? `${codOrders.length} zamówień za pobraniem${codCollected ? `, odebrano ${formatPlnCompact(codCollected)}` : ""}`
+                  : "brak zamówień za pobraniem"
+              }
               icon={<Banknote />}
             />
           </div>
