@@ -106,6 +106,8 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 - [x] Planowanie: alarm, gdy to samo auto lub kierowca jest na dwóch trasach w tym samym kursie; przycisk „Przydziel jak ostatnio”
 - [x] Demo (migracja `0009`): kierowcy rotują między trasami, raz w tygodniu auto zastępcze
 - [x] Barwy ExpertWMS (granat + pomarańcz, Barlow), zwarte menu bez przewijania
+- [x] BOK według tras: każda trasa z kierowcą, autem, telefonem, „gdzie jest teraz”, listą punktów i szacowanym dojazdem; wyszukiwanie pokazuje klienta w kontekście trasy (ile punktów przed nim, ETA vs okno)
+- [x] Raport zarządu: „Dziś / jutro — plan, realizacja i prognoza końca dnia” (sprzedaż, terminowość teraz → prognoza, zagrożone punkty, powroty tras); prognoza ETA w `modules/ops/domain/forecast.ts`
 - [ ] Decyzja produktowa: czy trasa stała ma dalej podpowiadać auto/kierowcę przy tworzeniu dnia (dziś: tak, jako propozycja do zmiany)
 
 ## Backlog P1 (po pilocie, kolejność wg feedbacku)
