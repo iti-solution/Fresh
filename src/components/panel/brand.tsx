@@ -14,15 +14,13 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-/** Logotyp: znak + „FRESH” w kroju i rytmie znaku ExpertWMS (wersaliki, rozstrzelone). */
+/** Logotyp: znak + „EXPERTTMS” w kroju i rytmie znaku ExpertWMS (wersaliki, rozstrzelone). */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- `inverted` zostaje w API na wypadek wersji na jasnym tle
 export function Wordmark({ className, inverted }: { className?: string; inverted?: boolean }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <BrandMark />
-      <span className="flex items-baseline gap-1.5 leading-none">
-        <span className="text-[21px] font-bold tracking-[0.08em] text-primary">FRESH</span>
-        <span className={cn("text-[11px] font-semibold tracking-[0.14em]", inverted ? "text-ink-muted" : "text-muted")}>TMS</span>
-      </span>
+      <span className="text-[20px] leading-none font-bold tracking-[0.06em] text-primary">EXPERTTMS</span>
     </span>
   );
 }
