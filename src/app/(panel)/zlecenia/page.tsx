@@ -98,7 +98,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
           <ChevronRight />
         </Link>
         {day !== nextWorkingDay(today) && (
-          <Link href={href(nextWorkingDay(today))} className="ml-2 text-sm text-primary hover:underline">
+          <Link href={href(nextWorkingDay(today))} className="ml-2 text-sm text-primary-strong hover:underline">
             najbliższy dzień roboczy
           </Link>
         )}
@@ -203,7 +203,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                           {o.customerId ? (
                             <Link
                               href={`/kartoteki/klienci/${o.customerId}`}
-                              className="font-medium text-foreground hover:text-primary hover:underline"
+                              className="font-medium text-foreground hover:text-primary-strong hover:underline"
                             >
                               {o.customerName}
                             </Link>

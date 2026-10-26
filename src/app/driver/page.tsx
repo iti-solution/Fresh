@@ -18,7 +18,7 @@ export default async function DriverHome() {
   if (ctx.role !== "driver") {
     return (
       <main className="flex flex-col gap-4 p-5">
-        <p className="text-2xl font-semibold text-primary">Fresh · aplikacja kierowcy</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh · aplikacja kierowcy</p>
         <Card className="flex flex-col gap-3 text-sm">
           <p>
             Jesteś zalogowany jako <strong>{ctx.email}</strong> (nie kierowca).
@@ -29,7 +29,7 @@ export default async function DriverHome() {
           <Link href="/driver/terminal" className={buttonVariants({ size: "lg" })}>
             Przypisz to urządzenie jako terminal
           </Link>
-          <Link href="/pulpit" className="text-center text-primary">
+          <Link href="/pulpit" className="text-center text-primary-strong">
             Wróć do panelu
           </Link>
         </Card>
@@ -46,7 +46,7 @@ export default async function DriverHome() {
     <main className="flex flex-col gap-4 p-5">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-2xl font-semibold text-primary">Moje trasy</p>
+          <p className="text-2xl font-semibold text-primary-strong">Moje trasy</p>
           <p className="text-sm text-muted">{ctx.tenantName}</p>
         </div>
         <form action={driverLogout}>
@@ -76,7 +76,7 @@ export default async function DriverHome() {
             {r.vehicle ?? "bez pojazdu"} · {r.stops} punktów · {ROUTE_STATUS_LABELS[r.status] ?? r.status}
           </span>
           {r.status === "completed" && (
-            <span className="text-sm text-primary">
+            <span className="text-sm text-primary-strong">
               Zakończona: {r.finished}/{r.stops} punktów — zobacz raport
             </span>
           )}

@@ -37,7 +37,7 @@ export function ActionForm({
       {(state.message || errors.length > 0) && (
         <div
           role="status"
-          className={cn("rounded-lg px-4 py-3 text-sm", state.ok ? "bg-accent text-primary" : "bg-danger-soft text-danger")}
+          className={cn("rounded-lg px-4 py-3 text-sm", state.ok ? "bg-success-soft text-success" : "bg-danger-soft text-danger")}
         >
           {state.message}
           {errors.length > 0 && !state.ok && (

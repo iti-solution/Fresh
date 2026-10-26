@@ -14,12 +14,12 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
   if (!tenantId) {
     return (
       <main className="flex flex-1 flex-col justify-center gap-4 p-6">
-        <p className="text-2xl font-semibold text-primary">Fresh · kierowca</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh · kierowca</p>
         <div className="rounded-xl border border-border bg-surface p-5 text-sm">
           <p className="font-semibold">Ten telefon nie jest jeszcze przypisany do firmy.</p>
           <p className="mt-2 text-muted">
             Dyspozytor lub administrator: zaloguj się na tym urządzeniu i otwórz{" "}
-            <Link href="/driver/terminal" className="font-medium text-primary underline">
+            <Link href="/driver/terminal" className="font-medium text-primary-strong underline">
               Przypisz terminal
             </Link>
             . Wystarczy raz.
@@ -42,11 +42,11 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
   return (
     <main className="flex flex-1 flex-col gap-5 p-5">
       <header>
-        <p className="text-2xl font-semibold text-primary">Fresh · kierowca</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh · kierowca</p>
         <p className="text-sm text-muted">{tenant?.name}</p>
       </header>
       {sp.terminal === "1" && (
-        <p role="status" className="rounded-lg bg-accent px-4 py-3 text-sm text-primary">
+        <p role="status" className="rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
           Terminal przypisany do firmy. Kierowcy logują się PIN-em.
         </p>
       )}

@@ -29,7 +29,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
                 <span
                   className={
                     s.s === "done"
-                      ? "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full bg-[#5cc48a]"
+                      ? "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full bg-[#3fbf7f]"
                       : s.s === "now"
                         ? "live-dot absolute top-1 -left-[33px] h-4 w-4 rounded-full border-[3px] border-[#7fb3e6] bg-ink"
                         : "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full border-2 border-white/25 bg-ink"

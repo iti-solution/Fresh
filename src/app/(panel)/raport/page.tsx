@@ -9,6 +9,7 @@ import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import {
   dayKpis,
+  nowForDay,
   EXCEPTION_STATUSES,
   packagingSummary,
   pctChange,
@@ -18,8 +19,9 @@ import {
   type DayKpis,
   type ReportRoute,
 } from "@/modules/ops/domain/reports";
-import { getDriverCash, getPackagingBalances, getReportRoutes } from "@/modules/ops/server/queries";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
+import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
+import { formatDayLabel, nextWorkingDay, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Raport zarządu" };
@@ -47,11 +49,15 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
   const trendStart = shiftDay(end, -27);
   const rangeStart = [prevStart, trendStart].sort()[0];
 
-  const [all, current, cash, pack] = await Promise.all([
+  const planKey = sp.plan === "jutro" ? "jutro" : "dzis";
+  const planDate = planKey === "jutro" ? nextWorkingDay(today) : today;
+  const planNow = nowForDay(planDate, today, nowInWarsaw());
+  const [all, current, cash, pack, planRoutes] = await Promise.all([
     getReportRoutes(ctx.tenantId, rangeStart, end),
     getReportRoutes(ctx.tenantId, start, end, { withNotes: true }),
     getDriverCash(ctx.tenantId),
     getPackagingBalances(ctx.tenantId),
+    getReportRoutes(ctx.tenantId, planDate, planDate),
   ]);
 
   const byDay = new Map<string, ReportRoute[]>();
@@ -94,8 +100,10 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
   const driverMissing = pkg.drivers.reduce((a, d) => a + Object.values(d.byType).reduce((x, q) => x + Math.min(0, q), 0), 0);
   const cashOpen = cash.reduce((a, c) => a + Math.max(0, c.cashGrosze), 0);
 
-  const href = (p: { okres?: PeriodKey; do?: string }) => {
+  const href = (p: { okres?: PeriodKey; do?: string; plan?: string }) => {
     const u = new URLSearchParams();
+    const pl = p.plan ?? planKey;
+    if (pl !== "dzis") u.set("plan", pl);
     const o = p.okres ?? period;
     if (o !== "tydzien") u.set("okres", o);
     const d = p.do ?? end;
@@ -145,6 +153,42 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
           </>
         }
       />
+
+      <Panel
+        className="mb-6"
+        title={planKey === "jutro" ? `Plan na ${formatDayLabel(planDate)}` : "Dziś: plan, realizacja i prognoza końca dnia"}
+        description={
+          planKey === "jutro"
+            ? "Co zaplanował dyspozytor i jak skończy się dzień, jeśli trasy wyjadą o czasie."
+            : "Prognoza zakłada, że pozostałe punkty zostaną dostarczone w obecnym tempie każdej trasy."
+        }
+        actions={
+          <Segmented
+            items={[
+              { href: href({ plan: "dzis" }), label: "Dziś", active: planKey === "dzis" },
+              {
+                href: href({ plan: "jutro" }),
+                label: formatDayLabel(nextWorkingDay(today)).split(",")[0],
+                active: planKey === "jutro",
+              },
+            ]}
+          />
+        }
+        flush
+      >
+        {planRoutes.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-muted">
+            Na {formatDayLabel(planDate)} nie ma jeszcze tras — plan pojawi się, gdy dyspozytor utworzy dzień.
+          </p>
+        ) : (
+          <DayForecastPanel routes={planRoutes} now={planNow} future={planKey === "jutro"} />
+        )}
+      </Panel>
+
+      <h2 className="mb-3 flex flex-wrap items-baseline gap-x-2 text-[17px] font-semibold">
+        Wyniki za okres <span className="font-normal text-muted capitalize">{rangeLabel}</span>
+        <span className="text-xs font-normal text-subtle">— zrealizowane dostawy, porównanie: {PERIODS[period].compare}</span>
+      </h2>
 
       {cur.stops === 0 ? (
         <Panel>

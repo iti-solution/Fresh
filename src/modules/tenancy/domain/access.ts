@@ -22,7 +22,7 @@ export function isPublicPath(pathname: string): boolean {
 export type NavItem = {
   href: string;
   label: string;
-  group: "Operacje" | "Zestawienia" | "Kartoteki" | "Rozliczenia" | "Wzrost" | "System";
+  group: "Operacje" | "Zestawienia" | "Kartoteki" | "Rozliczenia" | "System";
   milestone: string; // kamień milowy, w którym moduł powstaje
   built?: boolean; // moduł już działa — bez oznaczenia etapu w menu
   roles: Role[];
@@ -45,7 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
   { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
-  { href: "/audyt", label: "Audyt tras", group: "Wzrost", milestone: "M2", roles: ["admin", "dispatcher"] },
+  { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
   { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", roles: ["admin"] },
 ];
 

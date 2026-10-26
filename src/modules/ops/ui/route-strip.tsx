@@ -55,8 +55,19 @@ const FILL: Record<Tone, string> = {
  * Linia trasy jak linia metra: każdy przystanek to kropka w kolejności dostaw.
  * Pełna kropka = zrealizowany, pusta = przed kierowcą, pierścień = kierowca teraz tutaj.
  */
-export function RouteStrip({ stops, now, className }: { stops: ReportStop[]; now: string | null; className?: string }) {
+export function RouteStrip({
+  stops,
+  now,
+  className,
+  highlightId,
+}: {
+  stops: ReportStop[];
+  now: string | null;
+  className?: string;
+  highlightId?: string | string[];
+}) {
   if (stops.length === 0) return <span className="text-xs text-subtle">brak punktów</span>;
+  const marked = new Set(Array.isArray(highlightId) ? highlightId : highlightId ? [highlightId] : []);
   const lastDone = stops.reduce((acc, s, i) => (s.status !== "pending" ? i : acc), -1);
   return (
     <div className={cn("relative flex items-center", className)} role="img" aria-label={`Trasa: ${stops.length} punktów`}>
@@ -86,9 +97,16 @@ export function RouteStrip({ stops, now, className }: { stops: ReportStop[]; now
                         ? "border-border-strong bg-surface"
                         : cn("bg-surface", FILL[tone].split(" ")[1])
                       : FILL[tone]),
+                  marked.has(s.id) && "ring-2 ring-primary ring-offset-2 ring-offset-surface",
                 )}
                 title={`${s.sequence}. ${s.customer} — ${stopLabel(s, t)}${s.windowEnd ? ` (okno ${s.windowStart ?? ""}–${s.windowEnd})` : ""}${s.completedAt ? `, ${s.completedAt}` : ""}`}
               />
+              {marked.has(s.id) && (
+                <span
+                  className="pointer-events-none absolute -top-2.5 left-1/2 h-0 w-0 -translate-x-1/2 border-x-[5px] border-t-[6px] border-x-transparent border-t-primary"
+                  aria-hidden
+                />
+              )}
             </li>
           );
         })}

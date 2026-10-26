@@ -68,7 +68,7 @@ export default async function DriverStopPage({ params }: PageProps<"/driver/tras
   return (
     <main className="flex flex-col gap-3 pb-6">
       <header className="flex flex-col gap-1 border-b border-border bg-surface px-4 py-3">
-        <Link href={`/driver/trasa/${id}`} className="flex h-10 items-center text-sm text-primary">
+        <Link href={`/driver/trasa/${id}`} className="flex h-10 items-center text-sm text-primary-strong">
           ‹ Trasa · punkt {stop.sequence} z {route.stops.length}
         </Link>
         <h1 className="text-xl font-semibold">{stop.customer}</h1>
@@ -76,7 +76,7 @@ export default async function DriverStopPage({ params }: PageProps<"/driver/tras
           {stop.branch} · {stop.address}
         </p>
         <div className="mt-1 flex flex-wrap gap-1.5">
-          <span className="rounded bg-accent px-2 py-0.5 text-xs font-semibold text-primary">okno {stop.window}</span>
+          <span className="rounded bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2">okno {stop.window}</span>
           <span className="rounded bg-foreground/[0.08] px-2 py-0.5 text-xs font-semibold">
             {STOP_STATUS_LABELS[stop.status]}
           </span>
@@ -99,7 +99,7 @@ export default async function DriverStopPage({ params }: PageProps<"/driver/tras
         {stop.salesRepPhone ? (
           <a
             href={`tel:${stop.salesRepPhone}`}
-            className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-[#b9d9c4] bg-accent text-sm font-bold text-primary"
+            className="flex min-h-14 flex-col items-center justify-center rounded-xl border border-primary/30 bg-accent text-sm font-bold text-primary-strong"
           >
             Zadzwoń do opiekuna<span className="text-xs font-normal">{stop.salesRep}</span>
           </a>
@@ -111,7 +111,7 @@ export default async function DriverStopPage({ params }: PageProps<"/driver/tras
       </div>
 
       {stop.notes.map((n) => (
-        <p key={n} className="mx-3 rounded-xl bg-warning-soft px-4 py-2.5 text-sm font-medium text-[#6b2e05]">
+        <p key={n} className="mx-3 rounded-xl bg-warning-soft px-4 py-2.5 text-sm font-medium text-[#6e4700]">
           Uwaga: {n}
         </p>
       ))}

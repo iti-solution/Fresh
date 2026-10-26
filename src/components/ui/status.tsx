@@ -30,7 +30,7 @@ export const TONE_TEXT: Record<Tone, string> = {
   danger: "text-danger",
   info: "text-info",
   plum: "text-plum",
-  primary: "text-primary",
+  primary: "text-primary-strong",
 };
 
 /** Status w formie pigułki z kropką. */

@@ -35,7 +35,7 @@ export default async function DriverRoutePage({ params, searchParams }: PageProp
     const vehicles = await getVehiclesForDriver();
     return (
       <main className="flex flex-col gap-4 p-5">
-        <Link href="/driver" className="h-11 text-sm text-primary">
+        <Link href="/driver" className="h-11 text-sm text-primary-strong">
           ‹ Moje trasy
         </Link>
         <div>
@@ -108,7 +108,7 @@ export default async function DriverRoutePage({ params, searchParams }: PageProp
         </div>
         <div className="flex items-center gap-3">
           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/15">
-            <div className="h-full rounded-full bg-[#5cc48a]" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-[#3fbf7f]" style={{ width: `${pct}%` }} />
           </div>
           <span className="text-base font-semibold tabular-nums">
             {finished} / {route.stops.length}
@@ -117,7 +117,7 @@ export default async function DriverRoutePage({ params, searchParams }: PageProp
       </header>
 
       {sp.zapisano && (
-        <p role="status" className="mx-3 mt-3 rounded-lg bg-accent px-4 py-2 text-sm text-primary">
+        <p role="status" className="mx-3 mt-3 rounded-lg bg-success-soft px-4 py-2 text-sm font-medium text-success">
           Zapisano punkt.
         </p>
       )}
@@ -156,7 +156,7 @@ export default async function DriverRoutePage({ params, searchParams }: PageProp
                     {s.branch} · {s.address}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-primary-strong tabular-nums">
+                    <span className="rounded-md bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2 tabular-nums">
                       okno {s.window}
                     </span>
                     {s.notes.map((n) => (
@@ -176,7 +176,7 @@ export default async function DriverRoutePage({ params, searchParams }: PageProp
                 </div>
                 <Link
                   href={`/driver/trasa/${id}/punkt/${s.id}`}
-                  className="flex h-11 items-center px-1 text-sm font-semibold text-primary"
+                  className="flex h-11 items-center px-1 text-sm font-semibold text-primary-strong"
                 >
                   Szczegóły ›
                 </Link>

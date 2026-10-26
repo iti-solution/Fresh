@@ -106,7 +106,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
                   <td className="px-3 py-2">
                     <Link
                       href={`/kartoteki/klienci/${c.id}`}
-                      className="font-medium text-foreground hover:text-primary hover:underline"
+                      className="font-medium text-foreground hover:text-primary-strong hover:underline"
                     >
                       {c.name}
                     </Link>

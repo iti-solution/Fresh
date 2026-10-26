@@ -10,8 +10,8 @@ export function LoginForm({ next }: { next?: string }) {
 
   if (state.status === "sent") {
     return (
-      <div className="space-y-2 rounded-xl border border-primary/20 bg-accent p-4 text-sm" role="status">
-        <p className="font-semibold text-primary-strong">Sprawdź skrzynkę {state.email}</p>
+      <div className="space-y-2 rounded-xl border border-success/20 bg-success-soft p-4 text-sm" role="status">
+        <p className="font-semibold text-success">Sprawdź skrzynkę {state.email}</p>
         <p className="text-muted">
           Wysłaliśmy link do logowania. Otwórz go w tej samej przeglądarce. Link jest ważny przez godzinę.
         </p>

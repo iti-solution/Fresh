@@ -19,12 +19,12 @@ export default async function FinishPage({ params }: PageProps<"/driver/trasa/[i
 
   return (
     <main className="flex flex-col gap-4 p-5">
-      <Link href={`/driver/trasa/${id}`} className="h-11 text-sm text-primary">
+      <Link href={`/driver/trasa/${id}`} className="h-11 text-sm text-primary-strong">
         ‹ Wróć do trasy
       </Link>
       <h1 className="text-2xl font-semibold">Zakończ zmianę</h1>
       {open.length > 0 && (
-        <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-[#6b2e05]">
+        <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-[#6e4700]">
           <p className="font-semibold">Niezrealizowane punkty: {open.length}</p>
           <p>{open.map((s) => s.customer).join(", ")}</p>
           <p className="mt-1">Możesz zakończyć mimo to — dyspozytor zobaczy je jako niezrealizowane.</p>

@@ -154,10 +154,6 @@ export const vehicleSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? v : null)),
-  default_driver_id: z
-    .string()
-    .optional()
-    .transform((v) => (v ? v : null)),
   status: z.enum(["active", "service", "inactive"]).default("active"),
   cost_per_km: numberField({ min: 0, max: 100 }),
   driver_cost_per_day: numberField({ min: 0, max: 10000 }),
@@ -169,10 +165,6 @@ export const driverSchema = z.object({
   last_name: requiredText("nazwisko"),
   phone,
   employment_type: optionalText(60),
-  default_vehicle_id: z
-    .string()
-    .optional()
-    .transform((v) => (v ? v : null)),
   is_active: checkbox,
 });
 
