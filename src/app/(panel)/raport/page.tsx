@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, ChartNoAxesCombined, MessageSquare } from "l
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart, LineChart } from "@/components/panel/charts";
-import { Delta, EmptyState, PageHeader, Panel, Segmented, StatTile } from "@/components/panel/page";
+import { Delta, EmptyState, Meter, PageHeader, Panel, Segmented, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Pill } from "@/components/ui/status";
 import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
@@ -70,6 +70,17 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
   const trend = trendDays.map((d) => ({ day: d, k: dayKpis(byDay.get(d) ?? []) }));
   const workDays = trend.filter((t) => t.k.stops > 0);
   const avgValue = workDays.length ? workDays.reduce((a, t) => a + t.k.deliveredValueGrosze, 0) / workDays.length : 0;
+
+  // zestawienie dzień po dniu: dni okresu (dla widoku „Dzień” — tydzień kończący się wybranym dniem)
+  const tableDays = Array.from({ length: Math.max(len, 7) }, (_, i) => shiftDay(end, -(Math.max(len, 7) - 1) + i)).filter(
+    (d) => (byDay.get(d) ?? []).length > 0,
+  );
+  const dayRows = tableDays.map((d) => {
+    const k = dayKpis(byDay.get(d) ?? []);
+    const prevWeek = dayKpis(byDay.get(shiftDay(d, -7)) ?? []);
+    return { day: d, k, vsWeek: prevWeek.stops ? pctChange(k.deliveredValueGrosze, prevWeek.deliveredValueGrosze) : null };
+  });
+  const dayTotal = sumKpis(dayRows.map((r) => r.k));
 
   const costShare = cur.deliveredValueGrosze ? Math.round((cur.costGrosze / cur.deliveredValueGrosze) * 1000) / 10 : null;
   const prevCostShare = prev.deliveredValueGrosze ? Math.round((prev.costGrosze / prev.deliveredValueGrosze) * 1000) / 10 : null;
@@ -153,6 +164,136 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
           </>
         }
       />
+
+      <Panel
+        className="mb-6"
+        title="Dzień po dniu"
+        description={`Jak wyglądał każdy dzień: dostawy, sprzedaż, terminowość, problemy i koszt. Kliknij dzień, żeby zobaczyć go w szczegółach. Porównanie sprzedaży z tym samym dniem tydzień wcześniej.`}
+        flush
+      >
+        {dayRows.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-muted">Brak tras w tym okresie.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1080px] text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
+                  <th className="py-2.5 pr-3 pl-5 font-medium">Dzień</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Kursy</th>
+                  <th className="px-3 py-2.5 font-medium">Dostawy</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Sprzedaż dostarczona</th>
+                  <th className="px-3 py-2.5 font-medium">vs tydzień wcześniej</th>
+                  <th className="px-3 py-2.5 font-medium">Terminowość</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Reklamacje i odmowy</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Km</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Koszt transportu</th>
+                  <th className="py-2.5 pr-5 pl-3 text-right font-medium">Koszt / sprzedaż</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dayRows.map(({ day: d, k, vsWeek }) => {
+                  const share = k.deliveredValueGrosze ? (k.costGrosze / k.deliveredValueGrosze) * 100 : null;
+                  const isToday = d === today;
+                  const selected = len === 1 && d === end;
+                  return (
+                    <tr
+                      key={d}
+                      className={cn("border-b border-border last:border-0 hover:bg-surface-2", selected && "bg-accent/60")}
+                    >
+                      <td className="py-2.5 pr-3 pl-5 whitespace-nowrap">
+                        <Link href={href({ okres: "dzien", do: d })} className="font-medium capitalize hover:text-primary-strong">
+                          {formatDayLabel(d)}
+                        </Link>
+                        {isToday && (
+                          <Pill tone="info" className="ml-2">
+                            w trakcie
+                          </Pill>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        {k.routes}
+                        {k.extraCourses > 0 && <span className="text-xs text-muted"> (+{k.extraCourses} dod.)</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="flex items-center gap-2">
+                          <Meter pct={k.stops ? Math.round((k.finished / k.stops) * 100) : 0} tone="success" className="w-16" />
+                          <span className="tabular-nums">
+                            {k.finished}
+                            <span className="text-muted"> / {k.stops}</span>
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-medium tabular-nums">
+                        {formatPlnCompact(k.deliveredValueGrosze)}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {isToday ? <span className="text-xs text-subtle">dzień trwa</span> : <Delta value={vsWeek} />}
+                      </td>
+                      <td className="px-3 py-2.5 tabular-nums">
+                        <span
+                          className={cn(
+                            k.onTimePct !== null && k.onTimePct < 85
+                              ? "text-danger"
+                              : k.onTimePct !== null && k.onTimePct < 95
+                                ? "text-warning"
+                                : "text-success",
+                          )}
+                        >
+                          {pct(k.onTimePct)}
+                        </span>
+                      </td>
+                      <td
+                        className={cn(
+                          "px-3 py-2.5 text-right tabular-nums",
+                          k.exceptions ? "font-medium text-plum" : "text-subtle",
+                        )}
+                      >
+                        {k.exceptions || "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">{k.km ? k.km.toLocaleString("pl-PL") : "—"}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">
+                        {k.costGrosze ? formatPlnCompact(k.costGrosze) : "—"}
+                      </td>
+                      <td
+                        className={cn(
+                          "py-2.5 pr-5 pl-3 text-right tabular-nums",
+                          share !== null && share > 10 ? "text-warning" : "",
+                        )}
+                      >
+                        {share === null || !k.costGrosze
+                          ? "—"
+                          : `${share.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-border-strong bg-surface-2 font-semibold">
+                  <td className="py-2.5 pr-3 pl-5">Razem ({dayRows.length} dni)</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.routes}</td>
+                  <td className="px-3 py-2.5 tabular-nums">
+                    {dayTotal.finished} <span className="font-normal text-muted">/ {dayTotal.stops}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{formatPlnCompact(dayTotal.deliveredValueGrosze)}</td>
+                  <td className="px-3 py-2.5 text-xs font-normal text-muted">
+                    średnio {formatPlnCompact(dayRows.length ? dayTotal.deliveredValueGrosze / dayRows.length : 0)} / dzień
+                  </td>
+                  <td className="px-3 py-2.5 tabular-nums">{pct(dayTotal.onTimePct)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.exceptions}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.km.toLocaleString("pl-PL")}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{formatPlnCompact(dayTotal.costGrosze)}</td>
+                  <td className="py-2.5 pr-5 pl-3 text-right tabular-nums">
+                    {dayTotal.deliveredValueGrosze
+                      ? `${((dayTotal.costGrosze / dayTotal.deliveredValueGrosze) * 100).toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`
+                      : "—"}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </Panel>
 
       <Panel
         className="mb-6"
