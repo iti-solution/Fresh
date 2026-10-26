@@ -7,9 +7,9 @@ import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain
 import { getLastAssignments } from "@/modules/planning/server/history";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
-import { Plate } from "@/components/ui/status";
+import { VehicleTag } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
-import { VEHICLE_STATUS_LABELS } from "@/modules/masterdata/domain/format";
+import { VEHICLE_STATUS_LABELS, vehicleMake } from "@/modules/masterdata/domain/format";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -66,24 +66,23 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
         empty="Brak pojazdów."
         columns={[
           {
-            header: "Rejestracja",
-            cell: (r) =>
-              editable ? (
-                <Link href={`/kartoteki/pojazdy/${r.id}`} className="inline-flex rounded hover:ring-2 hover:ring-primary/30">
-                  <Plate>{r.registration}</Plate>
+            header: "Pojazd",
+            cell: (r) => {
+              const tag = (
+                <VehicleTag
+                  registration={r.registration}
+                  make={vehicleMake(r)}
+                  kind={[r.vehicle_type, r.body_type].filter(Boolean).join(", ")}
+                />
+              );
+              return editable ? (
+                <Link href={`/kartoteki/pojazdy/${r.id}`} className="inline-flex rounded-md hover:opacity-80">
+                  {tag}
                 </Link>
               ) : (
-                <Plate>{r.registration}</Plate>
-              ),
-          },
-          {
-            header: "Typ",
-            cell: (r) => (
-              <span>
-                {r.vehicle_type ?? "—"}
-                <span className="block text-xs text-muted">{r.body_type}</span>
-              </span>
-            ),
+                tag
+              );
+            },
           },
           { header: "Masa", cell: (r) => <span className="tabular-nums">{num(r.capacity_kg)} kg</span> },
           { header: "Palety", cell: (r) => <span className="tabular-nums">{num(r.capacity_pallets)}</span> },

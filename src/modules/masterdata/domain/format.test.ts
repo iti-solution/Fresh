@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatSeason, formatWeekdays, formatWindows } from "./format";
+import { formatSeason, formatWeekdays, formatWindows, vehicleMake, vehicleOptionLabel } from "./format";
 
 describe("formatWeekdays", () => {
   it("zakres ciągły", () => expect(formatWeekdays([1, 2, 3, 4, 5, 6])).toBe("pn–sb"));
@@ -25,5 +25,22 @@ describe("formatSeason", () => {
   it("sezon i cały rok", () => {
     expect(formatSeason("2026-05-01", "2026-09-30")).toBe("01.05–30.09");
     expect(formatSeason(null, null)).toBe("cały rok");
+  });
+});
+
+describe("vehicleOptionLabel", () => {
+  it("rejestracja + marka + typ", () => {
+    expect(
+      vehicleOptionLabel({
+        registration: "KR 2B118",
+        name: "Iveco Daily",
+        vehicle_type: "dostawczy 3,5 t",
+        body_type: "chłodnia",
+      }),
+    ).toBe("KR 2B118 — Iveco Daily (dostawczy 3,5 t, chłodnia)");
+  });
+  it("robocza nazwa „Auto 3” nie jest marką", () => {
+    expect(vehicleMake({ registration: "X", name: "Auto 3" })).toBeNull();
+    expect(vehicleOptionLabel({ registration: "KR 1", name: "Auto 3" })).toBe("KR 1");
   });
 });

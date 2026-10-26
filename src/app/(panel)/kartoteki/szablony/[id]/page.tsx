@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Pill } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeSearch } from "@/modules/ops/domain/reports";
-import { BRANCH_LABELS, formatTime } from "@/modules/masterdata/domain/format";
+import { BRANCH_LABELS, formatTime, vehicleOptionLabel } from "@/modules/masterdata/domain/format";
 import {
   addTemplatePoints,
   moveTemplatePoint,
@@ -43,7 +43,11 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
     isNew
       ? Promise.resolve({ data: null, error: null })
       : supabase.from("route_templates").select("*").eq("tenant_id", ctx.tenantId).eq("id", id).maybeSingle(),
-    supabase.from("vehicles").select("id, registration, status").eq("tenant_id", ctx.tenantId).order("registration"),
+    supabase
+      .from("vehicles")
+      .select("id, registration, name, vehicle_type, body_type, status")
+      .eq("tenant_id", ctx.tenantId)
+      .order("registration"),
     supabase.from("drivers").select("id, first_name, last_name, is_active").eq("tenant_id", ctx.tenantId).order("last_name"),
     isNew
       ? Promise.resolve({ data: [], error: null })
@@ -90,7 +94,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
 
   const vehicleOptions = (vehicles.data ?? [])
     .filter((v) => v.status !== "inactive")
-    .map((v) => ({ value: v.id, label: v.registration }));
+    .map((v) => ({ value: v.id, label: vehicleOptionLabel(v) }));
   const driverOptions = (drivers.data ?? [])
     .filter((d) => d.is_active)
     .map((d) => ({ value: d.id, label: `${d.first_name} ${d.last_name}` }));
