@@ -97,3 +97,29 @@ export function Plate({ children, className }: { children: ReactNode; className?
 export function DocRef({ children }: { children: ReactNode }) {
   return <span className="font-mono text-[12px] text-muted">{children}</span>;
 }
+
+/** Auto: tablica + marka i model (+ typ), np. do list szablonów i przydziałów. */
+export function VehicleTag({
+  registration,
+  make,
+  kind,
+  className,
+}: {
+  registration: string | null;
+  make?: string | null;
+  kind?: string | null;
+  className?: string;
+}) {
+  if (!registration) return <span className="text-subtle">brak auta</span>;
+  return (
+    <span className={cn("inline-flex min-w-0 items-center gap-2.5", className)}>
+      <Plate>{registration}</Plate>
+      {(make || kind) && (
+        <span className="min-w-0 leading-tight">
+          {make && <span className="block truncate text-[13px] font-medium text-foreground">{make}</span>}
+          {kind && <span className="block truncate text-xs text-muted">{kind}</span>}
+        </span>
+      )}
+    </span>
+  );
+}

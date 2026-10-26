@@ -43,3 +43,18 @@ export const BRANCH_LABELS: Record<string, string> = {
 };
 
 export const VEHICLE_STATUS_LABELS: Record<string, string> = { active: "aktywny", service: "serwis", inactive: "nieaktywny" };
+
+export type VehicleLike = { registration: string; name?: string | null; vehicle_type?: string | null; body_type?: string | null };
+
+/** Marka i model auta z kartoteki; robocze nazwy typu „Auto 3” traktujemy jak brak marki. */
+export function vehicleMake(v: VehicleLike): string | null {
+  const n = (v.name ?? "").trim();
+  return n && !/^auto\s*\d+$/i.test(n) ? n : null;
+}
+
+/** Opis do list wyboru: „KR 2B118 — Iveco Daily (dostawczy 3,5 t, chłodnia)”. */
+export function vehicleOptionLabel(v: VehicleLike): string {
+  const make = vehicleMake(v);
+  const kind = [v.vehicle_type, v.body_type].filter(Boolean).join(", ");
+  return [v.registration, make && `— ${make}`, kind && `(${kind})`].filter(Boolean).join(" ");
+}

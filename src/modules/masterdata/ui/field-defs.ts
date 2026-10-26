@@ -163,7 +163,7 @@ export function vehicleSections(v: Row, carriers: FieldOption[]): SectionDef[] {
       title: "Pojazd",
       fields: [
         { kind: "text", name: "registration", label: "Numer rejestracyjny", defaultValue: s(v, "registration"), required: true },
-        { kind: "text", name: "name", label: "Nazwa robocza", defaultValue: s(v, "name") },
+        { kind: "text", name: "name", label: "Marka i model", defaultValue: s(v, "name"), placeholder: "np. Iveco Daily 70C18" },
         {
           kind: "select",
           name: "status",
@@ -290,17 +290,18 @@ export function templateSections(t: Row, vehicles: FieldOption[], drivers: Field
       ],
     },
     {
-      title: "Propozycja przydziału (opcjonalnie)",
+      title: "Sugerowany przydział (opcjonalnie)",
       description:
-        "Przy tworzeniu dnia system wstawi kierowcę wstępnego, a gdy jest nieaktywny albo jedzie już inną trasą — zastępczego. Auto tylko gdy jest wolne. Dyspozytor zawsze może to zmienić.",
+        "Nic nie jest przypisane na stałe. Przy tworzeniu dnia system podpowie sugerowane auto (gdy jest wolne) i kierowcę wstępnego, a gdy ten jest nieaktywny albo jedzie już inną trasą — zastępczego. Dyspozytor zawsze może to zmienić.",
       fields: [
         {
           kind: "select",
           name: "default_vehicle_id",
-          label: "Auto",
+          label: "Sugerowane auto",
           defaultValue: s(t, "default_vehicle_id"),
           options: vehicles,
-          emptyLabel: "— bez propozycji —",
+          emptyLabel: "— bez sugestii —",
+          span: 3,
         },
         {
           kind: "select",
@@ -308,7 +309,7 @@ export function templateSections(t: Row, vehicles: FieldOption[], drivers: Field
           label: "Kierowca wstępny",
           defaultValue: s(t, "default_driver_id"),
           options: drivers,
-          emptyLabel: "— bez propozycji —",
+          emptyLabel: "— bez sugestii —",
         },
         {
           kind: "select",
@@ -316,7 +317,7 @@ export function templateSections(t: Row, vehicles: FieldOption[], drivers: Field
           label: "Kierowca zastępczy",
           defaultValue: s(t, "alt_driver_id"),
           options: drivers,
-          emptyLabel: "— bez propozycji —",
+          emptyLabel: "— bez sugestii —",
         },
       ],
     },

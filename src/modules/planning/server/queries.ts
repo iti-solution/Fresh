@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { vehicleOptionLabel } from "@/modules/masterdata/domain/format";
 import { computeLoad, routeIssues, type Issue, type RouteLoad } from "../domain/load";
 
 const t = (s?: string | null) => (s ? s.slice(0, 5) : "");
@@ -89,7 +90,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .not("status", "in", "(cancelled,delivered,failed)")
       .order("external_ref"),
     supabase.from("delivery_point_exceptions").select("delivery_point_id, is_closed, reason").eq("tenant_id", tenantId).eq("date", day),
-    supabase.from("vehicles").select("id, registration, status").eq("tenant_id", tenantId).order("registration"),
+    supabase.from("vehicles").select("id, registration, name, vehicle_type, body_type, status").eq("tenant_id", tenantId).order("registration"),
     supabase.from("drivers").select("id, first_name, last_name, is_active").eq("tenant_id", tenantId).order("last_name"),
     supabase.from("route_templates").select("id, weekdays, is_active").eq("tenant_id", tenantId),
   ]);
@@ -189,7 +190,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
     routes,
     unassigned,
     holiday,
-    vehicles: (vehRes.data ?? []).filter((v) => v.status === "active").map((v) => ({ id: v.id, label: v.registration })),
+    vehicles: (vehRes.data ?? []).filter((v) => v.status === "active").map((v) => ({ id: v.id, label: vehicleOptionLabel(v) })),
     drivers: (drvRes.data ?? []).filter((d) => d.is_active).map((d) => ({ id: d.id, label: `${d.first_name} ${d.last_name}` })),
     templatesForDay: (tplRes.data ?? []).filter((x) => x.is_active && x.weekdays.includes(weekday)).length,
   };

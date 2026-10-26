@@ -72,6 +72,27 @@ async function seedDemoHistory(supabase: Awaited<ReturnType<typeof createClient>
   const { error } = await supabase.rpc("seed_demo_history", { p_tenant: tenantId });
   if (error) console.warn("seed_demo_history:", error.message);
 
+  // Marki i modele aut demo (zamiast roboczych „Auto 1…7”)
+  const makes = [
+    "Iveco Eurocargo 75E16",
+    "Mercedes-Benz Atego 818",
+    "Renault Master",
+    "Iveco Daily 35S16",
+    "Mercedes-Benz Sprinter 316",
+    "Fiat Ducato",
+    "Peugeot Boxer",
+  ];
+  const { data: demoVehicles } = await supabase.from("vehicles").select("id, name").eq("tenant_id", tenantId);
+  for (const v of demoVehicles ?? []) {
+    const m = /^Auto (\d+)$/.exec(v.name ?? "");
+    if (m && makes[Number(m[1]) - 1])
+      await supabase
+        .from("vehicles")
+        .update({ name: makes[Number(m[1]) - 1] })
+        .eq("id", v.id)
+        .eq("tenant_id", tenantId);
+  }
+
   // Pobrania na nadchodzące dni: co piąty klient płaci gotówką przy dostawie (jak w historii demo).
   const { data: future } = await supabase
     .from("orders")

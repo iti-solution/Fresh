@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, Notice, PageHeader, Panel } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
-import { Pill, Plate } from "@/components/ui/status";
+import { Pill, VehicleTag } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
-import { formatTime, formatWeekdays } from "@/modules/masterdata/domain/format";
+import { formatTime, formatWeekdays, vehicleMake } from "@/modules/masterdata/domain/format";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -17,7 +17,8 @@ export default async function TemplatesPage() {
   const ctx = await requireAccess("/kartoteki/szablony");
   const supabase = await createClient();
   const editable = canEdit(ctx.role);
-  const base = "id, name, weekdays, planned_start, is_active, vehicles(registration), route_template_points(count)";
+  const base =
+    "id, name, weekdays, planned_start, is_active, vehicles(registration, name, vehicle_type, body_type), route_template_points(count)";
   const full = await supabase
     .from("route_templates")
     .select(
@@ -42,7 +43,7 @@ export default async function TemplatesPage() {
     weekdays: number[];
     planned_start: string | null;
     is_active: boolean;
-    vehicles: { registration: string } | null;
+    vehicles: { registration: string; name: string | null; vehicle_type: string | null; body_type: string | null } | null;
     route_template_points: { count: number }[];
     main: { first_name: string; last_name: string } | null;
     alt?: { first_name: string; last_name: string } | null;
@@ -52,7 +53,7 @@ export default async function TemplatesPage() {
     <>
       <PageHeader
         title="Szablony tras"
-        description="Trasy stałe: jakie oddziały klientów obsługują, w które dni i o której wyjeżdżają. Z szablonów powstaje plan dnia."
+        description="Trasy stałe: jakie oddziały klientów obsługują, w które dni i o której wyjeżdżają. Auto i kierowcy są tylko sugestią — przydział na dany dzień robi dyspozytor."
         actions={
           editable ? (
             <Link href="/kartoteki/szablony/nowy" className={buttonVariants({ size: "sm" })}>
@@ -90,7 +91,7 @@ export default async function TemplatesPage() {
                   <th className="px-3 py-2.5 font-medium">Dni</th>
                   <th className="px-3 py-2.5 font-medium">Wyjazd</th>
                   <th className="px-3 py-2.5 text-right font-medium">Punkty</th>
-                  <th className="px-3 py-2.5 font-medium">Auto</th>
+                  <th className="px-3 py-2.5 font-medium">Sugerowane auto</th>
                   <th className="px-3 py-2.5 font-medium">Kierowca wstępny</th>
                   <th className="py-2.5 pr-5 pl-3 font-medium">Kierowca zastępczy</th>
                 </tr>
@@ -112,7 +113,15 @@ export default async function TemplatesPage() {
                     <td className="px-3 py-3 tabular-nums">{formatTime(r.planned_start) || "—"}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{r.route_template_points[0]?.count ?? 0}</td>
                     <td className="px-3 py-3">
-                      {r.vehicles ? <Plate>{r.vehicles.registration}</Plate> : <span className="text-subtle">—</span>}
+                      {r.vehicles ? (
+                        <VehicleTag
+                          registration={r.vehicles.registration}
+                          make={vehicleMake(r.vehicles)}
+                          kind={[r.vehicles.vehicle_type, r.vehicles.body_type].filter(Boolean).join(", ")}
+                        />
+                      ) : (
+                        <span className="text-subtle">bez sugestii</span>
+                      )}
                     </td>
                     <td className="px-3 py-3">{name(r.main) ?? <span className="text-subtle">—</span>}</td>
                     <td className="py-3 pr-5 pl-3">{name(r.alt ?? null) ?? <span className="text-subtle">—</span>}</td>
