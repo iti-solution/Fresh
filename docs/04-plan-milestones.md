@@ -50,7 +50,7 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 **Sprzedaż:** od tego momentu każde pierwsze spotkanie (SellWise) zaczyna się od audytu.
 
 ## M3 — Planowanie tras (3 tydz.)
-- [ ] M3.1 Szablony tras: lista, przypisanie punktów z domyślną kolejnością, dni tygodnia, domyślny pojazd/kierowca
+- [x] M3.1 (2026-10-26, migracja `0010`) Szablony tras: lista, tworzenie i edycja, przypisanie oddziałów klientów z kolejnością (↑↓, sortowanie wg okien), dni tygodnia, godzina wyjazdu, opcjonalnie auto, kierowca wstępny i zastępczy (zastępczy wchodzi automatycznie, gdy wstępny jest nieaktywny lub zajęty)
 - [x] M3.2 "Utwórz dzień": z szablonów na datę D powstają trasy, zlecenia dnia automatycznie trafiają na trasy wg przypisania punktu; reszta w kolumnie "niezaplanowane"
 - [x] M3.3 Tablica planowania: kolumny tras + lista nieprzydzielonych (**bez mapy** — decyzja 2026-10-25); drag & drop zleceń między trasami, zmiana kolejności, podział/łączenie postojów
 - [x] M3.4 Walidacje na żywo (czyste funkcje + testy): palety/kg/m³/**skrzynki** vs pojazd z paskiem % obciążenia, brak kierowcy/pojazdu, zamówienie bez trasy, niegotowe zamówienie z WMS (alarm przeciążenia), ETA vs okno (konflikt), punkt zamknięty w dniu/święto, zlecenie priorytetowe

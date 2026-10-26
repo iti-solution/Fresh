@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { formToObject } from "@/lib/forms";
-import { buildWindows, customerSchema, isNoteActive, noteSchema, pointSchema, vehicleSchema, windowsToForm } from "./schemas";
+import {
+  buildWindows,
+  customerSchema,
+  isNoteActive,
+  noteSchema,
+  pointSchema,
+  vehicleSchema,
+  windowsToForm,
+  templateSchema,
+} from "./schemas";
 
 const point = {
   name: "Kuchnia",
@@ -8,7 +17,7 @@ const point = {
   address_line: "ul. Przykładowa 12",
   postal_code: "30-198",
   city: "Kraków",
-  "delivery_weekdays": ["1", "3", "5"],
+  delivery_weekdays: ["1", "3", "5"],
   window1_from: "06:00",
   window1_to: "08:00",
 };
@@ -35,7 +44,7 @@ describe("pointSchema + okna", () => {
   it("wymaga dnia dostaw i poprawnego okna", () => {
     expect(pointSchema.safeParse({ ...point, delivery_weekdays: [] }).success).toBe(false);
     expect(pointSchema.safeParse({ ...point, window1_to: "05:00" }).success).toBe(false);
-    expect(pointSchema.safeParse({ ...point, window1_from: "" , window1_to: ""}).success).toBe(false);
+    expect(pointSchema.safeParse({ ...point, window1_from: "", window1_to: "" }).success).toBe(false);
     expect(pointSchema.safeParse({ ...point, postal_code: "30198" }).success).toBe(false);
   });
   it("drugie okno nie może nachodzić na pierwsze", () => {
@@ -74,5 +83,27 @@ describe("vehicleSchema i formToObject", () => {
     fd.append("delivery_weekdays[]", "2");
     fd.append("name", "X");
     expect(formToObject(fd)).toEqual({ delivery_weekdays: ["1", "2"], name: "X" });
+  });
+});
+
+describe("templateSchema", () => {
+  const base = { name: "Kraków Zachód", weekdays: ["1", "3", "5"], planned_start: "05:30" };
+  it("kierowcy opcjonalni", () => {
+    const r = templateSchema.safeParse(base);
+    expect(r.success && r.data).toMatchObject({
+      weekdays: [1, 3, 5],
+      planned_start: "05:30",
+      default_driver_id: null,
+      alt_driver_id: null,
+      default_vehicle_id: null,
+    });
+  });
+  it("zastępczy musi być inną osobą niż wstępny", () => {
+    const r = templateSchema.safeParse({ ...base, default_driver_id: "d1", alt_driver_id: "d1" });
+    expect(r.success).toBe(false);
+    expect(templateSchema.safeParse({ ...base, default_driver_id: "d1", alt_driver_id: "d2" }).success).toBe(true);
+  });
+  it("wymaga nazwy i dni", () => {
+    expect(templateSchema.safeParse({ name: "", weekdays: [] }).success).toBe(false);
   });
 });

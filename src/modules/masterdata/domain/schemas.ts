@@ -102,7 +102,9 @@ export type PointInput = z.infer<typeof pointSchema>;
 export type WindowRow = { weekday: number; opens_at: string; closes_at: string };
 
 /** Okna przyjęć z formularza → wiersze delivery_point_windows (te same okna na każdy dzień dostaw). */
-export function buildWindows(input: Pick<PointInput, "delivery_weekdays" | "window1_from" | "window1_to" | "window2_from" | "window2_to">): WindowRow[] {
+export function buildWindows(
+  input: Pick<PointInput, "delivery_weekdays" | "window1_from" | "window1_to" | "window2_from" | "window2_to">,
+): WindowRow[] {
   const slots: [string, string][] = [];
   if (input.window1_from && input.window1_to) slots.push([input.window1_from, input.window1_to]);
   if (input.window2_from && input.window2_to) slots.push([input.window2_from, input.window2_to]);
@@ -173,3 +175,26 @@ export const carrierSchema = z.object({
   nip,
   phone,
 });
+
+const optionalId = z
+  .string()
+  .optional()
+  .transform((v) => (v ? v : null));
+
+/** Szablon trasy (trasa stała): kierowca wstępny i zastępczy są opcjonalne i muszą się różnić. */
+export const templateSchema = z
+  .object({
+    name: requiredText("nazwa trasy", 2, 120),
+    weekdays,
+    planned_start: optionalTime,
+    default_vehicle_id: optionalId,
+    default_driver_id: optionalId,
+    alt_driver_id: optionalId,
+    is_active: checkbox,
+  })
+  .superRefine((v, ctx) => {
+    if (v.alt_driver_id && v.alt_driver_id === v.default_driver_id) {
+      ctx.addIssue({ code: "custom", path: ["alt_driver_id"], message: "Kierowca zastępczy musi być inną osobą niż wstępny" });
+    }
+  });
+export type TemplateInput = z.infer<typeof templateSchema>;

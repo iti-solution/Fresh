@@ -1448,6 +1448,7 @@ export type Database = {
       };
       route_templates: {
         Row: {
+          alt_driver_id: string | null;
           default_driver_id: string | null;
           default_vehicle_id: string | null;
           depot_id: string | null;
@@ -1460,6 +1461,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          alt_driver_id?: string | null;
           default_driver_id?: string | null;
           default_vehicle_id?: string | null;
           depot_id?: string | null;
@@ -1471,6 +1473,7 @@ export type Database = {
           weekdays?: number[];
         };
         Update: {
+          alt_driver_id?: string | null;
           default_driver_id?: string | null;
           default_vehicle_id?: string | null;
           depot_id?: string | null;
@@ -1482,6 +1485,13 @@ export type Database = {
           weekdays?: number[];
         };
         Relationships: [
+          {
+            foreignKeyName: "route_templates_alt_driver_id_fkey";
+            columns: ["alt_driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "route_templates_default_driver_id_fkey";
             columns: ["default_driver_id"];
@@ -2320,6 +2330,8 @@ export type Database = {
       };
       resequence_route: { Args: { p_route: string }; Returns: undefined };
       reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
+      move_template_point: { Args: { p_template: string; p_point: string; p_dir: number }; Returns: undefined };
+      sort_template_by_window: { Args: { p_template: string }; Returns: undefined };
       seed_demo_history: { Args: { p_tenant: string; p_days?: number }; Returns: Json };
       set_driver_pin: {
         Args: { p_driver: string; p_pin: string };
