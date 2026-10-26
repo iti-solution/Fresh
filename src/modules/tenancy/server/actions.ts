@@ -71,4 +71,19 @@ export async function resetDemoTenant(): Promise<void> {
 async function seedDemoHistory(supabase: Awaited<ReturnType<typeof createClient>>, tenantId: string) {
   const { error } = await supabase.rpc("seed_demo_history", { p_tenant: tenantId });
   if (error) console.warn("seed_demo_history:", error.message);
+
+  // Pobrania na nadchodzące dni: co piąty klient płaci gotówką przy dostawie (jak w historii demo).
+  const { data: future } = await supabase
+    .from("orders")
+    .select("id, order_value, delivery_points(customer_id)")
+    .eq("tenant_id", tenantId)
+    .gt("delivery_date", new Date().toISOString().slice(0, 10))
+    .is("cod_amount", null);
+  const paysCash = (id: string) => [...id].reduce((a, c) => a + c.charCodeAt(0), 0) % 5 === 0;
+  for (const o of future ?? []) {
+    const customer = o.delivery_points?.customer_id;
+    if (customer && paysCash(customer) && o.order_value !== null) {
+      await supabase.from("orders").update({ cod_amount: o.order_value }).eq("id", o.id).eq("tenant_id", tenantId);
+    }
+  }
 }

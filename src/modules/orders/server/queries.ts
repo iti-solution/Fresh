@@ -9,6 +9,8 @@ export type DayOrder = {
   status: string;
   priority: number;
   order_value: number | null;
+  /** Pobranie (gotówka do odebrania przez kierowcę), w zł. */
+  cod_amount: number | null;
   weight_kg: number;
   pallets: number;
   crates: number;
@@ -32,7 +34,7 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, external_ref, readiness, status, priority, order_value, weight_kg, pallets, crates, notes_sales, notes_logistics, window_start, window_end, delivery_points(name, city, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
+      "id, external_ref, readiness, status, priority, order_value, cod_amount, weight_kg, pallets, crates, notes_sales, notes_logistics, window_start, window_end, delivery_points(name, city, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
     )
     .eq("tenant_id", tenantId)
     .eq("delivery_date", day)
@@ -53,6 +55,7 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
       status: o.status,
       priority: o.priority,
       order_value: o.order_value,
+      cod_amount: o.cod_amount !== null ? Number(o.cod_amount) : null,
       weight_kg: Number(o.weight_kg ?? 0),
       pallets: Number(o.pallets ?? 0),
       crates: o.crates ?? 0,
