@@ -19,7 +19,9 @@ export function ActionForm({
 }) {
   const [state, formAction] = useActionState<FormState, FormData>(action, {});
   const [pending, startTransition] = useTransition();
-  const errors = Object.values(state.fieldErrors ?? {}).flat().filter(Boolean) as string[];
+  const errors = Object.values(state.fieldErrors ?? {})
+    .flat()
+    .filter(Boolean) as string[];
   return (
     <form
       className={cn(className, pending && "pointer-events-none opacity-70")}
@@ -33,9 +35,18 @@ export function ActionForm({
     >
       {children}
       {(state.message || errors.length > 0) && (
-        <div role="status" className={cn("rounded-lg px-4 py-3 text-sm", state.ok ? "bg-accent text-primary" : "bg-danger/10 text-danger")}>
+        <div
+          role="status"
+          className={cn("rounded-lg px-4 py-3 text-sm", state.ok ? "bg-accent text-primary" : "bg-danger-soft text-danger")}
+        >
           {state.message}
-          {errors.length > 0 && !state.ok && <ul className="mt-1 list-disc pl-5">{[...new Set(errors)].map((e) => <li key={e}>{e}</li>)}</ul>}
+          {errors.length > 0 && !state.ok && (
+            <ul className="mt-1 list-disc pl-5">
+              {[...new Set(errors)].map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
       {pending && <p className="text-center text-sm text-muted">Zapisywanie…</p>}

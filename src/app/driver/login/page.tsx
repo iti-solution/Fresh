@@ -19,7 +19,10 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
           <p className="font-semibold">Ten telefon nie jest jeszcze przypisany do firmy.</p>
           <p className="mt-2 text-muted">
             Dyspozytor lub administrator: zaloguj się na tym urządzeniu i otwórz{" "}
-            <Link href="/driver/terminal" className="font-medium text-primary underline">Przypisz terminal</Link>. Wystarczy raz.
+            <Link href="/driver/terminal" className="font-medium text-primary underline">
+              Przypisz terminal
+            </Link>
+            . Wystarczy raz.
           </p>
           {!hasAdminKey() && <p className="mt-2 text-danger">Brak klucza serwerowego w konfiguracji aplikacji.</p>}
         </div>
@@ -32,7 +35,9 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
     admin.from("tenants").select("name").eq("id", tenantId).maybeSingle(),
     admin.from("drivers").select("id, first_name, last_name, pin_hash, is_active").eq("tenant_id", tenantId).order("last_name"),
   ]);
-  const list = (drivers ?? []).filter((d) => d.is_active && d.pin_hash).map((d) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` }));
+  const list = (drivers ?? [])
+    .filter((d) => d.is_active && d.pin_hash)
+    .map((d) => ({ id: d.id, name: `${d.first_name} ${d.last_name}` }));
 
   return (
     <main className="flex flex-1 flex-col gap-5 p-5">
@@ -40,7 +45,11 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
         <p className="text-2xl font-semibold text-primary">Fresh · kierowca</p>
         <p className="text-sm text-muted">{tenant?.name}</p>
       </header>
-      {sp.terminal === "1" && <p role="status" className="rounded-lg bg-accent px-4 py-3 text-sm text-primary">Terminal przypisany do firmy. Kierowcy logują się PIN-em.</p>}
+      {sp.terminal === "1" && (
+        <p role="status" className="rounded-lg bg-accent px-4 py-3 text-sm text-primary">
+          Terminal przypisany do firmy. Kierowcy logują się PIN-em.
+        </p>
+      )}
       <PinLogin drivers={list} login={driverLogin} />
     </main>
   );

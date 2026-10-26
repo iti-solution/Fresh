@@ -117,9 +117,15 @@ table td {
 
 /* Delikatny puls kropki „na żywo” w centrum operacyjnym */
 @keyframes live-pulse {
-  0% { box-shadow: 0 0 0 0 rgb(47 138 87 / 0.45); }
-  70% { box-shadow: 0 0 0 6px rgb(47 138 87 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(47 138 87 / 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgb(47 138 87 / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgb(47 138 87 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(47 138 87 / 0);
+  }
 }
 .live-dot {
   animation: live-pulse 2.4s ease-out infinite;

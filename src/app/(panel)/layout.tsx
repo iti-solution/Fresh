@@ -31,7 +31,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           >
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium text-white">{ctx.tenantName}</span>
-              <span className="block truncate text-[11px] text-ink-muted">{ctx.isDemo ? "Firma demonstracyjna" : ROLE_LABELS[ctx.role]}</span>
+              <span className="block truncate text-[11px] text-ink-muted">
+                {ctx.isDemo ? "Firma demonstracyjna" : ROLE_LABELS[ctx.role]}
+              </span>
             </span>
             <ChevronsUpDown className="size-4 text-ink-muted" />
           </Link>
@@ -40,12 +42,18 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <SidebarNav items={nav} />
         </div>
         <form action={signOut} className="flex items-center gap-3 border-t border-white/[0.07] px-5 py-3.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f8a57]/25 text-[11px] font-semibold text-[#9ee0b9]">{initials}</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f8a57]/25 text-[11px] font-semibold text-[#9ee0b9]">
+            {initials}
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[12.5px] text-white">{ctx.email}</span>
             <span className="block truncate text-[11px] text-ink-muted">{ROLE_LABELS[ctx.role]}</span>
           </span>
-          <button className="rounded-md p-1.5 text-ink-muted hover:bg-white/[0.06] hover:text-white" title="Wyloguj" aria-label="Wyloguj">
+          <button
+            className="rounded-md p-1.5 text-ink-muted hover:bg-white/[0.06] hover:text-white"
+            title="Wyloguj"
+            aria-label="Wyloguj"
+          >
             <LogOut className="size-4" />
           </button>
         </form>
@@ -65,7 +73,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             />
           </form>
           <div className="ml-auto flex items-center gap-3 text-sm">
-            {ctx.isDemo && <span className="hidden rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning sm:inline">Dane demo</span>}
+            {ctx.isDemo && (
+              <span className="hidden rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning sm:inline">
+                Dane demo
+              </span>
+            )}
             <span className="hidden text-muted capitalize lg:inline">{formatDayLabel(todayInWarsaw())}</span>
           </div>
         </header>

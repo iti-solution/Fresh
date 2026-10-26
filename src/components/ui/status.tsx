@@ -78,7 +78,7 @@ export function Plate({ children, className }: { children: ReactNode; className?
   return (
     <span
       className={cn(
-        "inline-flex h-[22px] items-stretch overflow-hidden rounded-[4px] border border-foreground/25 bg-white align-middle shadow-[0_1px_0_rgb(0_0_0/0.04)]",
+        "inline-flex h-[22px] shrink-0 items-stretch overflow-hidden whitespace-nowrap rounded-[4px] border border-foreground/25 bg-white align-middle shadow-[0_1px_0_rgb(0_0_0/0.04)]",
         className,
       )}
     >

@@ -210,6 +210,7 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
               }
             >
               <BarChart
+                height={236}
                 ariaLabel="Sprzedaż dostarczona w kolejnych dniach"
                 format={(v) => formatPlnCompact(v)}
                 reference={avgValue ? { value: avgValue, label: "średnia" } : undefined}

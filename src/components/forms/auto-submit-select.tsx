@@ -28,7 +28,7 @@ export function AutoSubmitSelect({
       disabled={pending}
       onChange={(e) => e.currentTarget.form?.requestSubmit()}
       className={cn(
-        "h-8 max-w-full rounded-md border border-border bg-surface px-2 text-xs outline-none focus:border-primary disabled:opacity-50",
+        "h-8 max-w-full cursor-pointer rounded-md border border-border-strong bg-surface px-2 text-xs text-foreground outline-none hover:border-subtle focus:border-primary focus:ring-[3px] focus:ring-primary/15 disabled:opacity-50",
         className,
       )}
     >
@@ -51,7 +51,7 @@ export function IconSubmit({ label, children, className }: { label: string; chil
       title={label}
       disabled={pending}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface text-sm hover:bg-accent disabled:opacity-40",
+        "flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-40 [&_svg]:size-4",
         className,
       )}
     >

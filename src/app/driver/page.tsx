@@ -20,10 +20,18 @@ export default async function DriverHome() {
       <main className="flex flex-col gap-4 p-5">
         <p className="text-2xl font-semibold text-primary">Fresh · aplikacja kierowcy</p>
         <Card className="flex flex-col gap-3 text-sm">
-          <p>Jesteś zalogowany jako <strong>{ctx.email}</strong> (nie kierowca).</p>
-          <p className="text-muted">Kierowcy logują się PIN-em na telefonie/terminalu przypisanym do firmy. PIN ustawisz w kartotece kierowców.</p>
-          <Link href="/driver/terminal" className={buttonVariants({ size: "lg" })}>Przypisz to urządzenie jako terminal</Link>
-          <Link href="/pulpit" className="text-center text-primary">Wróć do panelu</Link>
+          <p>
+            Jesteś zalogowany jako <strong>{ctx.email}</strong> (nie kierowca).
+          </p>
+          <p className="text-muted">
+            Kierowcy logują się PIN-em na telefonie/terminalu przypisanym do firmy. PIN ustawisz w kartotece kierowców.
+          </p>
+          <Link href="/driver/terminal" className={buttonVariants({ size: "lg" })}>
+            Przypisz to urządzenie jako terminal
+          </Link>
+          <Link href="/pulpit" className="text-center text-primary">
+            Wróć do panelu
+          </Link>
         </Card>
       </main>
     );
@@ -41,7 +49,9 @@ export default async function DriverHome() {
           <p className="text-2xl font-semibold text-primary">Moje trasy</p>
           <p className="text-sm text-muted">{ctx.tenantName}</p>
         </div>
-        <form action={driverLogout}><button className="h-12 px-3 text-sm text-muted">Wyloguj</button></form>
+        <form action={driverLogout}>
+          <button className="h-12 px-3 text-sm text-muted">Wyloguj</button>
+        </form>
       </header>
       {routes.length === 0 && (
         <Card className="text-sm">
@@ -49,11 +59,27 @@ export default async function DriverHome() {
         </Card>
       )}
       {routes.map((r) => (
-        <Link key={r.id} href={`/driver/trasa/${r.id}`} className={cn("flex flex-col gap-1 rounded-2xl border bg-surface p-4", r.date === today ? "border-primary" : "border-border")}>
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{r.date === today ? "Dziś" : formatDayLabel(r.date)}{r.courseNo > 1 ? ` · kurs ${r.courseNo}` : ""}</span>
+        <Link
+          key={r.id}
+          href={`/driver/trasa/${r.id}`}
+          className={cn(
+            "flex flex-col gap-1 rounded-2xl border bg-surface p-4",
+            r.date === today ? "border-primary" : "border-border",
+          )}
+        >
+          <span className="text-sm font-medium text-muted">
+            {r.date === today ? "Dziś" : formatDayLabel(r.date)}
+            {r.courseNo > 1 ? ` · kurs ${r.courseNo}` : ""}
+          </span>
           <span className="text-xl font-semibold">{r.name}</span>
-          <span className="text-sm text-muted">{r.vehicle ?? "bez pojazdu"} · {r.stops} punktów · {ROUTE_STATUS_LABELS[r.status] ?? r.status}</span>
-          {r.status === "completed" && <span className="text-sm text-primary">Zakończona: {r.finished}/{r.stops} punktów — zobacz raport</span>}
+          <span className="text-sm text-muted">
+            {r.vehicle ?? "bez pojazdu"} · {r.stops} punktów · {ROUTE_STATUS_LABELS[r.status] ?? r.status}
+          </span>
+          {r.status === "completed" && (
+            <span className="text-sm text-primary">
+              Zakończona: {r.finished}/{r.stops} punktów — zobacz raport
+            </span>
+          )}
         </Link>
       ))}
     </main>

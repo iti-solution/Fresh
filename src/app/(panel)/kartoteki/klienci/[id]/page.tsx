@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,33 +37,52 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
   const today = todayInWarsaw();
   const points = [...(c.delivery_points ?? [])].sort((a, b) => (a.external_code ?? "").localeCompare(b.external_code ?? ""));
   const flash =
-    sp.nowy === "1" ? "Klient zapisany. Dodaj teraz pierwszy oddział (adres dostawy)." :
-    sp.zapisano === "nowy-oddzial" ? "Dodano oddział." :
-    sp.zapisano === "oddzial" ? "Zapisano oddział." : null;
+    sp.nowy === "1"
+      ? "Klient zapisany. Dodaj teraz pierwszy oddział (adres dostawy)."
+      : sp.zapisano === "nowy-oddzial"
+        ? "Dodano oddział."
+        : sp.zapisano === "oddzial"
+          ? "Zapisano oddział."
+          : null;
 
   return (
     <>
-      <nav className="mb-3 text-sm"><Link href="/kartoteki/klienci" className="text-muted hover:underline">‹ Klienci</Link></nav>
+      <nav className="mb-3 text-sm">
+        <Link href="/kartoteki/klienci" className="inline-flex items-center gap-1 text-muted hover:text-foreground">
+          ‹ Klienci
+        </Link>
+      </nav>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="font-mono text-xs text-muted">{c.external_code ?? "bez kodu"}</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{c.name}</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">{c.name}</h1>
           <p className="text-sm text-muted">
             {[c.category, c.nip && `NIP ${c.nip}`, c.is_active ? null : "nieaktywny"].filter(Boolean).join(" · ") || "—"}
           </p>
           {c.sales_rep_name && (
             <p className="text-sm">
               Opiekun: <strong>{c.sales_rep_name}</strong>
-              {c.sales_rep_phone && <> · <a href={`tel:${c.sales_rep_phone}`}>{c.sales_rep_phone}</a></>}
+              {c.sales_rep_phone && (
+                <>
+                  {" "}
+                  · <a href={`tel:${c.sales_rep_phone}`}>{c.sales_rep_phone}</a>
+                </>
+              )}
             </p>
           )}
         </div>
         {editable && (
-          <Link href={`/kartoteki/klienci/${c.id}/oddzialy/nowy`} className={buttonVariants()}>+ Dodaj oddział</Link>
+          <Link href={`/kartoteki/klienci/${c.id}/oddzialy/nowy`} className={buttonVariants()}>
+            <Plus /> Dodaj oddział
+          </Link>
         )}
       </div>
 
-      {flash && <p role="status" className="mb-4 rounded-md bg-accent px-4 py-3 text-sm text-primary">{flash}</p>}
+      {flash && (
+        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-accent px-4 py-2.5 text-sm text-primary-strong">
+          {flash}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-start gap-6">
         <section aria-label="Oddziały" className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
@@ -87,39 +107,62 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
                       <h3 className="text-base font-semibold">{p.name}</h3>
                       <Badge>{BRANCH_LABELS[p.branch_type] ?? p.branch_type}</Badge>
                       {!p.is_active && <Badge className="bg-border text-muted">nieaktywny</Badge>}
-                      {(p.active_from || p.active_to) && <Badge className="bg-warning/10 text-warning">sezon {formatSeason(p.active_from, p.active_to)}</Badge>}
+                      {(p.active_from || p.active_to) && (
+                        <Badge className="bg-warning/10 text-warning">sezon {formatSeason(p.active_from, p.active_to)}</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted">
                       {p.address_line}, {p.postal_code} {p.city}
-                      {p.contact_phone && <> · <a href={`tel:${p.contact_phone}`}>{p.contact_phone}</a></>}
+                      {p.contact_phone && (
+                        <>
+                          {" "}
+                          · <a href={`tel:${p.contact_phone}`}>{p.contact_phone}</a>
+                        </>
+                      )}
                     </p>
                   </div>
                   {editable && (
-                    <Link href={`/kartoteki/klienci/${c.id}/oddzialy/${p.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                    <Link
+                      href={`/kartoteki/klienci/${c.id}/oddzialy/${p.id}`}
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                    >
                       Edytuj
                     </Link>
                   )}
                 </div>
 
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-[140px_1fr]">
-                  <dt className="text-muted">Dni dostaw</dt><dd>{formatWeekdays(p.delivery_weekdays)}</dd>
+                  <dt className="text-muted">Dni dostaw</dt>
+                  <dd>{formatWeekdays(p.delivery_weekdays)}</dd>
                   <dt className="text-muted">Okno przyjęć</dt>
                   <dd className="tabular-nums">{formatWindows(p.delivery_point_windows, p.delivery_weekdays?.[0] ?? 1)}</dd>
-                  <dt className="text-muted">Rozładunek</dt><dd>{p.service_minutes} min</dd>
+                  <dt className="text-muted">Rozładunek</dt>
+                  <dd>{p.service_minutes} min</dd>
                   {fixed.map(([k, v]) => (
-                    <div key={k as string} className="contents"><dt className="text-muted">{k}</dt><dd>{v}</dd></div>
+                    <div key={k as string} className="contents">
+                      <dt className="text-muted">{k}</dt>
+                      <dd>{v}</dd>
+                    </div>
                   ))}
                 </dl>
 
                 <div className="flex flex-col gap-2 border-t border-border pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">Uwagi tymczasowe</p>
+                  <p className="text-xs font-medium text-muted">Uwagi tymczasowe</p>
                   {active.length === 0 && upcoming.length === 0 && <p className="text-sm text-muted">Brak aktualnych uwag.</p>}
                   {[...active, ...upcoming].map((n) => (
-                    <div key={n.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm">
+                    <div
+                      key={n.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm"
+                    >
                       <span>
-                        <strong className="text-warning">{n.valid_from > today ? "od " + n.valid_from.slice(8, 10) + "." + n.valid_from.slice(5, 7) : "teraz"}</strong>{" "}
+                        <strong className="text-warning">
+                          {n.valid_from > today ? "od " + n.valid_from.slice(8, 10) + "." + n.valid_from.slice(5, 7) : "teraz"}
+                        </strong>{" "}
                         {n.text}
-                        <span className="text-xs text-muted"> · {n.valid_to ? `do ${n.valid_to.slice(8, 10)}.${n.valid_to.slice(5, 7)}` : "bez końca"}</span>
+                        <span className="text-xs text-muted">
+                          {" "}
+                          · {n.valid_to ? `do ${n.valid_to.slice(8, 10)}.${n.valid_to.slice(5, 7)}` : "bez końca"}
+                        </span>
                       </span>
                       {editable && (
                         <form action={endNote.bind(null, c.id, n.id)}>

@@ -19,9 +19,24 @@ export function DataTable<T>({
   className?: string;
   rowClassName?: (row: T) => string | undefined;
 }) {
-  if (rows.length === 0) return <div className="px-5 py-10 text-center text-sm text-muted">{empty}</div>;
+  if (rows.length === 0)
+    return (
+      <div
+        className={cn(
+          "rounded-[var(--radius-panel)] border border-border bg-surface px-5 py-10 text-center text-sm text-muted",
+          className,
+        )}
+      >
+        {empty}
+      </div>
+    );
   return (
-    <div className={cn("overflow-x-auto", className)}>
+    <div
+      className={cn(
+        "overflow-x-auto rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]",
+        className,
+      )}
+    >
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-surface-2 text-left">

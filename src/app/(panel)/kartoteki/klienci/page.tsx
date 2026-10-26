@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/panel/module-placeholder";
@@ -20,7 +21,9 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
 
   let query = supabase
     .from("customers")
-    .select("id, external_code, name, category, sales_rep_name, is_active, delivery_points(id, city, is_active, delivery_point_notes(valid_from, valid_to))")
+    .select(
+      "id, external_code, name, category, sales_rep_name, is_active, delivery_points(id, city, is_active, delivery_point_notes(valid_from, valid_to))",
+    )
     .eq("tenant_id", ctx.tenantId)
     .order("external_code", { nullsFirst: false })
     .order("name");
@@ -44,12 +47,19 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader title="Klienci i oddziały" description={`${rows.length} klientów · każdy może mieć kilka oddziałów (kuchnia, bar, magazyn).`} />
-        {canEdit(ctx.role) && (
-          <Link href="/kartoteki/klienci/nowy" className={buttonVariants()}>+ Nowy klient</Link>
-        )}
-      </div>
+      <PageHeader
+        title="Klienci i oddziały"
+        description={`${rows.length} klientów · każdy może mieć kilka oddziałów (kuchnia, bar, magazyn).`}
+        actions={
+          <>
+            {canEdit(ctx.role) && (
+              <Link href="/kartoteki/klienci/nowy" className={buttonVariants()}>
+                <Plus /> Nowy klient
+              </Link>
+            )}
+          </>
+        }
+      />
 
       <form className="mb-4 flex flex-wrap items-center gap-2" role="search">
         <input
@@ -57,7 +67,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
           defaultValue={q}
           placeholder="Szukaj: nazwa, kod klienta, opiekun…"
           aria-label="Szukaj klienta"
-          className="h-10 w-full max-w-sm rounded-md border border-border bg-surface px-3 text-sm outline-none focus:border-primary"
+          className="h-10 w-full max-w-sm rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none placeholder:text-subtle focus:border-primary focus:ring-[3px] focus:ring-primary/15"
         />
         <button className={buttonVariants({ variant: "outline" })}>Szukaj</button>
         <Link
@@ -68,16 +78,18 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
           Z aktualnymi uwagami {onlyNotes ? "" : `(${notesTotal})`}
         </Link>
         {(q || onlyNotes) && (
-          <Link href="/kartoteki/klienci" className="text-sm text-muted hover:underline">Wyczyść</Link>
+          <Link href="/kartoteki/klienci" className="text-sm text-muted hover:underline">
+            Wyczyść
+          </Link>
         )}
       </form>
 
       {rows.length === 0 ? (
         <p className="text-sm text-muted">Brak klientów{q ? ` dla „${q}”` : ""}.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-background text-left text-xs uppercase tracking-wide text-muted">
+            <thead className="border-b border-border bg-surface-2 text-left text-xs text-muted">
               <tr>
                 <th className="px-3 py-2 font-medium">Kod</th>
                 <th className="px-3 py-2 font-medium">Klient</th>
@@ -89,10 +101,13 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
             </thead>
             <tbody>
               {rows.map((c) => (
-                <tr key={c.id} className="border-b border-border last:border-0 hover:bg-accent/40">
+                <tr key={c.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                   <td className="px-3 py-2 font-mono text-xs">{c.external_code ?? "—"}</td>
                   <td className="px-3 py-2">
-                    <Link href={`/kartoteki/klienci/${c.id}`} className="font-medium text-foreground hover:text-primary hover:underline">
+                    <Link
+                      href={`/kartoteki/klienci/${c.id}`}
+                      className="font-medium text-foreground hover:text-primary hover:underline"
+                    >
                       {c.name}
                     </Link>
                     {c.category && <p className="text-xs text-muted">{c.category}</p>}

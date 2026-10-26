@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/components/panel/module-placeholder";
+import { RefreshCw, Route, Store } from "lucide-react";
+import { EmptyState, Meter, Notice, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/primitives";
+import { Pill, Plate } from "@/components/ui/status";
 import { formatPln } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
     const os = byRoute.get(t.name) ?? [];
     const sum = summarizeOrders(os);
     const v = t.vehicles;
-    const pct = (x: number, cap: number | string | null | undefined) => (cap && Number(cap) > 0 ? Math.round((x / Number(cap)) * 100) : null);
+    const pct = (x: number, cap: number | string | null | undefined) =>
+      cap && Number(cap) > 0 ? Math.round((x / Number(cap)) * 100) : null;
     return {
       name: t.name,
       vehicle: v?.registration ?? "—",
@@ -63,99 +65,160 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader title="Pulpit" description={`${ctx.tenantName} · przygotowanie dostaw na ${formatDayLabel(day)}`} />
-        {ctx.isDemo && ctx.role === "admin" && (
-          <form action={resetDemoTenant}>
-            <button className={buttonVariants({ variant: "outline", size: "sm" })} title="Usuwa dane demo i tworzy je od nowa z zamówieniami na najbliższy dzień roboczy">
-              Odśwież dane demo
-            </button>
-          </form>
-        )}
-      </div>
-      {sp.demo === "odswiezone" && <p role="status" className="mb-4 rounded-md bg-accent px-4 py-3 text-sm text-primary">Dane demo odświeżone — zamówienia na {formatDayLabel(day)}.</p>}
+      <PageHeader
+        title="Pulpit"
+        description={`Przygotowanie dostaw na ${formatDayLabel(day)}: zamówienia, kompletacja w magazynie i zajętość aut na trasach stałych.`}
+        actions={
+          <>
+            {ctx.isDemo && ctx.role === "admin" && (
+              <form action={resetDemoTenant}>
+                <button
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                  title="Usuwa dane demo i tworzy je od nowa: zamówienia na najbliższy dzień roboczy i 4 tygodnie historii tras"
+                >
+                  <RefreshCw /> Odśwież dane demo
+                </button>
+              </form>
+            )}
+            <Link href={`/planowanie?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
+              <Route /> Planuj {formatDayLabel(day).split(",")[0]}
+            </Link>
+          </>
+        }
+      />
+      {sp.demo === "odswiezone" && (
+        <Notice>Dane demo odświeżone: zamówienia na {formatDayLabel(day)} i historia tras z ostatnich tygodni.</Notice>
+      )}
 
       {empty ? (
-        <Card className="max-w-2xl text-sm">
-          Kartoteki są puste. Dodaj pierwszego <Link href="/kartoteki/klienci/nowy" className="text-primary hover:underline">klienta</Link> albo
-          załóż firmę demo na stronie <Link href="/wybierz-firme" className="text-primary hover:underline">wyboru firmy</Link>.
-        </Card>
+        <Panel className="max-w-2xl">
+          <EmptyState
+            icon={<Store />}
+            title="Kartoteki są puste"
+            action={
+              <Link href="/kartoteki/klienci/nowy" className={buttonVariants()}>
+                Dodaj pierwszego klienta
+              </Link>
+            }
+          >
+            Zacznij od klientów i ich oddziałów albo załóż firmę demo na stronie{" "}
+            <Link href="/wybierz-firme" className="text-primary hover:underline">
+              wyboru firmy
+            </Link>
+            .
+          </EmptyState>
+        </Panel>
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Tile href={`/zlecenia?dzien=${day}`} label={`Zamówienia · ${formatDayLabel(day)}`} value={String(s.count)} sub={formatPln(s.valueGrosze)} />
-            <Tile href={`/zlecenia?dzien=${day}&filtr=gotowe`} label="Skompletowane" value={String(s.ready)} sub={s.count ? `${Math.round((s.ready / s.count) * 100)}% zamówień` : "—"} tone="good" />
-            <Tile href={`/zlecenia?dzien=${day}&filtr=magazyn`} label="Do realizacji w magazynie" value={String(s.awaiting)} sub="czeka na kompletację" tone={s.awaiting ? "warn" : undefined} />
-            <Tile href="/kartoteki/klienci?uwagi=1" label="Oddziały z uwagami" value={String(activeNotes)} sub="remonty, zmiany godzin" tone={activeNotes ? "warn" : undefined} />
-            <Tile href="/kartoteki/pojazdy" label="Skrzynki vs flota" value={`${s.crates} / ${fleetCrates}`} sub={`${fleet.length} aktywnych aut`} />
-            <Tile href="/kartoteki/pojazdy" label="Masa vs flota" value={`${s.weightKg.toLocaleString("pl-PL")} kg`} sub={`ładowność ${fleetKg.toLocaleString("pl-PL")} kg`} />
+            <StatTile href={`/zlecenia?dzien=${day}`} label="Zamówienia" value={s.count} sub={formatPln(s.valueGrosze)} />
+            <StatTile
+              href={`/zlecenia?dzien=${day}&filtr=gotowe`}
+              label="Skompletowane"
+              value={s.ready}
+              sub={s.count ? `${Math.round((s.ready / s.count) * 100)}% zamówień` : "—"}
+              tone="success"
+            />
+            <StatTile
+              href={`/zlecenia?dzien=${day}&filtr=magazyn`}
+              label="W magazynie"
+              value={s.awaiting}
+              sub="czeka na kompletację"
+              tone={s.awaiting ? "warning" : undefined}
+            />
+            <StatTile
+              href="/kartoteki/klienci?uwagi=1"
+              label="Oddziały z uwagami"
+              value={activeNotes}
+              sub="remonty, zmiany godzin"
+              tone={activeNotes ? "warning" : undefined}
+            />
+            <StatTile
+              href="/kartoteki/pojazdy"
+              label="Skrzynki vs flota"
+              value={`${s.crates} / ${fleetCrates}`}
+              sub={`${fleet.length} aktywnych aut`}
+            />
+            <StatTile
+              href="/kartoteki/pojazdy"
+              label="Masa vs flota"
+              value={`${(s.weightKg / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} t`}
+              sub={`ładowność ${(fleetKg / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} t`}
+            />
           </div>
 
-          <section aria-label="Trasy stałe" className="overflow-x-auto rounded-lg border border-border bg-surface">
-            <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-4 py-3">
-              <h2 className="text-base font-semibold">Trasy stałe na {formatDayLabel(day)}</h2>
-              <p className="text-xs text-muted">Zajętość domyślnego auta trasy · planowanie i przenoszenie zamówień — etap M3</p>
-            </header>
-            <table className="w-full min-w-[820px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Trasa</th>
-                  <th className="px-4 py-2 font-medium">Auto · kierowca</th>
-                  <th className="px-4 py-2 text-right font-medium">Zam.</th>
-                  <th className="px-4 py-2 font-medium">Masa</th>
-                  <th className="px-4 py-2 font-medium">Palety</th>
-                  <th className="px-4 py-2 font-medium">Skrzynki</th>
-                  <th className="px-4 py-2 text-right font-medium">Do realizacji</th>
-                </tr>
-              </thead>
-              <tbody>
-                {routes.map((r) => (
-                  <tr key={r.name} className="border-t border-border">
-                    <td className="px-4 py-2.5 font-medium">
-                      <Link href={`/zlecenia?dzien=${day}`} className="text-foreground hover:text-primary hover:underline">{r.name}</Link>
-                    </td>
-                    <td className="px-4 py-2.5 text-muted"><span className="font-mono text-foreground">{r.vehicle}</span> · {r.driver}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{r.sum.count}</td>
-                    <td className="px-4 py-2.5"><LoadBar pct={r.kgPct} label={`${r.sum.weightKg} kg`} /></td>
-                    <td className="px-4 py-2.5"><LoadBar pct={r.palPct} label={`${r.sum.pallets}`} /></td>
-                    <td className="px-4 py-2.5"><LoadBar pct={r.cratesPct} label={`${r.sum.crates}`} /></td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{r.sum.awaiting ? <span className="font-semibold text-warning">{r.sum.awaiting}</span> : "—"}</td>
+          <Panel
+            title={`Trasy stałe na ${formatDayLabel(day)}`}
+            description="Zajętość domyślnego auta trasy. Przenoszenie zamówień i kolejność ustawisz w planowaniu."
+            actions={unassigned > 0 ? <Pill tone="warning">{unassigned} zamówień poza trasami stałymi</Pill> : undefined}
+            flush
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
+                    <th className="py-2.5 pr-3 pl-5 font-medium">Trasa</th>
+                    <th className="px-3 py-2.5 font-medium">Auto i kierowca</th>
+                    <th className="px-3 py-2.5 text-right font-medium">Zamówienia</th>
+                    <th className="px-3 py-2.5 font-medium">Masa</th>
+                    <th className="px-3 py-2.5 font-medium">Palety</th>
+                    <th className="px-3 py-2.5 font-medium">Skrzynki</th>
+                    <th className="py-2.5 pr-5 pl-3 text-right font-medium whitespace-nowrap">W magazynie</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {unassigned > 0 && (
-              <p className="border-t border-border px-4 py-2 text-sm text-warning">
-                {unassigned} zamówień dla oddziałów bez trasy stałej — <Link href={`/zlecenia?dzien=${day}`} className="underline">zobacz</Link>.
-              </p>
-            )}
-          </section>
+                </thead>
+                <tbody>
+                  {routes.map((r) => (
+                    <tr key={r.name} className="border-b border-border last:border-0 hover:bg-surface-2">
+                      <td className="py-3 pr-3 pl-5 font-medium">
+                        <Link href={`/planowanie?dzien=${day}`} className="hover:text-primary">
+                          {r.name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="flex items-center gap-2 text-[13px] text-muted">
+                          <Plate>{r.vehicle === "—" ? null : r.vehicle}</Plate>
+                          {r.driver}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums">{r.sum.count}</td>
+                      <td className="px-3 py-3">
+                        <LoadCell pct={r.kgPct} label={`${r.sum.weightKg} kg`} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <LoadCell pct={r.palPct} label={`${r.sum.pallets}`} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <LoadCell pct={r.cratesPct} label={`${r.sum.crates}`} />
+                      </td>
+                      <td className="py-3 pr-5 pl-3 text-right tabular-nums">
+                        {r.sum.awaiting ? (
+                          <span className="font-semibold text-warning">{r.sum.awaiting}</span>
+                        ) : (
+                          <span className="text-subtle">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
         </>
       )}
     </>
   );
 }
 
-function Tile({ label, value, sub, href, tone }: { label: string; value: string; sub?: string; href: string; tone?: "good" | "warn" }) {
-  return (
-    <Link href={href} className="rounded-lg border border-border bg-surface p-4 transition-colors hover:border-primary">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={cn("mt-1 text-2xl font-semibold tabular-nums", tone === "good" && "text-primary", tone === "warn" && "text-warning")}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
-    </Link>
-  );
-}
-
-function LoadBar({ pct, label }: { pct: number | null; label: string }) {
+function LoadCell({ pct, label }: { pct: number | null; label: string }) {
   if (pct === null) return <span className="text-muted">{label}</span>;
-  const color = pct > 100 ? "bg-danger" : pct >= 90 ? "bg-warning" : "bg-primary";
-  const text = pct > 100 ? "text-danger" : pct >= 90 ? "text-warning" : "text-muted";
+  const tone = pct > 100 ? "text-danger" : pct >= 90 ? "text-warning" : "text-muted";
   return (
-    <div className="flex min-w-36 items-center gap-2">
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-border/60">
-        <div className={cn("h-2 rounded-full", color)} style={{ width: `${Math.min(pct, 100)}%` }} />
-      </div>
-      <span className={cn("w-28 whitespace-nowrap text-right text-xs tabular-nums", text)}>{label} · {pct}%</span>
+    <div className="flex min-w-40 items-center gap-3">
+      <Meter pct={pct} className="w-20" />
+      <span className={cn("text-xs whitespace-nowrap tabular-nums", tone)}>
+        <b className={cn("font-semibold", pct > 100 ? "text-danger" : pct >= 90 ? "text-warning" : "text-foreground")}>{pct}%</b>{" "}
+        {label}
+      </span>
     </div>
   );
 }

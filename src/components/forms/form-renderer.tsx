@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/primitives";
 import { formToObject, type FormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
@@ -74,8 +75,7 @@ const WEEKDAYS = [
   { v: 7, l: "nd" },
 ];
 
-const inputCls =
-  "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-danger";
+const inputCls = inputClass;
 
 const spanCls = { 1: "sm:col-span-1", 2: "sm:col-span-2", 3: "sm:col-span-3" } as const;
 
@@ -139,7 +139,7 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
       break;
     case "checkbox":
       return (
-        <label className={cn("flex items-center gap-2 text-sm sm:col-span-1", f.span && spanCls[f.span])}>
+        <label className={cn("flex h-10 items-center gap-2 self-end text-sm sm:col-span-1", f.span && spanCls[f.span])}>
           <input type="checkbox" name={f.name} defaultChecked={f.defaultChecked} className="h-5 w-5 accent-[var(--primary)]" />
           {f.label}
           {f.hint && <span className="text-xs text-muted">({f.hint})</span>}
@@ -157,7 +157,7 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
                 defaultChecked={f.defaultValue?.includes(d.v)}
                 className="peer sr-only"
               />
-              <span className="flex h-10 w-11 items-center justify-center rounded-md border border-border bg-surface text-sm font-medium peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
+              <span className="flex h-10 w-11 items-center justify-center rounded-lg border border-border-strong bg-surface text-sm font-medium peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
                 {d.l}
               </span>
             </label>
@@ -269,10 +269,16 @@ export function FormRenderer({
   return (
     <form key={submitted.version} action={formAction} className="flex max-w-4xl flex-col gap-6" noValidate>
       {sections.map((s) => (
-        <fieldset key={s.title} className="rounded-lg border border-border bg-surface p-5">
-          <legend className="px-1 text-sm font-semibold">{s.title}</legend>
-          {s.description && <p className="-mt-1 mb-3 text-xs text-muted">{s.description}</p>}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <fieldset
+          key={s.title}
+          className="overflow-hidden rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]"
+        >
+          <legend className="sr-only">{s.title}</legend>
+          <div className="border-b border-border px-5 py-3.5" aria-hidden>
+            <p className="text-[15px] font-semibold">{s.title}</p>
+            {s.description && <p className="mt-0.5 text-xs text-muted">{s.description}</p>}
+          </div>
+          <div className="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:grid-cols-3">
             {s.fields.map((f) => (
               <Field key={f.name} f={withSubmitted(f, sub)} errors={state.fieldErrors?.[f.name]} />
             ))}
@@ -289,7 +295,7 @@ export function FormRenderer({
           </Link>
         )}
         {state.message && (
-          <p role="status" className={cn("text-sm", state.ok ? "text-primary" : "text-danger")}>
+          <p role="status" className={cn("text-sm font-medium", state.ok ? "text-success" : "text-danger")}>
             {state.message}
           </p>
         )}
