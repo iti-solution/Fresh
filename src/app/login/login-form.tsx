@@ -10,8 +10,8 @@ export function LoginForm({ next }: { next?: string }) {
 
   if (state.status === "sent") {
     return (
-      <div className="space-y-2 text-sm" role="status">
-        <p className="font-medium">Sprawdź skrzynkę {state.email}</p>
+      <div className="space-y-2 rounded-xl border border-primary/20 bg-accent p-4 text-sm" role="status">
+        <p className="font-semibold text-primary-strong">Sprawdź skrzynkę {state.email}</p>
         <p className="text-muted">
           Wysłaliśmy link do logowania. Otwórz go w tej samej przeglądarce. Link jest ważny przez godzinę.
         </p>
@@ -32,6 +32,7 @@ export function LoginForm({ next }: { next?: string }) {
           required
           defaultValue={state.email}
           placeholder="jan@hurtownia.pl"
+          className="h-12 text-base"
         />
       </div>
       {state.status === "error" && (
@@ -39,7 +40,7 @@ export function LoginForm({ next }: { next?: string }) {
           {state.message}
         </p>
       )}
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Wysyłanie…" : "Wyślij link do logowania"}
       </Button>
     </form>

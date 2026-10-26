@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Plus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/primitives";
 import type { FormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +16,7 @@ const KINDS = [
   { value: "weekend", label: "Weekendowy" },
 ];
 
-const field = "h-10 w-full rounded-md border border-border bg-surface px-3 text-sm outline-none focus:border-primary";
+const field = inputClass;
 
 export function ExtraRouteForm({
   action,
@@ -39,42 +41,84 @@ export function ExtraRouteForm({
 
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={buttonVariants({ variant: "outline", size: "sm" })}>
-        + Kurs dodatkowy / dowózka
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={buttonVariants({ variant: "outline", size: "sm" })}
+      >
+        <Plus /> Kurs dodatkowy lub dowózka
       </button>
-      {state.ok && state.message && !open && <p role="status" className="absolute right-0 top-10 z-10 w-80 rounded-md bg-accent p-3 text-xs text-primary shadow">{state.message}</p>}
+      {state.ok && state.message && !open && (
+        <p
+          role="status"
+          className="absolute right-0 top-10 z-10 w-80 rounded-lg border border-primary/20 bg-accent p-3 text-xs text-primary-strong shadow-[var(--shadow-pop)]"
+        >
+          {state.message}
+        </p>
+      )}
       {open && (
-        <form key={kept.n} action={formAction} className="absolute right-0 top-10 z-20 flex w-96 flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-lg">
+        <form
+          key={kept.n}
+          action={formAction}
+          className="absolute right-0 top-10 z-20 flex w-96 flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-pop)]"
+        >
           <p className="text-sm font-semibold">Nowy kurs na ten dzień</p>
-          <label className="flex flex-col gap-1 text-xs font-medium">Rodzaj
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Rodzaj
             <select name="kind" defaultValue={val("kind", "dowozka")} className={field}>
-              {KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+              {KINDS.map((k) => (
+                <option key={k.value} value={k.value}>
+                  {k.label}
+                </option>
+              ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium">Nazwa
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Nazwa
             <input name="name" defaultValue={val("name")} placeholder="np. Dowózka Zakopane" className={field} />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium">Przyczyna (wymagana dla dowózki i kursu awaryjnego)
-            <input name="reason" defaultValue={val("reason")} placeholder="np. reklamacja — przejrzałe banany" className={field} />
+          <label className="flex flex-col gap-1 text-xs font-medium">
+            Przyczyna (wymagana dla dowózki i kursu awaryjnego)
+            <input
+              name="reason"
+              defaultValue={val("reason")}
+              placeholder="np. reklamacja — przejrzałe banany"
+              className={field}
+            />
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-xs font-medium">Pojazd
+            <label className="flex flex-col gap-1 text-xs font-medium">
+              Pojazd
               <select name="vehicle_id" defaultValue={val("vehicle_id")} className={field}>
                 <option value="">— później —</option>
-                {vehicles.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
               </select>
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium">Kierowca
+            <label className="flex flex-col gap-1 text-xs font-medium">
+              Kierowca
               <select name="driver_id" defaultValue={val("driver_id")} className={field}>
                 <option value="">— później —</option>
-                {drivers.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+                {drivers.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
           {state.message && !state.ok && <p className="text-xs text-danger">{state.message}</p>}
           <div className="flex items-center gap-2">
-            <button disabled={pending} className={cn(buttonVariants({ size: "sm" }))}>{pending ? "Tworzenie…" : "Utwórz kurs"}</button>
-            <button type="button" onClick={() => setOpen(false)} className="text-sm text-muted hover:underline">Anuluj</button>
+            <button disabled={pending} className={cn(buttonVariants({ size: "sm" }))}>
+              {pending ? "Tworzenie…" : "Utwórz kurs"}
+            </button>
+            <button type="button" onClick={() => setOpen(false)} className="text-sm text-muted hover:underline">
+              Anuluj
+            </button>
           </div>
         </form>
       )}

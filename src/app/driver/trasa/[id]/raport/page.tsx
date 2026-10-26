@@ -22,7 +22,11 @@ export default async function ReportPage({ params }: PageProps<"/driver/trasa/[i
   const stopIds = route.stops.map((s) => s.id);
   const [types, { data: pack }, { data: cash }] = await Promise.all([
     getPackagingTypes(),
-    supabase.from("packaging_movements").select("packaging_type_id, qty, reason, stop_id").eq("party_type", "driver").in("stop_id", stopIds.length ? stopIds : ["00000000-0000-0000-0000-000000000000"]),
+    supabase
+      .from("packaging_movements")
+      .select("packaging_type_id, qty, reason, stop_id")
+      .eq("party_type", "driver")
+      .in("stop_id", stopIds.length ? stopIds : ["00000000-0000-0000-0000-000000000000"]),
     supabase.from("cash_movements").select("amount").eq("party_type", "driver").eq("route_id", id),
   ]);
   const packaging = types.map((t) => {
@@ -47,7 +51,9 @@ export default async function ReportPage({ params }: PageProps<"/driver/trasa/[i
   return (
     <main className="flex flex-col gap-3 p-4">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{formatDayLabel(route.date)} · {route.vehicle}</p>
+        <p className="text-sm font-medium text-muted">
+          {formatDayLabel(route.date)} · {route.vehicle}
+        </p>
         <h1 className="text-2xl font-semibold">Raport zmiany · {route.name}</h1>
       </header>
 
@@ -60,22 +66,41 @@ export default async function ReportPage({ params }: PageProps<"/driver/trasa/[i
       <section className="grid grid-cols-3 gap-2">
         <Tile label="Punkty" value={`${r.finished} / ${r.total}`} sub={`${r.partial} częśc. · ${r.exceptions} wyjątki`} />
         <Tile label="W oknie" value={r.withWindow ? `${r.onTime} / ${r.withWindow}` : "—"} sub="dostawy na czas" />
-        <Tile label="Przebieg" value={r.km !== null ? `${r.km} km` : "—"} sub={route.odometerEnd ? `licznik ${route.odometerEnd.toLocaleString("pl-PL")}` : "trasa w toku"} />
+        <Tile
+          label="Przebieg"
+          value={r.km !== null ? `${r.km} km` : "—"}
+          sub={route.odometerEnd ? `licznik ${route.odometerEnd.toLocaleString("pl-PL")}` : "trasa w toku"}
+        />
       </section>
 
       <section className="flex flex-col gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Do zdania w bazie</p>
-        <div className="flex justify-between"><span>Gotówka z pobrań</span><strong className="tabular-nums">{formatPln(r.cashGrosze)}</strong></div>
-        {r.packaging.filter((p) => p.out || p.back).map((p) => (
-          <div key={p.code} className="flex justify-between"><span>{p.name} — zebrane od klientów</span><strong className="tabular-nums">{p.back}</strong></div>
-        ))}
+        <p className="text-sm font-medium text-muted">Do zdania w bazie</p>
+        <div className="flex justify-between">
+          <span>Gotówka z pobrań</span>
+          <strong className="tabular-nums">{formatPln(r.cashGrosze)}</strong>
+        </div>
+        {r.packaging
+          .filter((p) => p.out || p.back)
+          .map((p) => (
+            <div key={p.code} className="flex justify-between">
+              <span>{p.name} — zebrane od klientów</span>
+              <strong className="tabular-nums">{p.back}</strong>
+            </div>
+          ))}
         {r.packaging.every((p) => !p.out && !p.back) && <p className="text-muted">Brak zapisanych opakowań.</p>}
       </section>
 
       {route.status === "completed" ? (
-        <form action={driverLogout}><button className="h-14 w-full rounded-xl bg-foreground text-lg font-bold text-background">Wyloguj</button></form>
+        <form action={driverLogout}>
+          <button className="h-14 w-full rounded-xl bg-foreground text-lg font-bold text-background">Wyloguj</button>
+        </form>
       ) : (
-        <Link href={`/driver/trasa/${id}`} className="flex h-14 items-center justify-center rounded-xl border border-border bg-surface font-semibold">Wróć do trasy</Link>
+        <Link
+          href={`/driver/trasa/${id}`}
+          className="flex h-14 items-center justify-center rounded-xl border border-border bg-surface font-semibold"
+        >
+          Wróć do trasy
+        </Link>
       )}
     </main>
   );

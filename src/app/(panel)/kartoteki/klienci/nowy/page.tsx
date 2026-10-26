@@ -15,7 +15,12 @@ export default async function NewCustomerPage() {
   return (
     <>
       <PageHeader title="Nowy klient" description="Po zapisaniu dodasz oddziały (adresy dostaw) z godzinami przyjęć." />
-      <FormRenderer action={saveCustomer.bind(null, null)} sections={customerSections()} submitLabel="Zapisz i dodaj oddział" cancelHref="/kartoteki/klienci" />
+      <FormRenderer
+        action={saveCustomer.bind(null, null)}
+        sections={customerSections()}
+        submitLabel="Zapisz i dodaj oddział"
+        cancelHref="/kartoteki/klienci"
+      />
     </>
   );
 }

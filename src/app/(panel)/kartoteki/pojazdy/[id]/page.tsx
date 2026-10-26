@@ -19,15 +19,26 @@ export default async function VehiclePage({ params }: PageProps<"/kartoteki/poja
   const supabase = await createClient();
 
   const [vehicle, carriers, drivers] = await Promise.all([
-    isNew ? Promise.resolve({ data: null }) : supabase.from("vehicles").select("*").eq("tenant_id", ctx.tenantId).eq("id", id).maybeSingle(),
+    isNew
+      ? Promise.resolve({ data: null })
+      : supabase.from("vehicles").select("*").eq("tenant_id", ctx.tenantId).eq("id", id).maybeSingle(),
     supabase.from("carriers").select("id, name").eq("tenant_id", ctx.tenantId).eq("is_active", true).order("name"),
-    supabase.from("drivers").select("id, first_name, last_name").eq("tenant_id", ctx.tenantId).eq("is_active", true).order("last_name"),
+    supabase
+      .from("drivers")
+      .select("id, first_name, last_name")
+      .eq("tenant_id", ctx.tenantId)
+      .eq("is_active", true)
+      .order("last_name"),
   ]);
   if (!isNew && !vehicle.data) notFound();
 
   return (
     <>
-      <nav className="mb-3 text-sm"><Link href="/kartoteki/pojazdy" className="text-muted hover:underline">‹ Pojazdy</Link></nav>
+      <nav className="mb-3 text-sm">
+        <Link href="/kartoteki/pojazdy" className="inline-flex items-center gap-1 text-muted hover:text-foreground">
+          ‹ Pojazdy
+        </Link>
+      </nav>
       <PageHeader title={isNew ? "Nowy pojazd" : `Pojazd ${vehicle.data?.registration}`} />
       <FormRenderer
         action={saveVehicle.bind(null, isNew ? null : id)}

@@ -20,7 +20,12 @@ export default async function PointPage({ params }: PageProps<"/kartoteki/klienc
   const isNew = pointId === "nowy";
   const supabase = await createClient();
 
-  const { data: customer } = await supabase.from("customers").select("id, name").eq("tenant_id", ctx.tenantId).eq("id", id).maybeSingle();
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("id, name")
+    .eq("tenant_id", ctx.tenantId)
+    .eq("id", id)
+    .maybeSingle();
   if (!customer) notFound();
 
   let point: Record<string, unknown> | null = null;
@@ -41,7 +46,9 @@ export default async function PointPage({ params }: PageProps<"/kartoteki/klienc
   return (
     <>
       <nav className="mb-3 text-sm">
-        <Link href={`/kartoteki/klienci/${id}`} className="text-muted hover:underline">‹ {customer.name}</Link>
+        <Link href={`/kartoteki/klienci/${id}`} className="inline-flex items-center gap-1 text-muted hover:text-foreground">
+          ‹ {customer.name}
+        </Link>
       </nav>
       <PageHeader title={isNew ? "Nowy oddział" : `Oddział: ${String(point?.name ?? "")}`} description={customer.name} />
       <FormRenderer

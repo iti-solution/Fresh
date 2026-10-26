@@ -22,7 +22,7 @@ export function isPublicPath(pathname: string): boolean {
 export type NavItem = {
   href: string;
   label: string;
-  group: "Operacje" | "Kartoteki" | "Rozliczenia" | "Wzrost" | "System";
+  group: "Operacje" | "Zestawienia" | "Kartoteki" | "Rozliczenia" | "Wzrost" | "System";
   milestone: string; // kamień milowy, w którym moduł powstaje
   built?: boolean; // moduł już działa — bez oznaczenia etapu w menu
   roles: Role[];
@@ -33,9 +33,11 @@ const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "man
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
+  { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
   { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
-  { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", roles: STAFF },
+  { href: "/bok", label: "Dostawy dla BOK", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
+  { href: "/raport", label: "Raport zarządu", group: "Zestawienia", milestone: "M6", built: true, roles: ["admin", "dispatcher", "management", "viewer"] },
   { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
@@ -61,8 +63,11 @@ export function canAccess(role: Role, pathname: string): boolean {
   return item ? item.roles.includes(role) : true;
 }
 
+/** Strona startowa roli: każdy ląduje na swoim zestawieniu. */
 export function homePathForRole(role: Role): string {
   if (role === "driver") return "/driver";
+  if (role === "customer_service") return "/bok";
+  if (role === "management") return "/raport";
   return "/pulpit";
 }
 

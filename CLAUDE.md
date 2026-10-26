@@ -7,6 +7,7 @@ Fresh to SaaS TMS dla hurtowni owoców i warzyw dostarczających do HoReCa włas
 - `docs/02-zakres-mvp.md` — co jest w MVP, a co nie (nie dodawaj funkcji spoza zakresu bez pytania)
 - `docs/04-plan-milestones.md` — kamienie milowe i zadania; po zakończeniu zadania odhacz `[x]`
 - `docs/05-scenariusz-dnia.md` — dzień pilota krok po kroku (dziś vs Fresh); źródło wymagań z warsztatów
+- `docs/06-system-wizualny.md` — kolory, typografia i komponenty UI (używaj ich zamiast pisać style od zera)
 - `supabase/migrations/` — schemat bazy; zmiany tylko nowymi migracjami, nigdy edycją starych
 
 ## Stos

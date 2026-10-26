@@ -34,8 +34,15 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
 
   return (
     <>
-      <nav className="mb-3 text-sm"><Link href={`/zlecenia?dzien=${day}`} className="text-muted hover:underline">‹ Zamówienia</Link></nav>
-      <PageHeader title="Nowe zamówienie" description="Ręczne dodanie zamówienia, np. dowózki albo zamówienia telefonicznego. Import z ERP — w kolejnym kroku." />
+      <nav className="mb-3 text-sm">
+        <Link href={`/zlecenia?dzien=${day}`} className="inline-flex items-center gap-1 text-muted hover:text-foreground">
+          ‹ Zamówienia
+        </Link>
+      </nav>
+      <PageHeader
+        title="Nowe zamówienie"
+        description="Ręczne dodanie zamówienia, np. dowózki albo zamówienia telefonicznego. Import z ERP — w kolejnym kroku."
+      />
       <FormRenderer
         action={createOrder}
         submitLabel="Dodaj zamówienie"
@@ -44,12 +51,34 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
           {
             title: "Dla kogo i kiedy",
             fields: [
-              { kind: "select", name: "delivery_point_id", label: "Klient i oddział", options, emptyLabel: "— wybierz oddział —", span: 3 },
+              {
+                kind: "select",
+                name: "delivery_point_id",
+                label: "Klient i oddział",
+                options,
+                emptyLabel: "— wybierz oddział —",
+                span: 3,
+              },
               { kind: "date", name: "delivery_date", label: "Data dostawy", defaultValue: day },
               { kind: "text", name: "external_ref", label: "Numer zamówienia", placeholder: "np. ZK/10/4600" },
-              { kind: "select", name: "readiness", label: "Magazyn", defaultValue: "ready", options: [
-                { value: "ready", label: "Skompletowane" }, { value: "awaiting_warehouse", label: "Do realizacji" }] },
-              { kind: "timerange", name: "window_start", nameTo: "window_end", label: "Inne okno niż zwykle (opcjonalnie)", span: 2, hint: "puste = okno oddziału" },
+              {
+                kind: "select",
+                name: "readiness",
+                label: "Magazyn",
+                defaultValue: "ready",
+                options: [
+                  { value: "ready", label: "Skompletowane" },
+                  { value: "awaiting_warehouse", label: "Do realizacji" },
+                ],
+              },
+              {
+                kind: "timerange",
+                name: "window_start",
+                nameTo: "window_end",
+                label: "Inne okno niż zwykle (opcjonalnie)",
+                span: 2,
+                hint: "puste = okno oddziału",
+              },
             ],
           },
           {
@@ -64,8 +93,20 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
           {
             title: "Uwagi",
             fields: [
-              { kind: "textarea", name: "notes_sales", label: "Uwaga handlowa", span: 3, placeholder: "np. banany mniej dojrzałe" },
-              { kind: "textarea", name: "notes_logistics", label: "Uwaga logistyczna", span: 3, placeholder: "np. dostawa do 7:30" },
+              {
+                kind: "textarea",
+                name: "notes_sales",
+                label: "Uwaga handlowa",
+                span: 3,
+                placeholder: "np. banany mniej dojrzałe",
+              },
+              {
+                kind: "textarea",
+                name: "notes_logistics",
+                label: "Uwaga logistyczna",
+                span: 3,
+                placeholder: "np. dostawa do 7:30",
+              },
             ],
           },
         ]}

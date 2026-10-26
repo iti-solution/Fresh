@@ -22,7 +22,10 @@ export default async function CarriersPage() {
 
   return (
     <>
-      <PageHeader title="Przewoźnicy" description="Firmy zewnętrzne, których auta jeżdżą na Twoich trasach. Rozliczenia przewoźników — po pilocie (P1)." />
+      <PageHeader
+        title="Przewoźnicy"
+        description="Firmy zewnętrzne, których auta jeżdżą na Twoich trasach. Rozliczenia przewoźników — po pilocie (P1)."
+      />
       <div className="flex flex-wrap items-start gap-6">
         <div className="min-w-0 flex-[999_1_480px]">
           <DataTable

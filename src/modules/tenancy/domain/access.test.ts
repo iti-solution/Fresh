@@ -54,6 +54,8 @@ describe("menu i przekierowania", () => {
     expect(navForRole("driver")).toHaveLength(0);
     expect(homePathForRole("driver")).toBe("/driver");
     expect(homePathForRole("dispatcher")).toBe("/pulpit");
+    expect(homePathForRole("customer_service")).toBe("/bok");
+    expect(homePathForRole("management")).toBe("/raport");
   });
   it("safeNextPath odrzuca zewnętrzne adresy", () => {
     expect(safeNextPath("/planowanie")).toBe("/planowanie");

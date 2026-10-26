@@ -1,35 +1,132 @@
 @import "tailwindcss";
 
-/* Fresh — tokeny kolorów. Panel dyspozytora: jasny, gęsty, czytelny na dużym monitorze. */
+/*
+  Fresh — system wizualny (v2, 2026-10-26)
+  Panel: chłodna, jasna powierzchnia do pracy na dużym monitorze + ciemny, świerkowy pasek nawigacji.
+  Kolory statusów pochodzą z „hurtowni”: liść (w oknie / dostarczono), cytrus (uwaga), pomidor (alarm),
+  niebo (w trasie / informacja), śliwka (reklamacje i zwroty). Kolor zawsze niesie znaczenie, nigdy dekorację.
+  Typografia: IBM Plex Sans (cyfry tabelaryczne w danych), IBM Plex Mono tylko dla tablic rejestracyjnych i numerów dokumentów.
+*/
 :root {
-  --background: #f6f7f5;
+  --background: #f3f5f4;
   --surface: #ffffff;
-  --foreground: #1b1f1c;
-  --muted: #5f6b63;
-  --border: #dfe3df;
-  --primary: #2f7d4f;
+  --surface-2: #f8faf9;
+  --foreground: #14201b;
+  --muted: #5b6963;
+  --subtle: #8a9690;
+  --border: #e1e6e3;
+  --border-strong: #c9d1cd;
+
+  --primary: #1f7a4d;
+  --primary-strong: #165c39;
   --primary-foreground: #ffffff;
-  --accent: #e9f3ec;
-  --warning: #b45309;
-  --danger: #b42318;
+  --accent: #e6f2eb;
+
+  --ink: #0f241c;
+  --ink-2: #183429;
+  --ink-foreground: #d7e4dd;
+  --ink-muted: #86a093;
+
+  --success: #2f8a57;
+  --success-soft: #e5f3ea;
+  --warning: #b86e00;
+  --warning-soft: #fdf3e1;
+  --danger: #c4372b;
+  --danger-soft: #fceae8;
+  --info: #2a6fb0;
+  --info-soft: #e6f0fa;
+  --plum: #7b4aa0;
+  --plum-soft: #f2eaf8;
+
+  --ring: #1f7a4d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted: var(--ink-muted);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-plum: var(--plum);
+  --color-plum-soft: var(--plum-soft);
+
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --radius-panel: 12px;
+  --shadow-panel: 0 1px 0 rgb(20 32 27 / 0.04), 0 1px 2px rgb(20 32 27 / 0.04);
+  --shadow-pop: 0 12px 32px -12px rgb(15 36 28 / 0.28), 0 2px 6px rgb(15 36 28 / 0.08);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-feature-settings: "ss02" 1;
+}
+
+/* Liczby w tabelach i kafelkach zawsze w równych kolumnach */
+.tabular-nums,
+table td {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #cfe7d9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Delikatny puls kropki „na żywo” w centrum operacyjnym */
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(47 138 87 / 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgb(47 138 87 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(47 138 87 / 0);
+  }
+}
+.live-dot {
+  animation: live-pulse 2.4s ease-out infinite;
 }

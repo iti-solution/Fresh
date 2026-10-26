@@ -1,9 +1,11 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DataTable } from "@/components/panel/data-table";
 import { PageHeader } from "@/components/panel/module-placeholder";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
+import { Plate } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import { VEHICLE_STATUS_LABELS } from "@/modules/masterdata/domain/format";
 import { canEdit } from "@/modules/tenancy/domain/access";
@@ -30,11 +32,24 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader title="Pojazdy" description={`${rows.length} pojazdów · ładowność służy do kontroli przeciążenia na tablicy planowania.`} />
-        {editable && <Link href="/kartoteki/pojazdy/nowy" className={buttonVariants()}>+ Nowy pojazd</Link>}
-      </div>
-      {sp.zapisano && <p role="status" className="mb-4 rounded-md bg-accent px-4 py-3 text-sm text-primary">Zapisano pojazd.</p>}
+      <PageHeader
+        title="Pojazdy"
+        description={`${rows.length} pojazdów · ładowność służy do kontroli przeciążenia na tablicy planowania.`}
+        actions={
+          <>
+            {editable && (
+              <Link href="/kartoteki/pojazdy/nowy" className={buttonVariants()}>
+                <Plus /> Nowy pojazd
+              </Link>
+            )}
+          </>
+        }
+      />
+      {sp.zapisano && (
+        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-accent px-4 py-2.5 text-sm text-primary-strong">
+          Zapisano pojazd.
+        </p>
+      )}
       <DataTable
         rows={rows}
         rowKey={(r) => r.id}
@@ -44,19 +59,37 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
             header: "Rejestracja",
             cell: (r) =>
               editable ? (
-                <Link href={`/kartoteki/pojazdy/${r.id}`} className="font-mono font-medium text-foreground hover:text-primary hover:underline">{r.registration}</Link>
+                <Link href={`/kartoteki/pojazdy/${r.id}`} className="inline-flex rounded hover:ring-2 hover:ring-primary/30">
+                  <Plate>{r.registration}</Plate>
+                </Link>
               ) : (
-                <span className="font-mono">{r.registration}</span>
+                <Plate>{r.registration}</Plate>
               ),
           },
-          { header: "Typ", cell: (r) => <span>{r.vehicle_type ?? "—"}<span className="block text-xs text-muted">{r.body_type}</span></span> },
+          {
+            header: "Typ",
+            cell: (r) => (
+              <span>
+                {r.vehicle_type ?? "—"}
+                <span className="block text-xs text-muted">{r.body_type}</span>
+              </span>
+            ),
+          },
           { header: "Masa", cell: (r) => <span className="tabular-nums">{num(r.capacity_kg)} kg</span> },
           { header: "Palety", cell: (r) => <span className="tabular-nums">{num(r.capacity_pallets)}</span> },
           { header: "Skrzynki", cell: (r) => <span className="tabular-nums">{num(r.capacity_crates)}</span> },
           { header: "m³", cell: (r) => <span className="tabular-nums">{num(r.capacity_m3)}</span> },
-          { header: "Własność", cell: (r) => (r.is_own ? "własny" : <Badge className="bg-warning/10 text-warning">{r.carriers?.name ?? "obcy"}</Badge>) },
+          {
+            header: "Własność",
+            cell: (r) =>
+              r.is_own ? "własny" : <Badge className="bg-warning/10 text-warning">{r.carriers?.name ?? "obcy"}</Badge>,
+          },
           { header: "Kierowca", cell: (r) => (r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—") },
-          { header: "Koszt km", cell: (r) => (r.cost_per_km ? <span className="tabular-nums">{Number(r.cost_per_km).toFixed(2).replace(".", ",")} zł</span> : "—") },
+          {
+            header: "Koszt km",
+            cell: (r) =>
+              r.cost_per_km ? <span className="tabular-nums">{Number(r.cost_per_km).toFixed(2).replace(".", ",")} zł</span> : "—",
+          },
           { header: "Status", cell: (r) => VEHICLE_STATUS_LABELS[r.status] ?? r.status },
         ]}
       />

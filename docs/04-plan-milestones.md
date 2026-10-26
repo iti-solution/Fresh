@@ -85,15 +85,20 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 **Gotowe gdy:** za miesiąc demo generujesz rozliczenie 6 kierowców jednym kliknięciem, a każda pozycja ma "skąd się wzięła".
 
 ## M6 — Centrum operacyjne i pilot (2 tydz.)
-- [ ] M6.1 Centrum operacyjne — **dyspozytor** (Realtime): postęp % per trasa, punkty spóźnione vs okno, trasy nierozpoczęte, brak potwierdzeń, alerty, zgłoszenia z trasy ze zdjęciami
-- [ ] M6.1a Widok **BOK**: wyszukiwarka „Gdzie jest dostawa?” (klient, zamówienie, telefon) → status, ETA vs okno, kierowca z telefonem, historia dnia; lista dostaw dnia z filtrami; rola `customer_service`
-- [ ] M6.1b **Podsumowanie dnia** (panel BOK + widok na telefon dla zarządu): sprzedaż dostarczona vs tydzień temu, trend, zamówienia, terminowość, reklamacje/zwroty/dowózki, najwięksi klienci, **opakowania** (wydano/wróciło, saldo u klientów i kaucja, zalegające > 30 dni, różnice u kierowców); rola `management`
-- [ ] M6.2 Mini-KPI: terminowość dostaw, km/punkt, punkty/trasę, czas obsługi punktu — dzień/tydzień
+- [~] M6.1 (zrobione 2026-10-26: `/centrum` — postęp tras jako „linia metra”, spóźnienia i zagrożenia vs okno, trasy nierozpoczęte, wyjątki, trasy do zamknięcia, gotówka i opakowania u kierowców, odświeżanie co 60 s; brakuje: Realtime, zdjęcia zgłoszeń) Centrum operacyjne — **dyspozytor** (Realtime): postęp % per trasa, punkty spóźnione vs okno, trasy nierozpoczęte, brak potwierdzeń, alerty, zgłoszenia z trasy ze zdjęciami
+- [x] M6.1a (2026-10-26: `/bok`, wyszukiwarka także w górnym pasku; strona startowa roli BOK) Widok **BOK**: wyszukiwarka „Gdzie jest dostawa?” (klient, zamówienie, telefon) → status, ETA vs okno, kierowca z telefonem, historia dnia; lista dostaw dnia z filtrami; rola `customer_service`
+- [~] M6.1b (zrobione 2026-10-26: `/raport` — dzień / 7 dni / 4 tygodnie z porównaniem, trend sprzedaży i terminowości, efektywność kierunków z kosztem, top klienci, wyjątki, opakowania i kaucja, gotówka; strona startowa roli Zarząd; brakuje: widok mobilny „na telefon”, zalegające > 30 dni) **Podsumowanie dnia** (panel BOK + widok na telefon dla zarządu): sprzedaż dostarczona vs tydzień temu, trend, zamówienia, terminowość, reklamacje/zwroty/dowózki, najwięksi klienci, **opakowania** (wydano/wróciło, saldo u klientów i kaucja, zalegające > 30 dni, różnice u kierowców); rola `management`
+- [~] M6.2 (terminowość, km/dostawę, dostawy/kurs w raporcie zarządu) Mini-KPI: terminowość dostaw, km/punkt, punkty/trasę, czas obsługi punktu — dzień/tydzień
 - [ ] M6.3 Onboarding klienta: kreator (firma → import punktów → pojazdy → kierowcy → szablony tras) — cel: nowy klient gotowy w 1 dzień
 - [ ] M6.4 Hardening: kopie zapasowe, logi audytu zmian tras/rozliczeń, testy RLS (tenant A nie widzi B), test obciążenia 5 000 punktów/dzień
 - [ ] M6.5 Uruchomienie pilota: pomiar "przed" (tydzień), szkolenie dyspozytora i kierowców, 10 dni bez Excela (Definicja gotowości w `02-zakres-mvp.md` §5)
 
 ---
+
+## Redesign UI (2026-10-26)
+- [x] System wizualny v2 (`docs/06-system-wizualny.md`): IBM Plex Sans, tokeny kolorów statusów, ciemna nawigacja z ikonami, globalna wyszukiwarka dostaw, nowe komponenty (`Panel`, `StatTile`, `Pill`, `Plate`, `Meter`, `Segmented`, wykresy SVG)
+- [x] Przebudowane: pulpit, planowanie (tablica 1–2 kolumny zależnie od monitora), zamówienia, kartoteki, formularze, logowanie i wybór firmy, aplikacja kierowcy
+- [x] Historia demo (migracja `0008`): ~4 tygodnie zrealizowanych tras + dzień „w trakcie”, żeby zestawienia miały dane na pokazie
 
 ## Backlog P1 (po pilocie, kolejność wg feedbacku)
 Reklamacje z decyzją (odrzucenie/uznanie/dowózka) · Analiza dowózek (przyczyna, odpowiedzialność, koszt, wpływ na premię) · KPI pustych przebiegów · Wydruk raportu na drukarce Zebra (jeśli potrzebny) · Zwroty — obsługa w biurze (decyzja, jakość, dokument) (pełne/częściowe, przyczyny, zdjęcia) · Reklamacje · Rozliczenia przewoźników (punktowe, km, strefowe, ryczałt) · Gotówka (przyjęcie, rozliczenie, różnice kasowe) · Alerty (push/mail) · Integracja GPS Consalnet · Natywny konektor WF-Mag / WMS · Komunikator BOK/dyspozytor ↔ kierowca (+ ETA dla klienta)

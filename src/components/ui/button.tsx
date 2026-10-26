@@ -3,15 +3,17 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+  "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[background-color,border-color,color,box-shadow] disabled:pointer-events-none disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:bg-primary/90",
-        outline: "border border-border bg-surface hover:bg-accent",
-        ghost: "hover:bg-accent",
+        primary: "bg-primary text-primary-foreground shadow-[inset_0_-1px_0_rgb(0_0_0/0.12)] hover:bg-primary-strong",
+        outline: "border border-border-strong bg-surface text-foreground hover:border-subtle hover:bg-surface-2",
+        ghost: "text-muted hover:bg-foreground/[0.05] hover:text-foreground",
+        danger: "bg-danger text-white shadow-[inset_0_-1px_0_rgb(0_0_0/0.12)] hover:bg-danger/90",
+        soft: "bg-accent text-primary-strong hover:bg-[#d6eadf]",
       },
-      size: { sm: "h-8 px-3", md: "h-10 px-4", lg: "h-12 px-6 text-base" },
+      size: { xs: "h-7 rounded-md px-2 text-xs", sm: "h-8 px-3 text-[13px]", md: "h-10 px-4", lg: "h-12 px-6 text-base" },
     },
     defaultVariants: { variant: "primary", size: "md" },
   },

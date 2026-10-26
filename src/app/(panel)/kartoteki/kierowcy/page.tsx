@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DataTable } from "@/components/panel/data-table";
@@ -15,7 +16,9 @@ export default async function DriversPage({ searchParams }: PageProps<"/kartotek
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("drivers")
-    .select("id, first_name, last_name, phone, employment_type, is_active, user_id, pin_hash, vehicles!drivers_default_vehicle_id_fkey(registration)")
+    .select(
+      "id, first_name, last_name, phone, employment_type, is_active, user_id, pin_hash, vehicles!drivers_default_vehicle_id_fkey(registration)",
+    )
     .eq("tenant_id", ctx.tenantId)
     .order("last_name");
   if (error) throw error;
@@ -24,11 +27,24 @@ export default async function DriversPage({ searchParams }: PageProps<"/kartotek
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader title="Kierowcy" description={`${rows.length} kierowców · PIN do terminala i stawki dochodzą w etapach M4 i M5.`} />
-        {editable && <Link href="/kartoteki/kierowcy/nowy" className={buttonVariants()}>+ Nowy kierowca</Link>}
-      </div>
-      {sp.zapisano && <p role="status" className="mb-4 rounded-md bg-accent px-4 py-3 text-sm text-primary">Zapisano kierowcę.</p>}
+      <PageHeader
+        title="Kierowcy"
+        description={`${rows.length} kierowców · PIN do terminala i stawki dochodzą w etapach M4 i M5.`}
+        actions={
+          <>
+            {editable && (
+              <Link href="/kartoteki/kierowcy/nowy" className={buttonVariants()}>
+                <Plus /> Nowy kierowca
+              </Link>
+            )}
+          </>
+        }
+      />
+      {sp.zapisano && (
+        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-accent px-4 py-2.5 text-sm text-primary-strong">
+          Zapisano kierowcę.
+        </p>
+      )}
       <DataTable
         rows={rows}
         rowKey={(r) => r.id}
@@ -38,7 +54,10 @@ export default async function DriversPage({ searchParams }: PageProps<"/kartotek
             header: "Kierowca",
             cell: (r) =>
               editable ? (
-                <Link href={`/kartoteki/kierowcy/${r.id}`} className="font-medium text-foreground hover:text-primary hover:underline">{`${r.first_name} ${r.last_name}`}</Link>
+                <Link
+                  href={`/kartoteki/kierowcy/${r.id}`}
+                  className="font-medium text-foreground hover:text-primary hover:underline"
+                >{`${r.first_name} ${r.last_name}`}</Link>
               ) : (
                 <span className="font-medium">{`${r.first_name} ${r.last_name}`}</span>
               ),

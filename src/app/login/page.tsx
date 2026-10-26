@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/ui/primitives";
+import { AuthShell } from "@/components/panel/auth-shell";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Logowanie" };
@@ -10,22 +10,22 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const failed = params.error === "link";
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm space-y-6 p-8">
-        <div className="space-y-1">
-          <p className="text-2xl font-semibold tracking-tight">
-            <span className="text-primary">Fresh</span>
-          </p>
-          <h1 className="text-lg font-medium">Zaloguj się</h1>
-          <p className="text-sm text-muted">Bez hasła — wyślemy Ci link na e-mail.</p>
+    <AuthShell>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Zaloguj się do Fresh</h1>
+          <p className="text-sm text-muted">Bez hasła. Wyślemy Ci jednorazowy link na e-mail.</p>
         </div>
         {failed && (
-          <p className="rounded-md bg-danger/10 p-3 text-sm text-danger" role="alert">
+          <p className="rounded-lg border border-danger/25 bg-danger-soft p-3 text-sm text-danger" role="alert">
             Link wygasł albo został już użyty. Wyślij nowy.
           </p>
         )}
         <LoginForm next={next} />
-      </Card>
-    </main>
+        <p className="border-t border-border pt-5 text-xs text-muted">
+          Kierowcy logują się na terminalu firmy numerem i PIN-em — nie potrzebują e-maila.
+        </p>
+      </div>
+    </AuthShell>
   );
 }

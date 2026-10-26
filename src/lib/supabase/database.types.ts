@@ -2320,6 +2320,7 @@ export type Database = {
       };
       resequence_route: { Args: { p_route: string }; Returns: undefined };
       reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
+      seed_demo_history: { Args: { p_tenant: string; p_days?: number }; Returns: Json };
       set_driver_pin: {
         Args: { p_driver: string; p_pin: string };
         Returns: undefined;
