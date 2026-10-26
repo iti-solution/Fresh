@@ -127,3 +127,12 @@ export function toGrosze(value: number | string | null | undefined): number {
 export function formatPln(grosze: number): string {
   return (grosze / 100).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " zł";
 }
+
+/** Kwota w skrócie do kafelków: 1 240 zł, 66,2 tys. zł, 1,4 mln zł. */
+export function formatPlnCompact(grosze: number): string {
+  const zl = grosze / 100;
+  const abs = Math.abs(zl);
+  if (abs >= 1_000_000) return `${(zl / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} mln zł`;
+  if (abs >= 10_000) return `${(zl / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} tys. zł`;
+  return `${Math.round(zl).toLocaleString("pl-PL")} zł`;
+}

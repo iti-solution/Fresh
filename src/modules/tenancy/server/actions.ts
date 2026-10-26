@@ -45,6 +45,7 @@ export async function createDemoTenant(): Promise<void> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_demo_tenant");
   if (error || !data) throw new Error("Nie udało się utworzyć firmy demo.");
+  await seedDemoHistory(supabase, data);
   await setTenantCookie(data);
   redirect("/pulpit");
 }
@@ -61,6 +62,13 @@ export async function resetDemoTenant(): Promise<void> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("reset_demo_tenant");
   if (error || !data) throw new Error("Nie udało się odświeżyć firmy demo.");
+  await seedDemoHistory(supabase, data);
   await setTenantCookie(data);
   redirect("/pulpit?demo=odswiezone");
+}
+
+/** Historia demo (~4 tygodnie tras) pod zestawienia. Brak migracji 0008 nie blokuje założenia firmy demo. */
+async function seedDemoHistory(supabase: Awaited<ReturnType<typeof createClient>>, tenantId: string) {
+  const { error } = await supabase.rpc("seed_demo_history", { p_tenant: tenantId });
+  if (error) console.warn("seed_demo_history:", error.message);
 }

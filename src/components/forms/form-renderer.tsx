@@ -9,13 +9,58 @@ import { cn } from "@/lib/utils";
 export type FieldOption = { value: string; label: string };
 
 export type FieldDef =
-  | { kind: "text" | "tel" | "date" | "time"; name: string; label: string; defaultValue?: string | null; placeholder?: string; span?: 1 | 2 | 3; hint?: string; required?: boolean }
-  | { kind: "number"; name: string; label: string; defaultValue?: number | string | null; placeholder?: string; span?: 1 | 2 | 3; hint?: string; step?: string; suffix?: string }
-  | { kind: "textarea"; name: string; label: string; defaultValue?: string | null; placeholder?: string; span?: 1 | 2 | 3; hint?: string }
-  | { kind: "select"; name: string; label: string; defaultValue?: string | null; options: FieldOption[]; span?: 1 | 2 | 3; hint?: string; emptyLabel?: string }
+  | {
+      kind: "text" | "tel" | "date" | "time";
+      name: string;
+      label: string;
+      defaultValue?: string | null;
+      placeholder?: string;
+      span?: 1 | 2 | 3;
+      hint?: string;
+      required?: boolean;
+    }
+  | {
+      kind: "number";
+      name: string;
+      label: string;
+      defaultValue?: number | string | null;
+      placeholder?: string;
+      span?: 1 | 2 | 3;
+      hint?: string;
+      step?: string;
+      suffix?: string;
+    }
+  | {
+      kind: "textarea";
+      name: string;
+      label: string;
+      defaultValue?: string | null;
+      placeholder?: string;
+      span?: 1 | 2 | 3;
+      hint?: string;
+    }
+  | {
+      kind: "select";
+      name: string;
+      label: string;
+      defaultValue?: string | null;
+      options: FieldOption[];
+      span?: 1 | 2 | 3;
+      hint?: string;
+      emptyLabel?: string;
+    }
   | { kind: "checkbox"; name: string; label: string; defaultChecked?: boolean; span?: 1 | 2 | 3; hint?: string }
   | { kind: "weekdays"; name: string; label: string; defaultValue?: number[]; span?: 1 | 2 | 3; hint?: string }
-  | { kind: "timerange"; name: string; nameTo: string; label: string; defaultFrom?: string; defaultTo?: string; span?: 1 | 2 | 3; hint?: string };
+  | {
+      kind: "timerange";
+      name: string;
+      nameTo: string;
+      label: string;
+      defaultFrom?: string;
+      defaultTo?: string;
+      span?: 1 | 2 | 3;
+      hint?: string;
+    };
 
 export type SectionDef = { title: string; description?: string; fields: FieldDef[] };
 
@@ -61,17 +106,33 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
   switch (f.kind) {
     case "textarea":
       control = (
-        <textarea id={id} name={f.name} defaultValue={f.defaultValue ?? ""} placeholder={f.placeholder} rows={3}
-          aria-invalid={invalid} aria-describedby={describedBy}
-          className={cn(inputCls, "h-auto min-h-20 py-2")} />
+        <textarea
+          id={id}
+          name={f.name}
+          defaultValue={f.defaultValue ?? ""}
+          placeholder={f.placeholder}
+          rows={3}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
+          className={cn(inputCls, "h-auto min-h-20 py-2")}
+        />
       );
       break;
     case "select":
       control = (
-        <select id={id} name={f.name} defaultValue={f.defaultValue ?? ""} aria-invalid={invalid} aria-describedby={describedBy} className={inputCls}>
+        <select
+          id={id}
+          name={f.name}
+          defaultValue={f.defaultValue ?? ""}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
+          className={inputCls}
+        >
           {f.emptyLabel !== undefined && <option value="">{f.emptyLabel}</option>}
           {f.options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
           ))}
         </select>
       );
@@ -89,7 +150,13 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
         <div role="group" aria-labelledby={`${id}-label`} className="flex flex-wrap gap-1.5">
           {WEEKDAYS.map((d) => (
             <label key={d.v} className="cursor-pointer">
-              <input type="checkbox" name={`${f.name}[]`} value={d.v} defaultChecked={f.defaultValue?.includes(d.v)} className="peer sr-only" />
+              <input
+                type="checkbox"
+                name={`${f.name}[]`}
+                value={d.v}
+                defaultChecked={f.defaultValue?.includes(d.v)}
+                className="peer sr-only"
+              />
               <span className="flex h-10 w-11 items-center justify-center rounded-md border border-border bg-surface text-sm font-medium peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
                 {d.l}
               </span>
@@ -101,25 +168,61 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
     case "timerange":
       control = (
         <div className="flex items-center gap-2">
-          <input id={id} type="time" name={f.name} defaultValue={f.defaultFrom ?? ""} aria-label={`${f.label} od`} aria-invalid={invalid} className={inputCls} />
+          <input
+            id={id}
+            type="time"
+            name={f.name}
+            defaultValue={f.defaultFrom ?? ""}
+            aria-label={`${f.label} od`}
+            aria-invalid={invalid}
+            className={inputCls}
+          />
           <span className="text-muted">–</span>
-          <input type="time" name={f.nameTo} defaultValue={f.defaultTo ?? ""} aria-label={`${f.label} do`} aria-invalid={invalid} className={inputCls} />
+          <input
+            type="time"
+            name={f.nameTo}
+            defaultValue={f.defaultTo ?? ""}
+            aria-label={`${f.label} do`}
+            aria-invalid={invalid}
+            className={inputCls}
+          />
         </div>
       );
       break;
     case "number":
       control = (
         <div className="relative">
-          <input id={id} name={f.name} inputMode="decimal" defaultValue={f.defaultValue ?? ""} placeholder={f.placeholder}
-            aria-invalid={invalid} aria-describedby={describedBy} className={cn(inputCls, f.suffix && "pr-12")} />
-          {f.suffix && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted">{f.suffix}</span>}
+          <input
+            id={id}
+            name={f.name}
+            inputMode="decimal"
+            defaultValue={f.defaultValue ?? ""}
+            placeholder={f.placeholder}
+            aria-invalid={invalid}
+            aria-describedby={describedBy}
+            className={cn(inputCls, f.suffix && "pr-12")}
+          />
+          {f.suffix && (
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted">
+              {f.suffix}
+            </span>
+          )}
         </div>
       );
       break;
     default:
       control = (
-        <input id={id} type={f.kind} name={f.name} defaultValue={f.defaultValue ?? ""} placeholder={f.placeholder} required={f.required}
-          aria-invalid={invalid} aria-describedby={describedBy} className={inputCls} />
+        <input
+          id={id}
+          type={f.kind}
+          name={f.name}
+          defaultValue={f.defaultValue ?? ""}
+          placeholder={f.placeholder}
+          required={f.required}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
+          className={inputCls}
+        />
       );
   }
 
@@ -130,9 +233,15 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
       </label>
       {control}
       {invalid ? (
-        <p id={`${id}-err`} className="text-xs text-danger">{errors!.join(" ")}</p>
+        <p id={`${id}-err`} className="text-xs text-danger">
+          {errors!.join(" ")}
+        </p>
       ) : (
-        f.hint && <p id={`${id}-hint`} className="text-xs text-muted">{f.hint}</p>
+        f.hint && (
+          <p id={`${id}-hint`} className="text-xs text-muted">
+            {f.hint}
+          </p>
+        )
       )}
     </div>
   );
@@ -171,12 +280,18 @@ export function FormRenderer({
         </fieldset>
       ))}
       <div className="sticky bottom-0 flex items-center gap-3 border-t border-border bg-background/95 py-3 backdrop-blur">
-        <Button type="submit" disabled={pending}>{pending ? "Zapisywanie…" : submitLabel}</Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Zapisywanie…" : submitLabel}
+        </Button>
         {cancelHref && (
-          <Link href={cancelHref} className="text-sm text-muted hover:underline">Anuluj</Link>
+          <Link href={cancelHref} className="text-sm text-muted hover:underline">
+            Anuluj
+          </Link>
         )}
         {state.message && (
-          <p role="status" className={cn("text-sm", state.ok ? "text-primary" : "text-danger")}>{state.message}</p>
+          <p role="status" className={cn("text-sm", state.ok ? "text-primary" : "text-danger")}>
+            {state.message}
+          </p>
         )}
       </div>
     </form>
