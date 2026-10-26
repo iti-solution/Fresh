@@ -1,44 +1,128 @@
+import { Plus, Waypoints } from "lucide-react";
 import type { Metadata } from "next";
-import { DataTable } from "@/components/panel/data-table";
-import { PageHeader } from "@/components/panel/module-placeholder";
+import Link from "next/link";
+import { EmptyState, Notice, PageHeader, Panel } from "@/components/panel/page";
+import { buttonVariants } from "@/components/ui/button";
+import { Pill, Plate } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import { formatTime, formatWeekdays } from "@/modules/masterdata/domain/format";
+import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Szablony tras" };
 
+const name = (d: { first_name: string; last_name: string } | null) => (d ? `${d.first_name} ${d.last_name}` : null);
+
 export default async function TemplatesPage() {
   const ctx = await requireAccess("/kartoteki/szablony");
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const editable = canEdit(ctx.role);
+  const base = "id, name, weekdays, planned_start, is_active, vehicles(registration), route_template_points(count)";
+  const full = await supabase
     .from("route_templates")
     .select(
-      "id, name, weekdays, planned_start, vehicles(registration), drivers(first_name, last_name), route_template_points(count)",
+      `${base}, main:drivers!route_templates_default_driver_id_fkey(first_name, last_name), alt:drivers!route_templates_alt_driver_id_fkey(first_name, last_name)`,
     )
     .eq("tenant_id", ctx.tenantId)
+    .order("is_active", { ascending: false })
     .order("name");
-  if (error) throw error;
-  const rows = data ?? [];
+  // baza bez migracji 0010 (brak kierowcy zastępczego) — lista działa dalej, tylko bez tej kolumny
+  const needsMigration = Boolean(full.error);
+  const fallback = needsMigration
+    ? await supabase
+        .from("route_templates")
+        .select(`${base}, main:drivers(first_name, last_name)`)
+        .eq("tenant_id", ctx.tenantId)
+        .order("name")
+    : null;
+  if (fallback?.error) throw fallback.error;
+  const rows: {
+    id: string;
+    name: string;
+    weekdays: number[];
+    planned_start: string | null;
+    is_active: boolean;
+    vehicles: { registration: string } | null;
+    route_template_points: { count: number }[];
+    main: { first_name: string; last_name: string } | null;
+    alt?: { first_name: string; last_name: string } | null;
+  }[] = (full.data ?? fallback?.data ?? []) as never;
 
   return (
     <>
       <PageHeader
         title="Szablony tras"
-        description="Stałe trasy, z których powstaje plan dnia. Edycja i przypisywanie punktów — etap M3."
+        description="Trasy stałe: jakie oddziały klientów obsługują, w które dni i o której wyjeżdżają. Z szablonów powstaje plan dnia."
+        actions={
+          editable ? (
+            <Link href="/kartoteki/szablony/nowy" className={buttonVariants({ size: "sm" })}>
+              <Plus /> Nowy szablon
+            </Link>
+          ) : undefined
+        }
       />
-      <DataTable
-        rows={rows}
-        rowKey={(r) => r.id}
-        empty="Brak szablonów tras."
-        columns={[
-          { header: "Trasa", cell: (r) => <span className="font-medium">{r.name}</span> },
-          { header: "Dni", cell: (r) => formatWeekdays(r.weekdays) },
-          { header: "Start", cell: (r) => <span className="tabular-nums">{formatTime(r.planned_start)}</span> },
-          { header: "Punkty", cell: (r) => <span className="tabular-nums">{r.route_template_points[0]?.count ?? 0}</span> },
-          { header: "Pojazd", cell: (r) => (r.vehicles ? <span className="font-mono">{r.vehicles.registration}</span> : "—") },
-          { header: "Kierowca", cell: (r) => (r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—") },
-        ]}
-      />
+      {needsMigration && (
+        <Notice tone="warning">
+          Baza nie ma jeszcze kolumny kierowcy zastępczego. Zastosuj migrację 0010_template_alt_driver.sql w Supabase.
+        </Notice>
+      )}
+      <Panel flush>
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={<Waypoints />}
+            title="Nie ma jeszcze szablonów tras"
+            action={
+              editable ? (
+                <Link href="/kartoteki/szablony/nowy" className={buttonVariants()}>
+                  Utwórz pierwszy szablon
+                </Link>
+              ) : undefined
+            }
+          >
+            Szablon to trasa stała, np. „Kraków Zachód” — z listą oddziałów klientów, dniami i godziną wyjazdu.
+          </EmptyState>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[960px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
+                  <th className="py-2.5 pr-3 pl-5 font-medium">Trasa</th>
+                  <th className="px-3 py-2.5 font-medium">Dni</th>
+                  <th className="px-3 py-2.5 font-medium">Wyjazd</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Punkty</th>
+                  <th className="px-3 py-2.5 font-medium">Auto</th>
+                  <th className="px-3 py-2.5 font-medium">Kierowca wstępny</th>
+                  <th className="py-2.5 pr-5 pl-3 font-medium">Kierowca zastępczy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                    <td className="py-3 pr-3 pl-5">
+                      <Link href={`/kartoteki/szablony/${r.id}`} className="font-medium hover:text-primary-strong">
+                        {r.name}
+                      </Link>
+                      {!r.is_active && (
+                        <Pill tone="neutral" className="ml-2">
+                          nieaktywna
+                        </Pill>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">{formatWeekdays(r.weekdays)}</td>
+                    <td className="px-3 py-3 tabular-nums">{formatTime(r.planned_start) || "—"}</td>
+                    <td className="px-3 py-3 text-right tabular-nums">{r.route_template_points[0]?.count ?? 0}</td>
+                    <td className="px-3 py-3">
+                      {r.vehicles ? <Plate>{r.vehicles.registration}</Plate> : <span className="text-subtle">—</span>}
+                    </td>
+                    <td className="px-3 py-3">{name(r.main) ?? <span className="text-subtle">—</span>}</td>
+                    <td className="py-3 pr-5 pl-3">{name(r.alt ?? null) ?? <span className="text-subtle">—</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
     </>
   );
 }
