@@ -80,7 +80,7 @@ function PinPad({
   };
   return (
     <div className="flex flex-col gap-4">
-      <button onClick={onBack} className="h-11 self-start text-sm text-primary">
+      <button onClick={onBack} className="h-11 self-start text-sm text-primary-strong">
         ‹ Zmień kierowcę
       </button>
       <p className="text-center text-xl font-semibold">{driver.name}</p>

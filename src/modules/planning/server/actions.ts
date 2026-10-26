@@ -72,7 +72,9 @@ export async function setRouteResource(routeId: string, field: "vehicle_id" | "d
   const value = str(fd, field) || null;
   await p.supabase
     .from("routes")
-    .update(field === "vehicle_id" ? { vehicle_id: value, status: "draft" as const } : { driver_id: value, status: "draft" as const })
+    .update(
+      field === "vehicle_id" ? { vehicle_id: value, status: "draft" as const } : { driver_id: value, status: "draft" as const },
+    )
     .eq("id", routeId)
     .eq("tenant_id", p.ctx.tenantId)
     .in("status", ["draft", "planned"]);
@@ -87,7 +89,12 @@ export async function markReady(routeId: string, day: string, force: boolean): P
   const route = plan.routes.find((r) => r.id === routeId);
   if (!route || route.status !== "draft") return;
   if (!canMarkReady(route.issues, force).ok) return;
-  await p.supabase.from("routes").update({ status: "planned" }).eq("id", routeId).eq("tenant_id", p.ctx.tenantId).eq("status", "draft");
+  await p.supabase
+    .from("routes")
+    .update({ status: "planned" })
+    .eq("id", routeId)
+    .eq("tenant_id", p.ctx.tenantId)
+    .eq("status", "draft");
   done();
 }
 
@@ -104,7 +111,12 @@ export async function markAllReady(day: string): Promise<void> {
 export async function backToDraft(routeId: string): Promise<void> {
   const p = await planner();
   if (!p) return;
-  await p.supabase.from("routes").update({ status: "draft" }).eq("id", routeId).eq("tenant_id", p.ctx.tenantId).eq("status", "planned");
+  await p.supabase
+    .from("routes")
+    .update({ status: "draft" })
+    .eq("id", routeId)
+    .eq("tenant_id", p.ctx.tenantId)
+    .eq("status", "planned");
   done();
 }
 
@@ -129,7 +141,11 @@ export async function createExtraRoute(day: string, _prev: FormState, fd: FormDa
 
   let courseNo = 1;
   if (driverId) {
-    const { count } = await p.supabase.from("routes").select("id", { count: "exact", head: true }).eq("route_date", day).eq("driver_id", driverId);
+    const { count } = await p.supabase
+      .from("routes")
+      .select("id", { count: "exact", head: true })
+      .eq("route_date", day)
+      .eq("driver_id", driverId);
     courseNo = (count ?? 0) + 1;
   }
   const { error } = await p.supabase.from("routes").insert({
@@ -146,4 +162,51 @@ export async function createExtraRoute(day: string, _prev: FormState, fd: FormDa
   if (error) return { ok: false, message: "Nie udało się utworzyć kursu." };
   done();
   return { ok: true, message: `Utworzono kurs „${input.name}”. Przenieś na niego zamówienia z listy po lewej.` };
+}
+
+/**
+ * „Przydziel jak ostatnio”: trasom stałym bez auta lub kierowcy podpowiada przydział z ostatniego
+ * dnia, w którym ta trasa jechała (z dziennika przydziałów). Nie zmienia tego, co dyspozytor już ustawił.
+ */
+export async function copyLastAssignments(day: string): Promise<void> {
+  const p = await planner();
+  if (!p || !DATE_RE.test(day)) return;
+  const { data: routes } = await p.supabase
+    .from("routes")
+    .select("id, template_id, vehicle_id, driver_id, course_no")
+    .eq("tenant_id", p.ctx.tenantId)
+    .eq("route_date", day)
+    .in("status", ["draft", "planned"]);
+  const usedVehicles = new Set((routes ?? []).filter((r) => r.vehicle_id).map((r) => `${r.course_no}:${r.vehicle_id}`));
+  const usedDrivers = new Set((routes ?? []).filter((r) => r.driver_id).map((r) => `${r.course_no}:${r.driver_id}`));
+  for (const r of routes ?? []) {
+    if (!r.template_id || (r.vehicle_id && r.driver_id)) continue;
+    const { data: last } = await p.supabase
+      .from("routes")
+      .select("vehicle_id, driver_id")
+      .eq("tenant_id", p.ctx.tenantId)
+      .eq("template_id", r.template_id)
+      .lt("route_date", day)
+      .not("vehicle_id", "is", null)
+      .order("route_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!last) continue;
+    const patch: { vehicle_id?: string; driver_id?: string } = {};
+    if (!r.vehicle_id && last.vehicle_id && !usedVehicles.has(`${r.course_no}:${last.vehicle_id}`)) {
+      patch.vehicle_id = last.vehicle_id;
+      usedVehicles.add(`${r.course_no}:${last.vehicle_id}`);
+    }
+    if (!r.driver_id && last.driver_id && !usedDrivers.has(`${r.course_no}:${last.driver_id}`)) {
+      patch.driver_id = last.driver_id;
+      usedDrivers.add(`${r.course_no}:${last.driver_id}`);
+    }
+    if (Object.keys(patch).length)
+      await p.supabase
+        .from("routes")
+        .update({ ...patch, status: "draft" })
+        .eq("id", r.id)
+        .eq("tenant_id", p.ctx.tenantId);
+  }
+  done();
 }

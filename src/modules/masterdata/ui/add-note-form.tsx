@@ -14,7 +14,7 @@ export function AddNoteForm({ action, today }: { action: (s: FormState, fd: Form
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-sm font-medium text-primary hover:underline">
+      <button type="button" onClick={() => setOpen(true)} className="text-sm font-medium text-primary-strong hover:underline">
         + Dodaj uwagę tymczasową
       </button>
     );
@@ -42,7 +42,7 @@ export function AddNoteForm({ action, today }: { action: (s: FormState, fd: Form
         <button type="button" onClick={() => setOpen(false)} className="h-10 px-2 text-sm text-muted hover:underline">Zamknij</button>
       </div>
       {err("valid_to") && <p className="text-xs text-danger">{err("valid_to")}</p>}
-      {state.message && <p role="status" className={state.ok ? "text-xs text-primary" : "text-xs text-danger"}>{state.message}</p>}
+      {state.message && <p role="status" className={state.ok ? "text-xs text-primary-strong" : "text-xs text-danger"}>{state.message}</p>}
     </form>
   );
 }

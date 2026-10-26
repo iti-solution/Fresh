@@ -11,7 +11,7 @@ export default async function TerminalPage() {
   const allowed = canEdit(ctx.role);
   return (
     <main className="flex flex-1 flex-col justify-center gap-4 p-6">
-      <p className="text-2xl font-semibold text-primary">Przypisz terminal</p>
+      <p className="text-2xl font-semibold text-primary-strong">Przypisz terminal</p>
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 text-sm">
         <p>
           Ten telefon / terminal zostanie przypisany do firmy <strong>{ctx.tenantName}</strong>. Potem zostaniesz wylogowany, a na

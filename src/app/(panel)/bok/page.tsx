@@ -274,7 +274,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
                         {r.route.driver ?? "—"}
                         {r.route.driverPhone && (
                           <a
-                            className="text-primary hover:underline"
+                            className="text-primary-strong hover:underline"
                             href={`tel:${r.route.driverPhone.replace(/\s/g, "")}`}
                             title="Zadzwoń do kierowcy"
                           >

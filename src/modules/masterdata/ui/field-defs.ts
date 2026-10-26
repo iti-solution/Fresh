@@ -77,7 +77,8 @@ export function pointSections(
   ];
 }
 
-export function vehicleSections(v: Row, carriers: FieldOption[], drivers: FieldOption[]): SectionDef[] {
+/** Kierowca nie jest przypisany do auta na stałe — przydział robi dyspozytor na każdy dzień (trasa). */
+export function vehicleSections(v: Row, carriers: FieldOption[]): SectionDef[] {
   return [
     {
       title: "Pojazd",
@@ -88,7 +89,6 @@ export function vehicleSections(v: Row, carriers: FieldOption[], drivers: FieldO
           { value: "active", label: "aktywny" }, { value: "service", label: "serwis" }, { value: "inactive", label: "nieaktywny" }] },
         { kind: "text", name: "vehicle_type", label: "Typ pojazdu", defaultValue: s(v, "vehicle_type"), placeholder: "dostawczy 3,5 t" },
         { kind: "text", name: "body_type", label: "Zabudowa", defaultValue: s(v, "body_type"), placeholder: "chłodnia, izoterma" },
-        { kind: "select", name: "default_driver_id", label: "Kierowca", defaultValue: s(v, "default_driver_id"), options: drivers, emptyLabel: "— brak —" },
       ],
     },
     {
@@ -114,7 +114,7 @@ export function vehicleSections(v: Row, carriers: FieldOption[], drivers: FieldO
   ];
 }
 
-export function driverSections(d: Row, vehicles: FieldOption[]): SectionDef[] {
+export function driverSections(d: Row): SectionDef[] {
   return [
     {
       title: "Kierowca",
@@ -125,7 +125,6 @@ export function driverSections(d: Row, vehicles: FieldOption[]): SectionDef[] {
         { kind: "select", name: "employment_type", label: "Forma współpracy", defaultValue: s(d, "employment_type"), emptyLabel: "— wybierz —", options: [
           { value: "etat (UoP)", label: "etat (UoP)" }, { value: "dowózkowy (B2B)", label: "dowózkowy (B2B)" },
           { value: "zlecenie", label: "zlecenie" }, { value: "przewoźnik", label: "przewoźnik" }] },
-        { kind: "select", name: "default_vehicle_id", label: "Domyślny pojazd", defaultValue: s(d, "default_vehicle_id"), options: vehicles, emptyLabel: "— brak —" },
         { kind: "checkbox", name: "is_active", label: "Aktywny", defaultChecked: d ? Boolean(d.is_active) : true },
       ],
     },

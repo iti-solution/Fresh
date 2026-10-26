@@ -100,6 +100,14 @@ Razem: ~15–16 tygodni do pilota (po warsztatach: +gotówka, skrzynki, PIN, GPS
 - [x] Przebudowane: pulpit, planowanie (tablica 1–2 kolumny zależnie od monitora), zamówienia, kartoteki, formularze, logowanie i wybór firmy, aplikacja kierowcy
 - [x] Historia demo (migracja `0008`): ~4 tygodnie zrealizowanych tras + dzień „w trakcie”, żeby zestawienia miały dane na pokazie
 
+## Poprawki 2026-10-26 (wieczór)
+- [x] Kierowca nie jest przypisany do auta na stałe: usunięte „domyślne” pary w kartotekach; auto i kierowca są przydzielane do trasy na dany dzień (dyspozytor), kierowca może zmienić auto przy starcie trasy
+- [x] **Dziennik przydziałów** (`/kartoteki/pojazdy/dziennik`): kto, którym autem, na jakiej trasie i z jakimi zamówieniami jechał danego dnia; historia 30 dni na karcie auta i kierowcy; „ostatni przydział” na listach
+- [x] Planowanie: alarm, gdy to samo auto lub kierowca jest na dwóch trasach w tym samym kursie; przycisk „Przydziel jak ostatnio”
+- [x] Demo (migracja `0009`): kierowcy rotują między trasami, raz w tygodniu auto zastępcze
+- [x] Barwy ExpertWMS (granat + pomarańcz, Barlow), zwarte menu bez przewijania
+- [ ] Decyzja produktowa: czy trasa stała ma dalej podpowiadać auto/kierowcę przy tworzeniu dnia (dziś: tak, jako propozycja do zmiany)
+
 ## Backlog P1 (po pilocie, kolejność wg feedbacku)
 Reklamacje z decyzją (odrzucenie/uznanie/dowózka) · Analiza dowózek (przyczyna, odpowiedzialność, koszt, wpływ na premię) · KPI pustych przebiegów · Wydruk raportu na drukarce Zebra (jeśli potrzebny) · Zwroty — obsługa w biurze (decyzja, jakość, dokument) (pełne/częściowe, przyczyny, zdjęcia) · Reklamacje · Rozliczenia przewoźników (punktowe, km, strefowe, ryczałt) · Gotówka (przyjęcie, rozliczenie, różnice kasowe) · Alerty (push/mail) · Integracja GPS Consalnet · Natywny konektor WF-Mag / WMS · Komunikator BOK/dyspozytor ↔ kierowca (+ ETA dla klienta)
 

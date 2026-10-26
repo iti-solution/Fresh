@@ -1,17 +1,21 @@
-# Fresh — system wizualny (v2, 2026-10-26)
+# Fresh — system wizualny (v3, 2026-10-26 — barwy ExpertWMS)
 
 Cel: aplikacja wygląda jak jedno narzędzie, a nie zbiór ekranów. Dyspozytor pracuje na dużym monitorze o 5 rano, BOK odbiera telefony, zarząd ogląda raport na laptopie, kierowca trzyma terminal jedną ręką.
 
 ## Zasady
-1. **Kolor znaczy coś.** Zieleń liścia = w oknie / dostarczono, cytrus = uwaga, pomidor = alarm, niebo = w trasie / teraz, śliwka = reklamacje i zwroty. Nie używamy kolorów dekoracyjnie.
+1. **Marka: granat + pomarańcz ExpertWMS.** Granat (#0f2a48) to nawigacja i struktura, pomarańcz (#ff5f00) to akcje (przyciski, aktywna zakładka, aktywna pozycja menu) i wykresy sprzedaży. Pomarańcz **nie** oznacza statusu.
+1a. **Statusy są znaczeniowe:** zieleń = w oknie / dostarczono / zapisano, bursztyn = uwaga, czerwień = alarm, błękit = w trasie / teraz, śliwka = reklamacje i zwroty. Wypełnienia „zwykłe” (ładowność) w stalowym granacie.
 2. **Liczba przed etykietą.** Kafelki (`StatTile`) pokazują wartość dużą, opis mały pod spodem; zmiana r/r jako `Delta` (zielona, gdy dobra — także „w dół” dla kosztów i reklamacji).
-3. **Bez WIELKICH LITER** w etykietach i nagłówkach tabel. Zdania zwykłe, krótkie, w języku użytkownika.
+3. **Wersaliki tylko w logotypie i nazwach grup menu** (jak w ExpertWMS). Etykiety, przyciski i nagłówki tabel zwykłymi literami.
 4. **Gęsto, ale czytelnie:** tabele z `tabular-nums`, nagłówek tabeli na tle `surface-2`, akcje w wierszu pojawiają się mocniej po najechaniu.
 5. **Znaki z branży:** tablica rejestracyjna (`Plate`) zamiast samego tekstu, trasa jako „linia metra” (`RouteStrip`) z kropką na każdy punkt.
 
 ## Tokeny (`src/app/globals.css`)
-`background` #f3f5f4 · `surface` #fff · `foreground` #14201b · `muted` #5b6963 · `border` #e1e6e3 · `primary` #1f7a4d · `ink` #0f241c (nawigacja) · statusy: `success` `warning` `danger` `info` `plum` + wersje `-soft` na tła.
-Czcionka: IBM Plex Sans (zmienna), IBM Plex Mono tylko dla tablic i numerów dokumentów.
+`background` #f2f4f8 · `surface` #fff · `foreground` #0f1f33 · `muted` #55657b · `border` #e0e6ee · `primary` #ff5f00 (wypełnienia) / `primary-strong` #c84a00 (tekst i linki — kontrast) · `ink` #0f2a48 (nawigacja) · `steel` #2f5d8c (paski ładowności, okna godzinowe na `steel-soft`) · statusy: `success` `warning` `danger` `info` `plum` + wersje `-soft`.
+Czcionka: Barlow (jak w ExpertWMS; cyfry tabelaryczne), IBM Plex Mono tylko dla tablic i numerów dokumentów.
+
+## Menu
+Zwarte (32 px na pozycję), grupy: Operacje, Zestawienia (stale rozwinięte), Kartoteki i Rozliczenia (zwijane, rozwinięte gdy jesteś w środku). Ustawienia w stopce, wybór firmy w górnym pasku. Menu mieści się bez przewijania na laptopie 1366×768.
 
 ## Komponenty
 | Komponent | Plik | Do czego |

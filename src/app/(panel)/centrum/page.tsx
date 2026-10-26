@@ -172,7 +172,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                     <li
                       key={r.id}
                       className={cn(
-                        "grid gap-x-6 gap-y-3 px-5 py-4 lg:grid-cols-[minmax(200px,1.1fr)_minmax(220px,1.6fr)_minmax(180px,1fr)]",
+                        "grid gap-x-6 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(180px,1fr)_minmax(200px,1.4fr)] min-[1700px]:grid-cols-[minmax(200px,1.1fr)_minmax(220px,1.6fr)_minmax(200px,1fr)]",
                         (p.startOverdue || p.overdue > 0) && "bg-danger-soft/40",
                       )}
                     >
@@ -180,7 +180,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                         <div className="flex flex-wrap items-center gap-2">
                           <Link
                             href={`/planowanie?dzien=${day}`}
-                            className="truncate text-[15px] font-semibold hover:text-primary"
+                            className="truncate text-[15px] font-semibold hover:text-primary-strong"
                           >
                             {r.name}
                           </Link>
@@ -196,7 +196,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                           {r.driverPhone && (
                             <a
                               href={`tel:${r.driverPhone.replace(/\s/g, "")}`}
-                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                              className="inline-flex items-center gap-1 text-primary-strong hover:underline"
                               title="Zadzwoń do kierowcy"
                             >
                               <Phone className="size-3.5" />
@@ -215,7 +215,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                           </span>
                         </div>
                       </div>
-                      <div className="flex min-w-0 flex-col justify-center gap-1.5 text-[13px]">
+                      <div className="flex min-w-0 flex-col justify-center gap-1.5 text-[13px] sm:col-span-2 sm:flex-row sm:items-center sm:gap-3 min-[1700px]:col-span-1 min-[1700px]:flex-col min-[1700px]:items-start min-[1700px]:gap-1.5">
                         <div className="flex flex-wrap items-center gap-2">
                           <RouteStatePill state={p.state} alarm={p.startOverdue} />
                           {p.overdue > 0 && <span className="text-xs font-semibold text-danger">{p.overdue} po oknie</span>}

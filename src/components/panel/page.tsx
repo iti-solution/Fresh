@@ -149,16 +149,17 @@ export function Delta({
 /** Pasek wypełnienia (ładowność, postęp). Kolor rośnie z ryzykiem. */
 export function Meter({ pct, tone, className, label }: { pct: number | null; tone?: Tone; className?: string; label?: string }) {
   const p = pct ?? 0;
-  const auto: Tone = p > 100 ? "danger" : p >= 90 ? "warning" : "primary";
+  // zwykłe wypełnienie w stalowym granacie — pomarańcz marki zostaje dla akcji, nie dla stanów
+  const auto: Tone = p > 100 ? "danger" : p >= 90 ? "warning" : "neutral";
   const t = tone ?? auto;
   const bg = {
     danger: "bg-danger",
-    warning: "bg-warning",
+    warning: "bg-[#d99a00]",
     primary: "bg-primary",
     success: "bg-success",
     info: "bg-info",
     plum: "bg-plum",
-    neutral: "bg-subtle",
+    neutral: "bg-steel",
   }[t];
   return (
     <div
@@ -189,7 +190,7 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
       {icon && (
-        <span className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-accent text-primary [&_svg]:size-5">
+        <span className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-accent text-primary-strong [&_svg]:size-5">
           {icon}
         </span>
       )}
@@ -211,8 +212,8 @@ export function Notice({
   className?: string;
 }) {
   const cls = {
-    primary: "border-primary/20 bg-accent text-primary-strong",
-    warning: "border-warning/25 bg-warning-soft text-[#7a4900]",
+    primary: "border-success/20 bg-success-soft text-success",
+    warning: "border-warning/25 bg-warning-soft text-[#6e4700]",
     danger: "border-danger/25 bg-danger-soft text-danger",
     info: "border-info/20 bg-info-soft text-info",
   }[tone];
@@ -243,7 +244,9 @@ export function Segmented({
           aria-current={i.active ? "page" : undefined}
           className={cn(
             "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors",
-            i.active ? "bg-surface text-foreground shadow-[0_1px_2px_rgb(20_32_27/0.12)]" : "text-muted hover:text-foreground",
+            i.active
+              ? "bg-surface text-primary-strong shadow-[0_1px_2px_rgb(15_31_51/0.14)]"
+              : "text-muted hover:text-foreground",
           )}
         >
           {i.label}

@@ -22,18 +22,29 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
   const today = todayInWarsaw();
   const day = nextWorkingDay(today);
 
-  const [orders, templatesRes, notesRes, vehiclesRes, customersRes] = await Promise.all([
+  const [orders, templatesRes, notesRes, vehiclesRes, customersRes, dayRoutesRes] = await Promise.all([
     getDayOrders(ctx.tenantId, day),
     supabase
       .from("route_templates")
-      .select("name, vehicles(registration, capacity_kg, capacity_pallets, capacity_crates), drivers(first_name, last_name)")
+      .select("id, name, vehicles(registration, capacity_kg, capacity_pallets, capacity_crates)")
       .eq("tenant_id", ctx.tenantId)
       .eq("is_active", true)
       .order("name"),
     supabase.from("delivery_point_notes").select("valid_from, valid_to").eq("tenant_id", ctx.tenantId),
     supabase.from("vehicles").select("status, capacity_crates, capacity_kg").eq("tenant_id", ctx.tenantId),
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("tenant_id", ctx.tenantId),
+    supabase
+      .from("routes")
+      .select(
+        "template_id, vehicles(registration, capacity_kg, capacity_pallets, capacity_crates), drivers(first_name, last_name)",
+      )
+      .eq("tenant_id", ctx.tenantId)
+      .eq("route_date", day)
+      .eq("kind", "regular")
+      .neq("status", "cancelled"),
   ]);
+  // przydział auta i kierowcy jest na dany dzień (trasa); przed utworzeniem dnia pokazujemy tylko auto podpowiadane przez trasę stałą
+  const dayRoutes = new Map((dayRoutesRes.data ?? []).map((r) => [r.template_id, r]));
 
   const active = orders.filter((o) => o.status !== "cancelled");
   const s = summarizeOrders(active);
@@ -47,13 +58,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
   const routes = (templatesRes.data ?? []).map((t) => {
     const os = byRoute.get(t.name) ?? [];
     const sum = summarizeOrders(os);
-    const v = t.vehicles;
+    const planned = dayRoutes.get(t.id);
+    const v = planned ? planned.vehicles : t.vehicles;
     const pct = (x: number, cap: number | string | null | undefined) =>
       cap && Number(cap) > 0 ? Math.round((x / Number(cap)) * 100) : null;
     return {
       name: t.name,
-      vehicle: v?.registration ?? "—",
-      driver: t.drivers ? `${t.drivers.first_name} ${t.drivers.last_name}` : "—",
+      vehicle: v?.registration ?? null,
+      driver: planned?.drivers ? `${planned.drivers.first_name} ${planned.drivers.last_name}` : null,
+      proposal: !planned,
       sum,
       kgPct: pct(sum.weightKg, v?.capacity_kg),
       cratesPct: pct(sum.crates, v?.capacity_crates),
@@ -102,7 +115,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
             }
           >
             Zacznij od klientów i ich oddziałów albo załóż firmę demo na stronie{" "}
-            <Link href="/wybierz-firme" className="text-primary hover:underline">
+            <Link href="/wybierz-firme" className="text-primary-strong hover:underline">
               wyboru firmy
             </Link>
             .
@@ -149,7 +162,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
 
           <Panel
             title={`Trasy stałe na ${formatDayLabel(day)}`}
-            description="Zajętość domyślnego auta trasy. Przenoszenie zamówień i kolejność ustawisz w planowaniu."
+            description="Zajętość auta przydzielonego do trasy na ten dzień. Auto, kierowcę, kolejność i przenoszenie zamówień ustawisz w planowaniu."
             actions={unassigned > 0 ? <Pill tone="warning">{unassigned} zamówień poza trasami stałymi</Pill> : undefined}
             flush
           >
@@ -158,7 +171,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
                 <thead>
                   <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
                     <th className="py-2.5 pr-3 pl-5 font-medium">Trasa</th>
-                    <th className="px-3 py-2.5 font-medium">Auto i kierowca</th>
+                    <th className="px-3 py-2.5 font-medium">Przydział na ten dzień</th>
                     <th className="px-3 py-2.5 text-right font-medium">Zamówienia</th>
                     <th className="px-3 py-2.5 font-medium">Masa</th>
                     <th className="px-3 py-2.5 font-medium">Palety</th>
@@ -170,14 +183,18 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
                   {routes.map((r) => (
                     <tr key={r.name} className="border-b border-border last:border-0 hover:bg-surface-2">
                       <td className="py-3 pr-3 pl-5 font-medium">
-                        <Link href={`/planowanie?dzien=${day}`} className="hover:text-primary">
+                        <Link href={`/planowanie?dzien=${day}`} className="hover:text-primary-strong">
                           {r.name}
                         </Link>
                       </td>
                       <td className="px-3 py-3">
                         <span className="flex items-center gap-2 text-[13px] text-muted">
-                          <Plate>{r.vehicle === "—" ? null : r.vehicle}</Plate>
-                          {r.driver}
+                          <Plate>{r.vehicle}</Plate>
+                          {r.proposal ? (
+                            <span className="text-subtle">propozycja — dzień jeszcze nie zaplanowany</span>
+                          ) : (
+                            (r.driver ?? <Pill tone="danger">bez kierowcy</Pill>)
+                          )}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums">{r.sum.count}</td>

@@ -79,7 +79,7 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
       </div>
 
       {flash && (
-        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-accent px-4 py-2.5 text-sm text-primary-strong">
+        <p role="status" className="mb-4 rounded-lg border border-success/20 bg-success-soft px-4 py-2.5 text-sm text-success">
           {flash}
         </p>
       )}

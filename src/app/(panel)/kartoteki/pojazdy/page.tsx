@@ -2,7 +2,9 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DataTable } from "@/components/panel/data-table";
-import { PageHeader } from "@/components/panel/module-placeholder";
+import { PageHeader, Segmented } from "@/components/panel/page";
+import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { getLastAssignments } from "@/modules/planning/server/history";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
 import { Plate } from "@/components/ui/status";
@@ -22,23 +24,31 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, registration, name, vehicle_type, body_type, capacity_pallets, capacity_kg, capacity_m3, capacity_crates, is_own, status, cost_per_km, carriers(name), drivers!vehicles_default_driver_fk(first_name, last_name)",
+      "id, registration, name, vehicle_type, body_type, capacity_pallets, capacity_kg, capacity_m3, capacity_crates, is_own, status, cost_per_km, carriers(name)",
     )
     .eq("tenant_id", ctx.tenantId)
     .order("registration");
   if (error) throw error;
   const rows = data ?? [];
   const editable = canEdit(ctx.role);
+  const today = todayInWarsaw();
+  const { byVehicle } = await getLastAssignments(ctx.tenantId, shiftDay(today, -30), shiftDay(today, 1));
 
   return (
     <>
       <PageHeader
         title="Pojazdy"
-        description={`${rows.length} pojazdów · ładowność służy do kontroli przeciążenia na tablicy planowania.`}
+        description={`${rows.length} pojazdów. Ładowność służy do kontroli przeciążenia; auto i kierowcę przydziela dyspozytor do trasy na dany dzień.`}
         actions={
           <>
+            <Segmented
+              items={[
+                { href: "/kartoteki/pojazdy", label: "Pojazdy", active: true },
+                { href: "/kartoteki/pojazdy/dziennik", label: "Dziennik przydziałów", active: false },
+              ]}
+            />
             {editable && (
-              <Link href="/kartoteki/pojazdy/nowy" className={buttonVariants()}>
+              <Link href="/kartoteki/pojazdy/nowy" className={buttonVariants({ size: "sm" })}>
                 <Plus /> Nowy pojazd
               </Link>
             )}
@@ -46,7 +56,7 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
         }
       />
       {sp.zapisano && (
-        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-accent px-4 py-2.5 text-sm text-primary-strong">
+        <p role="status" className="mb-4 rounded-lg border border-success/20 bg-success-soft px-4 py-2.5 text-sm text-success">
           Zapisano pojazd.
         </p>
       )}
@@ -84,7 +94,22 @@ export default async function VehiclesPage({ searchParams }: PageProps<"/kartote
             cell: (r) =>
               r.is_own ? "własny" : <Badge className="bg-warning/10 text-warning">{r.carriers?.name ?? "obcy"}</Badge>,
           },
-          { header: "Kierowca", cell: (r) => (r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—") },
+          {
+            header: "Ostatni przydział",
+            cell: (r) => {
+              const a = byVehicle.get(r.id);
+              return a ? (
+                <Link href={`/kartoteki/pojazdy/dziennik?auto=${r.id}`} className="group block">
+                  <span className="group-hover:text-primary-strong">{a.driver ?? "bez kierowcy"}</span>
+                  <span className="block text-xs text-muted">
+                    {a.date === today ? "dziś" : formatDayLabel(a.date)}, {a.routeName}
+                  </span>
+                </Link>
+              ) : (
+                <span className="text-subtle">brak tras w 30 dni</span>
+              );
+            },
+          },
           {
             header: "Koszt km",
             cell: (r) =>

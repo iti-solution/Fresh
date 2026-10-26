@@ -22,7 +22,7 @@ export default async function SelectTenantPage() {
         <div className="space-y-2">
           <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Wybierz firmę</h1>
           <form action={signOut} className="text-sm text-muted">
-            Zalogowano jako {user.email}. <button className="font-medium text-primary hover:underline">Wyloguj</button>
+            Zalogowano jako {user.email}. <button className="font-medium text-primary-strong hover:underline">Wyloguj</button>
           </form>
         </div>
 
@@ -60,7 +60,7 @@ export default async function SelectTenantPage() {
         {!hasDemo && (
           <div className="space-y-3 rounded-xl border border-dashed border-border-strong p-4">
             <div className="flex gap-3">
-              <FlaskConical className="mt-0.5 size-5 shrink-0 text-primary" />
+              <FlaskConical className="mt-0.5 size-5 shrink-0 text-primary-strong" />
               <div>
                 <h2 className="font-semibold">Firma demo</h2>
                 <p className="text-sm text-muted">

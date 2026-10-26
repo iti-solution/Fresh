@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  History,
   Clock,
   PackageCheck,
   Route,
@@ -27,6 +28,7 @@ import {
   createDay,
   createExtraRoute,
   deleteEmptyRoute,
+  copyLastAssignments,
   markAllReady,
   markReady,
   moveStop,
@@ -36,6 +38,7 @@ import {
   unassignStop,
 } from "@/modules/planning/server/actions";
 import { getPlanningDay, type PlanRoute } from "@/modules/planning/server/queries";
+import { assignmentConflicts } from "@/modules/planning/domain/assignments";
 import { ExtraRouteForm } from "@/modules/planning/ui/extra-route-form";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
@@ -65,6 +68,20 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
   );
   const awaitingUnassigned = unassigned.filter((o) => o.readiness === "awaiting_warehouse").length;
   const href = (d: string) => `/planowanie?dzien=${d}`;
+  const conflicts = assignmentConflicts(
+    routes.map((r) => ({
+      id: r.id,
+      name: r.name,
+      courseNo: r.courseNo,
+      vehicleId: r.vehicleId,
+      vehicleLabel: r.vehicleLabel,
+      driverId: r.driverId,
+      driverLabel: r.driverLabel,
+    })),
+  );
+  const missingAssignment = routes.filter(
+    (r) => (r.status === "draft" || r.status === "planned") && (!r.vehicleId || !r.driverId),
+  ).length;
 
   const alerts: { text: string; tone: "danger" | "warn" }[] = [];
   if (plan.holiday) alerts.push({ text: `Święto: ${plan.holiday}`, tone: "danger" });
@@ -93,6 +110,16 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
               {plan.templatesForDay > routes.filter((r) => r.kind === "regular").length && (
                 <form action={createDay.bind(null, day)}>
                   <button className={buttonVariants({ variant: "outline", size: "sm" })}>Dodaj brakujące trasy stałe</button>
+                </form>
+              )}
+              {missingAssignment > 0 && (
+                <form action={copyLastAssignments.bind(null, day)}>
+                  <button
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                    title="Trasom bez auta lub kierowcy podpowiada przydział z ostatniego dnia, w którym jechały. Zmienisz go na karcie trasy."
+                  >
+                    <History /> Przydziel jak ostatnio ({missingAssignment})
+                  </button>
                 </form>
               )}
               <form action={markAllReady.bind(null, day)}>
@@ -152,7 +179,7 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
       {alerts.length > 0 && routes.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-warning/25 bg-warning-soft px-4 py-2.5 text-sm">
           <TriangleAlert className="size-4 text-warning" />
-          <span className="mr-1 font-semibold text-[#7a4900]">Do wyjaśnienia przed załadunkiem</span>
+          <span className="mr-1 font-semibold text-[#6e4700]">Do wyjaśnienia przed załadunkiem</span>
           {alerts.map((a) => (
             <Pill key={a.text} tone={a.tone === "danger" ? "danger" : "warning"} className="bg-surface">
               {a.text}
@@ -242,6 +269,7 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
               <RouteCard
                 key={r.id}
                 route={r}
+                conflicts={conflicts.get(r.id) ?? []}
                 day={day}
                 editable={editable}
                 routeOptions={routeOptions}
@@ -261,7 +289,7 @@ function WindowChip({ window, closed }: { window: string; closed?: boolean }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums",
-        closed ? "bg-danger-soft text-danger" : "bg-accent text-primary-strong",
+        closed ? "bg-danger-soft text-danger" : "bg-steel-soft text-ink-2",
       )}
       title={closed ? "Oddział zamknięty tego dnia" : "Okno przyjęć"}
     >
@@ -273,6 +301,7 @@ function WindowChip({ window, closed }: { window: string; closed?: boolean }) {
 
 function RouteCard({
   route: r,
+  conflicts,
   day,
   editable,
   routeOptions,
@@ -280,6 +309,7 @@ function RouteCard({
   drivers,
 }: {
   route: PlanRoute;
+  conflicts: string[];
   day: string;
   editable: boolean;
   routeOptions: { value: string; label: string }[];
@@ -381,8 +411,13 @@ function RouteCard({
         })}
       </div>
 
-      {r.issues.length > 0 && (
+      {r.issues.length + conflicts.length > 0 && (
         <div className="flex flex-wrap gap-1.5 px-4 pt-3">
+          {conflicts.map((c) => (
+            <Pill key={c} tone="danger">
+              {c}
+            </Pill>
+          ))}
           {r.issues.map((i) => (
             <Pill key={i.code} tone={i.severity === "info" ? "warning" : "danger"}>
               {i.label}
