@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RefreshCw, Route, Store } from "lucide-react";
+import { Banknote, ChevronLeft, ChevronRight, RefreshCw, Route, Store } from "lucide-react";
 import { EmptyState, Meter, Notice, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Pill, Plate } from "@/components/ui/status";
-import { formatPln } from "@/lib/forms";
+import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { isNoteActive } from "@/modules/masterdata/domain/schemas";
-import { formatDayLabel, nextWorkingDay, summarizeOrders, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, shiftDay, summarizeOrders, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { getDriverCash } from "@/modules/ops/server/queries";
 import { getDayOrders } from "@/modules/orders/server/queries";
 import { resetDemoTenant } from "@/modules/tenancy/server/actions";
 import { requireAccess } from "@/modules/tenancy/server/context";
@@ -20,9 +21,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
   const sp = await searchParams;
   const supabase = await createClient();
   const today = todayInWarsaw();
-  const day = nextWorkingDay(today);
+  const day = typeof sp.dzien === "string" && DATE_RE.test(sp.dzien) ? sp.dzien : today;
 
-  const [orders, templatesRes, notesRes, vehiclesRes, customersRes, dayRoutesRes] = await Promise.all([
+  const [orders, templatesRes, notesRes, cash, customersRes, dayRoutesRes] = await Promise.all([
     getDayOrders(ctx.tenantId, day),
     supabase
       .from("route_templates")
@@ -31,7 +32,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
       .eq("is_active", true)
       .order("name"),
     supabase.from("delivery_point_notes").select("valid_from, valid_to").eq("tenant_id", ctx.tenantId),
-    supabase.from("vehicles").select("status, capacity_crates, capacity_kg").eq("tenant_id", ctx.tenantId),
+    getDriverCash(ctx.tenantId),
     supabase.from("customers").select("id", { count: "exact", head: true }).eq("tenant_id", ctx.tenantId),
     supabase
       .from("routes")
@@ -49,9 +50,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
   const active = orders.filter((o) => o.status !== "cancelled");
   const s = summarizeOrders(active);
   const activeNotes = (notesRes.data ?? []).filter((n) => isNoteActive(n, day)).length;
-  const fleet = (vehiclesRes.data ?? []).filter((v) => v.status === "active");
-  const fleetCrates = fleet.reduce((a, v) => a + (v.capacity_crates ?? 0), 0);
-  const fleetKg = fleet.reduce((a, v) => a + Number(v.capacity_kg ?? 0), 0);
+  // do dostarczenia = zamówienia jeszcze niezrealizowane (bez dostarczonych, częściowych i nieodebranych)
+  const open = active.filter((o) => !["delivered", "partial", "failed"].includes(o.status));
+  const toDeliver = summarizeOrders(open);
+  const delivered = active.length - open.length;
+  const cashTotal = cash.reduce((a, c) => a + Math.max(0, c.cashGrosze), 0);
+  const cashDrivers = cash.filter((c) => c.cashGrosze > 0).length;
+  const dayLabel = day === today ? `dziś, ${formatDayLabel(day).split(", ")[1]}` : formatDayLabel(day);
 
   const byRoute = new Map<string, typeof active>();
   for (const o of active) byRoute.set(o.route, [...(byRoute.get(o.route) ?? []), o]);
@@ -80,9 +85,28 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
     <>
       <PageHeader
         title="Pulpit"
-        description={`Przygotowanie dostaw na ${formatDayLabel(day)}: zamówienia, kompletacja w magazynie i zajętość aut na trasach stałych.`}
+        description={`Dostawy na ${dayLabel} i zajętość aut na trasach.`}
         actions={
           <>
+            <div className="flex items-center gap-1">
+              <Link
+                href={`/pulpit?dzien=${shiftDay(day, -1)}`}
+                aria-label="Poprzedni dzień"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <ChevronLeft />
+              </Link>
+              <Link href="/pulpit" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-36 capitalize")}>
+                {dayLabel}
+              </Link>
+              <Link
+                href={`/pulpit?dzien=${shiftDay(day, 1)}`}
+                aria-label="Następny dzień"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <ChevronRight />
+              </Link>
+            </div>
             {ctx.isDemo && ctx.role === "admin" && (
               <form action={resetDemoTenant}>
                 <button
@@ -94,7 +118,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
               </form>
             )}
             <Link href={`/planowanie?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
-              <Route /> Planuj {formatDayLabel(day).split(",")[0]}
+              <Route /> Planowanie dnia
             </Link>
           </>
         }
@@ -124,44 +148,49 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <StatTile href={`/zlecenia?dzien=${day}`} label="Zamówienia" value={s.count} sub={formatPln(s.valueGrosze)} />
             <StatTile
-              href={`/zlecenia?dzien=${day}&filtr=gotowe`}
-              label="Skompletowane"
-              value={s.ready}
-              sub={s.count ? `${Math.round((s.ready / s.count) * 100)}% zamówień` : "—"}
-              tone="success"
+              href={`/zlecenia?dzien=${day}`}
+              label="Zamówienia"
+              value={s.count}
+              sub={`${formatPln(s.valueGrosze)}${delivered ? `, ${delivered} zrealizowanych` : ""}`}
             />
             <StatTile
               href={`/zlecenia?dzien=${day}&filtr=magazyn`}
-              label="W magazynie"
+              label="Oczekuje na kompletację"
               value={s.awaiting}
-              sub="czeka na kompletację"
-              tone={s.awaiting ? "warning" : undefined}
+              sub={s.count ? `${Math.round((s.ready / s.count) * 100)}% już skompletowane` : "—"}
+              tone={s.awaiting ? "warning" : "success"}
+            />
+            <StatTile
+              href={`/zlecenia?dzien=${day}`}
+              label="Skrzynki do dostarczenia"
+              value={toDeliver.crates.toLocaleString("pl-PL")}
+              sub={delivered ? `z ${s.crates.toLocaleString("pl-PL")} na ten dzień` : `w ${open.length} zamówieniach`}
+            />
+            <StatTile
+              href={`/zlecenia?dzien=${day}`}
+              label="Palety do dostarczenia"
+              value={toDeliver.pallets.toLocaleString("pl-PL")}
+              sub={delivered ? `z ${s.pallets.toLocaleString("pl-PL")} na ten dzień` : `w ${open.length} zamówieniach`}
             />
             <StatTile
               href="/kartoteki/klienci?uwagi=1"
-              label="Oddziały z uwagami"
+              label="Odbiorcy z uwagami"
               value={activeNotes}
-              sub="remonty, zmiany godzin"
+              sub="remonty, zmiany godzin, objazdy"
               tone={activeNotes ? "warning" : undefined}
             />
             <StatTile
-              href="/kartoteki/pojazdy"
-              label="Skrzynki vs flota"
-              value={`${s.crates} / ${fleetCrates}`}
-              sub={`${fleet.length} aktywnych aut`}
-            />
-            <StatTile
-              href="/kartoteki/pojazdy"
-              label="Masa vs flota"
-              value={`${(s.weightKg / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} t`}
-              sub={`ładowność ${(fleetKg / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} t`}
+              href="/centrum"
+              label="Gotówka u kierowców"
+              value={formatPlnCompact(cashTotal)}
+              sub={cashDrivers ? `${cashDrivers} kierowców do rozliczenia` : "wszystko rozliczone"}
+              icon={<Banknote />}
             />
           </div>
 
           <Panel
-            title={`Trasy stałe na ${formatDayLabel(day)}`}
+            title={`Trasy stałe — ${dayLabel}`}
             description="Zajętość auta przydzielonego do trasy na ten dzień. Auto, kierowcę, kolejność i przenoszenie zamówień ustawisz w planowaniu."
             actions={unassigned > 0 ? <Pill tone="warning">{unassigned} zamówień poza trasami stałymi</Pill> : undefined}
             flush
@@ -175,8 +204,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
                     <th className="px-3 py-2.5 text-right font-medium">Zamówienia</th>
                     <th className="px-3 py-2.5 font-medium">Masa</th>
                     <th className="px-3 py-2.5 font-medium">Palety</th>
-                    <th className="px-3 py-2.5 font-medium">Skrzynki</th>
-                    <th className="py-2.5 pr-5 pl-3 text-right font-medium whitespace-nowrap">W magazynie</th>
+                    <th className="py-2.5 pr-5 pl-3 font-medium">Skrzynki</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -204,15 +232,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
                       <td className="px-3 py-3">
                         <LoadCell pct={r.palPct} label={`${r.sum.pallets}`} />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="py-3 pr-5 pl-3">
                         <LoadCell pct={r.cratesPct} label={`${r.sum.crates}`} />
-                      </td>
-                      <td className="py-3 pr-5 pl-3 text-right tabular-nums">
-                        {r.sum.awaiting ? (
-                          <span className="font-semibold text-warning">{r.sum.awaiting}</span>
-                        ) : (
-                          <span className="text-subtle">—</span>
-                        )}
                       </td>
                     </tr>
                   ))}
