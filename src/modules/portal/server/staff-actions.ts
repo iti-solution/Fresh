@@ -27,6 +27,9 @@ export async function saveProduct(_prev: FormState, fd: FormData): Promise<FormS
     unit: v.unit,
     unit_weight_kg: normalizedUnitWeight(v.unit, v.unit_weight_kg),
     price: v.price,
+    pack_label: v.pack_label,
+    is_special: v.is_special,
+    image_url: v.image_url,
   });
   if (error?.code === "23505")
     return {
@@ -44,6 +47,14 @@ export async function setProductActive(productId: string, active: boolean): Prom
   if (!canEdit(ctx.role)) return;
   const supabase = await createClient();
   await supabase.from("products").update({ is_active: active }).eq("id", productId).eq("tenant_id", ctx.tenantId);
+  revalidatePath("/kartoteki/produkty");
+}
+
+export async function setProductSpecial(productId: string, special: boolean): Promise<void> {
+  const ctx = await requireTenantContext();
+  if (!canEdit(ctx.role)) return;
+  const supabase = await createClient();
+  await supabase.from("products").update({ is_special: special }).eq("id", productId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/kartoteki/produkty");
 }
 

@@ -194,6 +194,15 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                       <tr key={o.id} className="border-t border-border align-top first:border-0 hover:bg-surface-2">
                         <td className="py-2.5 pr-3 pl-5">
                           <DocRef>{o.external_ref ?? "—"}</DocRef>
+                          {o.source === "ai" && (
+                            <Pill
+                              tone="plum"
+                              className="mt-1"
+                              title="Odczytane z wiadomości klienta i sprawdzone przez człowieka"
+                            >
+                              AI
+                            </Pill>
+                          )}
                           {o.source === "portal" && (
                             <Pill tone="info" className="mt-1" title="Klient złożył zamówienie sam w portalu zamówień">
                               portal

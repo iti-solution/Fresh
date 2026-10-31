@@ -226,6 +226,49 @@ export type Database = {
           },
         ];
       };
+      customer_favorites: {
+        Row: {
+          created_at: string;
+          customer_id: string;
+          product_id: string;
+          tenant_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          customer_id: string;
+          product_id: string;
+          tenant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          customer_id?: string;
+          product_id?: string;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customer_favorites_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "customer_favorites_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "customer_favorites_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customer_portal_users: {
         Row: {
           created_at: string;
@@ -946,6 +989,50 @@ export type Database = {
           },
         ];
       };
+      inbound_messages: {
+        Row: {
+          audio_path: string | null;
+          body: string;
+          channel: Database["public"]["Enums"]["intake_channel"];
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          received_at: string;
+          sender: string | null;
+          tenant_id: string;
+        };
+        Insert: {
+          audio_path?: string | null;
+          body: string;
+          channel: Database["public"]["Enums"]["intake_channel"];
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          received_at?: string;
+          sender?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          audio_path?: string | null;
+          body?: string;
+          channel?: Database["public"]["Enums"]["intake_channel"];
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          received_at?: string;
+          sender?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inbound_messages_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       memberships: {
         Row: {
           created_at: string;
@@ -968,6 +1055,173 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "memberships_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      order_draft_lines: {
+        Row: {
+          alias_key: string | null;
+          confidence: number | null;
+          created_at: string;
+          draft_id: string;
+          final_product_id: string | null;
+          final_qty: number | null;
+          id: string;
+          line_no: number;
+          outcome: string | null;
+          phrase: string | null;
+          proposed_product_id: string | null;
+          proposed_qty: number | null;
+          span_end: number | null;
+          span_start: number | null;
+          tenant_id: string;
+        };
+        Insert: {
+          alias_key?: string | null;
+          confidence?: number | null;
+          created_at?: string;
+          draft_id: string;
+          final_product_id?: string | null;
+          final_qty?: number | null;
+          id?: string;
+          line_no: number;
+          outcome?: string | null;
+          phrase?: string | null;
+          proposed_product_id?: string | null;
+          proposed_qty?: number | null;
+          span_end?: number | null;
+          span_start?: number | null;
+          tenant_id: string;
+        };
+        Update: {
+          alias_key?: string | null;
+          confidence?: number | null;
+          created_at?: string;
+          draft_id?: string;
+          final_product_id?: string | null;
+          final_qty?: number | null;
+          id?: string;
+          line_no?: number;
+          outcome?: string | null;
+          phrase?: string | null;
+          proposed_product_id?: string | null;
+          proposed_qty?: number | null;
+          span_end?: number | null;
+          span_start?: number | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_draft_lines_draft_id_fkey";
+            columns: ["draft_id"];
+            isOneToOne: false;
+            referencedRelation: "order_drafts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_draft_lines_final_product_id_fkey";
+            columns: ["final_product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_draft_lines_proposed_product_id_fkey";
+            columns: ["proposed_product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_draft_lines_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      order_drafts: {
+        Row: {
+          created_at: string;
+          customer_id: string | null;
+          delivery_date: string | null;
+          delivery_point_id: string | null;
+          id: string;
+          message_id: string;
+          note: string | null;
+          order_id: string | null;
+          parser: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: Database["public"]["Enums"]["draft_status"];
+          tenant_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          customer_id?: string | null;
+          delivery_date?: string | null;
+          delivery_point_id?: string | null;
+          id?: string;
+          message_id: string;
+          note?: string | null;
+          order_id?: string | null;
+          parser: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["draft_status"];
+          tenant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          customer_id?: string | null;
+          delivery_date?: string | null;
+          delivery_point_id?: string | null;
+          id?: string;
+          message_id?: string;
+          note?: string | null;
+          order_id?: string | null;
+          parser?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["draft_status"];
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_drafts_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_drafts_delivery_point_id_fkey";
+            columns: ["delivery_point_id"];
+            isOneToOne: false;
+            referencedRelation: "delivery_points";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_drafts_message_id_fkey";
+            columns: ["message_id"];
+            isOneToOne: false;
+            referencedRelation: "inbound_messages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_drafts_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_drafts_tenant_id_fkey";
             columns: ["tenant_id"];
             isOneToOne: false;
             referencedRelation: "tenants";
@@ -1323,14 +1577,69 @@ export type Database = {
           },
         ];
       };
+      product_aliases: {
+        Row: {
+          alias_key: string;
+          customer_id: string | null;
+          hits: number;
+          id: string;
+          last_used_at: string;
+          product_id: string;
+          tenant_id: string;
+        };
+        Insert: {
+          alias_key: string;
+          customer_id?: string | null;
+          hits?: number;
+          id?: string;
+          last_used_at?: string;
+          product_id: string;
+          tenant_id: string;
+        };
+        Update: {
+          alias_key?: string;
+          customer_id?: string | null;
+          hits?: number;
+          id?: string;
+          last_used_at?: string;
+          product_id?: string;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_aliases_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_aliases_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_aliases_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       products: {
         Row: {
           category: string | null;
           code: string | null;
           created_at: string;
           id: string;
+          image_url: string | null;
           is_active: boolean;
+          is_special: boolean;
           name: string;
+          pack_label: string | null;
           price: number | null;
           sort: number;
           tenant_id: string;
@@ -1342,8 +1651,11 @@ export type Database = {
           code?: string | null;
           created_at?: string;
           id?: string;
+          image_url?: string | null;
           is_active?: boolean;
+          is_special?: boolean;
           name: string;
+          pack_label?: string | null;
           price?: number | null;
           sort?: number;
           tenant_id: string;
@@ -1355,8 +1667,11 @@ export type Database = {
           code?: string | null;
           created_at?: string;
           id?: string;
+          image_url?: string | null;
           is_active?: boolean;
+          is_special?: boolean;
           name?: string;
+          pack_label?: string | null;
           price?: number | null;
           sort?: number;
           tenant_id?: string;
@@ -2286,6 +2601,16 @@ export type Database = {
         Args: { roles: Database["public"]["Enums"]["member_role"][]; t: string };
         Returns: boolean;
       };
+      intake_approve_draft: {
+        Args: {
+          p_date: string;
+          p_draft: string;
+          p_lines: Json;
+          p_note?: string;
+          p_point: string;
+        };
+        Returns: string;
+      };
       is_member: { Args: { t: string }; Returns: boolean };
       longtransactionsenabled: { Args: never; Returns: boolean };
       move_stop: { Args: { p_dir: number; p_stop: string }; Returns: undefined };
@@ -2964,7 +3289,9 @@ export type Database = {
     Enums: {
       branch_type: "restaurant" | "kitchen" | "bar" | "warehouse" | "hotel" | "other";
       cash_party: "customer" | "driver" | "office";
+      draft_status: "needs_review" | "approved" | "rejected";
       geocode_status: "pending" | "ok" | "ambiguous" | "failed" | "manual";
+      intake_channel: "sms" | "email" | "whatsapp" | "voice" | "phone" | "photo" | "other";
       member_role: "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
       order_readiness: "awaiting_warehouse" | "ready";
       order_status: "new" | "unmatched" | "planned" | "in_progress" | "delivered" | "partial" | "failed" | "cancelled";
@@ -3102,7 +3429,9 @@ export const Constants = {
     Enums: {
       branch_type: ["restaurant", "kitchen", "bar", "warehouse", "hotel", "other"],
       cash_party: ["customer", "driver", "office"],
+      draft_status: ["needs_review", "approved", "rejected"],
       geocode_status: ["pending", "ok", "ambiguous", "failed", "manual"],
+      intake_channel: ["sms", "email", "whatsapp", "voice", "phone", "photo", "other"],
       member_role: ["admin", "dispatcher", "driver", "viewer", "customer_service", "management", "customer"],
       order_readiness: ["awaiting_warehouse", "ready"],
       order_status: ["new", "unmatched", "planned", "in_progress", "delivered", "partial", "failed", "cancelled"],

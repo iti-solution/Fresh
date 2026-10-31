@@ -22,3 +22,15 @@ Zamówienie trafia od razu do „Zamówienia” w panelu (znacznik **portal**) z
 
 ## Model danych (migracja 0012)
 `products` (katalog) · `order_lines` (pozycje z kopią nazwy, jednostki, wagi i ceny z chwili zamówienia) · `customer_portal_users` (kto loguje się za którego klienta) · `orders.source` (`panel` | `import` | `api` | `portal`), `placed_by`, `placed_at`, `customer_note`.
+
+## Zamówienia z wiadomości — „Do sprawdzenia” (v0.2, 2026-11-01)
+Wzorowane na Fresho OrderPilot: klient zamawia jak dotąd (SMS, e-mail, WhatsApp, telefon), a **człowiek zawsze sprawdza** zamówienie, zanim trafi do „Zamówień”.
+
+1. Dyspozytor wkleja wiadomość w *Operacje → Do sprawdzenia* (później: bramka SMS i skrzynka e-mail wpiszą je same). Klient jest rozpoznawany po telefonie oddziału albo e-mailu konta w portalu.
+2. Automat odczytuje pozycje: najpierw **słownik klienta** (jak ten klient nazywał produkty wcześniej), potem nazwy z katalogu; z `ANTHROPIC_API_KEY` — model Claude. Dzień dostawy z „jutro / na piątek”, inaczej najbliższy dzień dostaw oddziału. Uwagi („zostawcie w chłodni”) idą do pola uwag.
+3. Ekran sprawdzenia: po lewej wiadomość z podkreślonymi fragmentami (zielony — pewne, bursztyn — sprawdź, czerwony — nie wiem), po prawej propozycja do poprawy. **Wprowadź zamówienie** albo **Odrzuć**.
+4. Zatwierdzenie zapisuje dla każdej pozycji wynik: **trafione / poprawione / dodane / usunięte** i uczy słownik klienta. Z tego liczona jest **skuteczność** (30 dni): % zamówień bez poprawek i % pozycji trafionych — łącznie i per wersja rozpoznawania (`rules`, `claude:<model>`), żeby porównać wersje.
+
+Model danych (migracja 0013): `inbound_messages`, `order_drafts`, `order_draft_lines` (propozycja + decyzja + wynik), `product_aliases` (słownik), `customer_favorites`; `products.pack_label`, `is_special`, `image_url`; `orders.source = 'ai'`. Zatwierdzenie w jednej transakcji: `intake_approve_draft`. Test: `supabase/tests/intake.sql`.
+
+Portal: zakładka **★ Ulubione** (gwiazdka przy produkcie; kto ma ulubione, zaczyna od nich), oznaczenie **Promocja**, opis opakowania („Skrzynka (18 szt.)”) i zdjęcie produktu.

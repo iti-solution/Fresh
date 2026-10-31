@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePortalContext } from "@/modules/portal/server/context";
-import { getPortalCatalog, getPortalOrder, getPortalPoints } from "@/modules/portal/server/queries";
+import { getPortalCatalog, getPortalFavorites, getPortalOrder, getPortalPoints } from "@/modules/portal/server/queries";
 import { OrderBuilder } from "@/modules/portal/ui/order-builder";
 
 export const metadata: Metadata = { title: "Nowe zamówienie" };
@@ -10,9 +10,10 @@ export default async function NewPortalOrderPage({ searchParams }: PageProps<"/p
   const ctx = await requirePortalContext();
   const sp = await searchParams;
   const repeatId = typeof sp.powtorz === "string" ? sp.powtorz : null;
-  const [points, products, repeat] = await Promise.all([
+  const [points, products, favorites, repeat] = await Promise.all([
     getPortalPoints(ctx),
     getPortalCatalog(ctx),
+    getPortalFavorites(ctx),
     repeatId ? getPortalOrder(ctx, repeatId) : Promise.resolve(null),
   ]);
 
@@ -48,6 +49,7 @@ export default async function NewPortalOrderPage({ searchParams }: PageProps<"/p
           initialQty={initialQty}
           initialPointId={repeat?.delivery_point_id ?? undefined}
           notice={notice}
+          favorites={favorites}
         />
       )}
     </>

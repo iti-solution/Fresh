@@ -37,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
   { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
+  { href: "/do-sprawdzenia", label: "Do sprawdzenia", group: "Operacje", milestone: "P1", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
   { href: "/bok", label: "Dostawy dla BOK", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
   {

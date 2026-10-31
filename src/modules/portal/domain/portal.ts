@@ -1,7 +1,7 @@
 // Portal zamówień klienta: terminy dostaw, koszyk, statusy, katalog (czyste funkcje — bez Next/Supabase).
 // Terminy liczy też baza (portal_earliest_date / portal_date_allowed w migracji 0012) — logika musi być zgodna.
 import { z } from "zod";
-import { numberField, optionalText, requiredText, toGrosze } from "@/lib/forms";
+import { checkbox, numberField, optionalText, requiredText, toGrosze } from "@/lib/forms";
 
 // =========================================================
 // USTAWIENIA HURTOWNI (tenants.settings)
@@ -141,6 +141,9 @@ export const productSchema = z.object({
   unit: z.enum(UNITS, { message: "Wybierz jednostkę" }),
   unit_weight_kg: numberField({ min: 0, max: 2000, fallback: null }),
   price: numberField({ min: 0, max: 100_000, fallback: null }),
+  pack_label: optionalText(60),
+  is_special: checkbox,
+  image_url: optionalText(500).refine((v) => v === null || /^https:\/\//.test(v), "Adres zdjęcia musi zaczynać się od https://"),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 

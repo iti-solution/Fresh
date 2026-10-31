@@ -8,7 +8,7 @@ import { DocRef, Pill } from "@/components/ui/status";
 import { formatPln, toGrosze } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { UNIT_NAMES, UNITS, unitLabel } from "@/modules/portal/domain/portal";
-import { addSampleProducts, saveProduct, setProductActive } from "@/modules/portal/server/staff-actions";
+import { addSampleProducts, saveProduct, setProductActive, setProductSpecial } from "@/modules/portal/server/staff-actions";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -19,7 +19,7 @@ export default async function ProductsPage() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("id, code, name, category, unit, unit_weight_kg, price, is_active")
+    .select("id, code, name, category, unit, unit_weight_kg, price, is_active, pack_label, is_special")
     .eq("tenant_id", ctx.tenantId)
     .order("is_active", { ascending: false })
     .order("category", { nullsFirst: false })
@@ -68,6 +68,7 @@ export default async function ProductsPage() {
                 { header: "Produkt", cell: (r) => <span className="font-medium">{r.name}</span> },
                 { header: "Kategoria", cell: (r) => r.category ?? "—" },
                 { header: "Jedn.", cell: (r) => unitLabel(r.unit) },
+                { header: "Opakowanie", cell: (r) => r.pack_label ?? "—" },
                 {
                   header: "Waga jedn.",
                   className: "text-right tabular-nums",
@@ -79,6 +80,25 @@ export default async function ProductsPage() {
                   className: "text-right tabular-nums",
                   headClassName: "text-right",
                   cell: (r) => (r.price !== null ? formatPln(toGrosze(r.price)) : "—"),
+                },
+                {
+                  header: "Promocja",
+                  cell: (r) =>
+                    editable ? (
+                      <form action={setProductSpecial.bind(null, r.id, !r.is_special)}>
+                        <button title="Kliknij, aby zmienić">
+                          <Pill tone={r.is_special ? "success" : "neutral"} dot={false}>
+                            {r.is_special ? "promocja" : "—"}
+                          </Pill>
+                        </button>
+                      </form>
+                    ) : r.is_special ? (
+                      <Pill tone="success" dot={false}>
+                        promocja
+                      </Pill>
+                    ) : (
+                      "—"
+                    ),
                 },
                 {
                   header: "W portalu",
@@ -127,6 +147,15 @@ export default async function ProductsPage() {
                       hint: "Dla kg zawsze 1",
                     },
                     { kind: "number", name: "price", label: "Cena netto", span: 1, step: "0.01", suffix: "zł" },
+                    {
+                      kind: "text",
+                      name: "pack_label",
+                      label: "Opakowanie (widzi klient)",
+                      span: 2,
+                      placeholder: "Skrzynka (18 szt.)",
+                    },
+                    { kind: "checkbox", name: "is_special", label: "Promocja", span: 1 },
+                    { kind: "text", name: "image_url", label: "Zdjęcie (adres https)", span: 3, placeholder: "https://…" },
                   ],
                 },
               ]}

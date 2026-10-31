@@ -1,14 +1,14 @@
 "use client";
 
-import { Minus, Plus, Search, X } from "lucide-react";
-import { useActionState, useMemo, useState } from "react";
+import { Minus, Plus, Search, Star, X } from "lucide-react";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/primitives";
 import { formatPln, toGrosze, type FormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/modules/orders/domain/orders";
 import { isFractionalUnit, mergeCart, parseQty, stepQty, summarizeCart, unitLabel, type CatalogItem } from "../domain/portal";
-import { placePortalOrder } from "../server/actions";
+import { placePortalOrder, toggleFavorite } from "../server/actions";
 
 export type BuilderPoint = { id: string; name: string; address: string; window: string | null; dates: string[] };
 export type BuilderProduct = {
@@ -19,10 +19,14 @@ export type BuilderProduct = {
   unit: string;
   unit_weight_kg: number | string | null;
   price: number | string | null;
+  pack_label?: string | null;
+  is_special?: boolean;
+  image_url?: string | null;
 };
 
 const ALL = "__all__";
 const IN_CART = "__cart__";
+const FAVS = "__fav__";
 
 function fmtQty(n: number, unit: string): string {
   return isFractionalUnit(unit) ? n.toLocaleString("pl-PL", { maximumFractionDigits: 3 }) : String(Math.round(n));
@@ -34,12 +38,14 @@ export function OrderBuilder({
   initialQty,
   initialPointId,
   notice,
+  favorites: initialFavorites = [],
 }: {
   points: BuilderPoint[];
   products: BuilderProduct[];
   initialQty: Record<string, number>;
   initialPointId?: string;
   notice?: string;
+  favorites?: string[];
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(placePortalOrder, {});
   const [pointId, setPointId] = useState(() => (points.some((p) => p.id === initialPointId) ? initialPointId! : points[0]?.id));
@@ -48,7 +54,10 @@ export function OrderBuilder({
   const [qty, setQty] = useState<Record<string, number>>(initialQty);
   const [drafts, setDrafts] = useState<Record<string, string>>({}); // to, co klient właśnie wpisuje w pole ilości
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState(Object.keys(initialQty).length ? IN_CART : ALL);
+  const [favorites, setFavorites] = useState(() => new Set(initialFavorites));
+  const [, startFav] = useTransition();
+  // jak u Fresho: kto ma ulubione, zaczyna od nich; „Zamów to samo” — od koszyka
+  const [category, setCategory] = useState(Object.keys(initialQty).length ? IN_CART : initialFavorites.length ? FAVS : ALL);
 
   const catalog = useMemo(() => new Map<string, CatalogItem>(products.map((p) => [p.id, p])), [products]);
   const categories = useMemo(() => [...new Set(products.map((p) => p.category ?? "Inne"))], [products]);
@@ -58,7 +67,8 @@ export function OrderBuilder({
   const q = query.trim().toLocaleLowerCase("pl");
   const visible = products.filter((p) => {
     if (category === IN_CART && !(qty[p.id] > 0)) return false;
-    if (category !== ALL && category !== IN_CART && (p.category ?? "Inne") !== category) return false;
+    if (category === FAVS && !favorites.has(p.id)) return false;
+    if (category !== ALL && category !== IN_CART && category !== FAVS && (p.category ?? "Inne") !== category) return false;
     return !q || p.name.toLocaleLowerCase("pl").includes(q) || (p.code ?? "").toLocaleLowerCase("pl").includes(q);
   });
 
@@ -66,6 +76,17 @@ export function OrderBuilder({
     setPointId(id);
     const p = points.find((x) => x.id === id);
     if (p && !p.dates.includes(date)) setDate(p.dates[0] ?? "");
+  }
+
+  function flipFavorite(p: BuilderProduct) {
+    const on = !favorites.has(p.id);
+    setFavorites((cur) => {
+      const next = new Set(cur);
+      if (on) next.add(p.id);
+      else next.delete(p.id);
+      return next;
+    });
+    startFav(() => toggleFavorite(p.id, on));
   }
 
   function setProductQty(p: BuilderProduct, value: number) {
@@ -180,6 +201,7 @@ export function OrderBuilder({
           </div>
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4">
             {[
+              { k: FAVS, l: `★ Ulubione (${favorites.size})` },
               { k: ALL, l: "Wszystko" },
               { k: IN_CART, l: `W koszyku (${summary.items})` },
               ...categories.map((c) => ({ k: c, l: c })),
@@ -201,7 +223,11 @@ export function OrderBuilder({
 
         {visible.length === 0 ? (
           <p className="px-1 py-6 text-center text-sm text-muted">
-            {category === IN_CART ? "Koszyk jest pusty — dodaj produkty z listy." : "Nic nie znaleziono."}
+            {category === IN_CART
+              ? "Koszyk jest pusty — dodaj produkty z listy."
+              : category === FAVS
+                ? "Dodaj ulubione gwiazdką przy produkcie — będą tu na start każdego zamówienia."
+                : "Nic nie znaleziono."}
           </p>
         ) : (
           <ul className="overflow-hidden rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]">
@@ -217,10 +243,35 @@ export function OrderBuilder({
                     inCart && "bg-accent/50",
                   )}
                 >
+                  <button
+                    type="button"
+                    onClick={() => flipFavorite(p)}
+                    aria-pressed={favorites.has(p.id)}
+                    aria-label={favorites.has(p.id) ? `Usuń z ulubionych: ${p.name}` : `Dodaj do ulubionych: ${p.name}`}
+                    className="-ml-2 flex h-11 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-surface-2"
+                  >
+                    <Star className={cn("size-5", favorites.has(p.id) ? "fill-primary text-primary" : "text-subtle")} />
+                  </button>
+                  {p.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element -- zdjęcia z katalogu hurtowni, dowolne źródło
+                    <img src={p.image_url} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" loading="lazy" />
+                  )}
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium leading-snug">{p.name}</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <span className="font-medium leading-snug">{p.name}</span>
+                      {p.is_special && (
+                        <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">
+                          Promocja
+                        </span>
+                      )}
+                    </span>
                     <span className="block text-xs text-muted">
-                      {p.price !== null ? `${formatPln(toGrosze(p.price))} / ${unitLabel(p.unit)}` : unitLabel(p.unit)}
+                      {[
+                        p.pack_label ?? unitLabel(p.unit),
+                        p.price !== null ? `${formatPln(toGrosze(p.price))} / ${unitLabel(p.unit)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-1">

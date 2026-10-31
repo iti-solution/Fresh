@@ -81,3 +81,19 @@ export async function cancelPortalOrder(orderId: string): Promise<void> {
   revalidatePath("/portal");
   redirect(`/portal/zamowienie/${orderId}${error ? "?blad=anulowanie" : "?anulowano=1"}`);
 }
+
+/** Gwiazdka w portalu: dodaje / usuwa produkt z ulubionych klienta. */
+export async function toggleFavorite(productId: string, on: boolean): Promise<void> {
+  const ctx = await requirePortalContext();
+  const supabase = await createClient();
+  if (on) {
+    await supabase
+      .from("customer_favorites")
+      .upsert(
+        { tenant_id: ctx.tenantId, customer_id: ctx.customerId, product_id: productId },
+        { onConflict: "customer_id,product_id", ignoreDuplicates: true },
+      );
+  } else {
+    await supabase.from("customer_favorites").delete().eq("customer_id", ctx.customerId).eq("product_id", productId);
+  }
+}

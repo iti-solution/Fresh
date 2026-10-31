@@ -62,14 +62,21 @@ export async function getPortalCatalog(ctx: PortalContext) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("id, code, name, category, unit, unit_weight_kg, price")
+    .select("id, code, name, category, unit, unit_weight_kg, price, pack_label, is_special, image_url")
     .eq("tenant_id", ctx.tenantId)
     .eq("is_active", true)
+    .order("is_special", { ascending: false })
     .order("category", { nullsFirst: false })
     .order("sort")
     .order("name");
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getPortalFavorites(ctx: PortalContext): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("customer_favorites").select("product_id").eq("customer_id", ctx.customerId);
+  return (data ?? []).map((f) => f.product_id);
 }
 
 const ORDER_LIST_COLS =
