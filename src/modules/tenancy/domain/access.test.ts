@@ -65,3 +65,26 @@ describe("menu i przekierowania", () => {
     expect(safeNextPath(null)).toBeNull();
   });
 });
+
+describe("portal klienta", () => {
+  it("logowanie do portalu jest publiczne, portal nie", () => {
+    expect(isPublicPath("/portal/login")).toBe(true);
+    expect(isPublicPath("/portal")).toBe(false);
+    expect(isPublicPath("/portal/zamow")).toBe(false);
+  });
+  it("klient widzi wyłącznie portal", () => {
+    expect(canAccess("customer", "/portal")).toBe(true);
+    expect(canAccess("customer", "/portal/zamow")).toBe(true);
+    expect(canAccess("customer", "/pulpit")).toBe(false);
+    expect(canAccess("customer", "/zlecenia")).toBe(false);
+    expect(canAccess("customer", "/driver")).toBe(false);
+    expect(canAccess("customer", "/wybierz-firme")).toBe(false);
+    expect(navForRole("customer")).toEqual([]);
+    expect(homePathForRole("customer")).toBe("/portal");
+  });
+  it("pracownicy hurtowni i kierowcy nie wchodzą do portalu klienta", () => {
+    for (const role of ["admin", "dispatcher", "driver", "viewer", "customer_service", "management"] as const) {
+      expect(canAccess(role, "/portal")).toBe(false);
+    }
+  });
+});

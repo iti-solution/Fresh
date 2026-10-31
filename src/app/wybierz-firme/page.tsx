@@ -14,6 +14,8 @@ export const metadata: Metadata = { title: "Wybór firmy" };
 export default async function SelectTenantPage() {
   const user = await getUserWithMemberships();
   if (!user) redirect("/login");
+  // Klient hurtowni nie wybiera firmy — ma tylko portal zamówień
+  if (user.memberships.length > 0 && user.memberships.every((m) => m.role === "customer")) redirect("/portal");
   const hasDemo = user.memberships.some((m) => m.isDemo);
 
   return (

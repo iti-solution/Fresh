@@ -14,13 +14,13 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-/** Logotyp: znak + „EXPERT” + „TMS” w kroju i rytmie znaku ExpertWMS (wersaliki, rozstrzelone). */
+/** Logotyp: znak + „FRESH” + „TMS” (wersaliki, rozstrzelone — w rytmie znaku ExpertWMS). */
 export function Wordmark({ className, inverted }: { className?: string; inverted?: boolean }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <BrandMark />
       <span className="flex items-baseline gap-1.5 leading-none">
-        <span className="text-[21px] font-bold tracking-[0.08em] text-primary">EXPERT</span>
+        <span className="text-[21px] font-bold tracking-[0.08em] text-primary">FRESH</span>
         <span className={cn("text-[11px] font-semibold tracking-[0.14em]", inverted ? "text-ink-muted" : "text-muted")}>TMS</span>
       </span>
     </span>

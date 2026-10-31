@@ -1,7 +1,7 @@
 // Czysta logika dostępu: role, ścieżki publiczne, menu panelu.
 // Bez importów z Next.js / Supabase — testowane jednostkowo.
 
-export type Role = "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management";
+export type Role = "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrator",
@@ -10,10 +10,12 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: "Podgląd",
   customer_service: "Obsługa klienta (BOK)",
   management: "Zarząd",
+  customer: "Klient (portal zamówień)",
 };
 
 // /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
-const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login"];
+// /portal/login — logowanie klienta hurtowni e-mailem i hasłem nadanym w panelu
+const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login", "/portal/login"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));
@@ -37,11 +39,19 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/planowanie", label: "Planowanie tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
   { href: "/bok", label: "Dostawy dla BOK", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
-  { href: "/raport", label: "Raport zarządu", group: "Zestawienia", milestone: "M6", built: true, roles: ["admin", "dispatcher", "management", "viewer"] },
+  {
+    href: "/raport",
+    label: "Raport zarządu",
+    group: "Zestawienia",
+    milestone: "M6",
+    built: true,
+    roles: ["admin", "dispatcher", "management", "viewer"],
+  },
   { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/przewoznicy", label: "Przewoźnicy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/produkty", label: "Katalog produktów", group: "Kartoteki", milestone: "P1", built: true, roles: STAFF },
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
   { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
@@ -55,6 +65,9 @@ export function navForRole(role: Role): NavItem[] {
 
 /** Czy rola może wejść na ścieżkę panelu / aplikacji kierowcy. */
 export function canAccess(role: Role, pathname: string): boolean {
+  // Portal zamówień: wyłącznie klient hurtowni; klient nie widzi niczego poza portalem.
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) return role === "customer";
+  if (role === "customer") return false;
   if (pathname === "/driver" || pathname.startsWith("/driver/")) {
     return role === "driver" || role === "admin";
   }
@@ -66,6 +79,7 @@ export function canAccess(role: Role, pathname: string): boolean {
 /** Strona startowa roli: każdy ląduje na swoim zestawieniu. */
 export function homePathForRole(role: Role): string {
   if (role === "driver") return "/driver";
+  if (role === "customer") return "/portal";
   if (role === "customer_service") return "/bok";
   if (role === "management") return "/raport";
   return "/pulpit";

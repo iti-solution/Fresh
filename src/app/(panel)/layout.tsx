@@ -12,6 +12,7 @@ import { requireTenantContext } from "@/modules/tenancy/server/context";
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireTenantContext();
   if (ctx.role === "driver") redirect("/driver");
+  if (ctx.role === "customer") redirect("/portal");
   const nav = navForRole(ctx.role);
   const canSettings = nav.some((i) => i.href === "/ustawienia");
   const initials = (ctx.email ?? "?").slice(0, 2).toUpperCase();
@@ -20,7 +21,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col bg-ink text-ink-foreground md:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-white/[0.07] px-5">
-          <Link href="/" aria-label="ExpertTMS — strona startowa">
+          <Link href="/" aria-label="Fresh TMS — strona startowa">
             <Wordmark inverted />
           </Link>
         </div>

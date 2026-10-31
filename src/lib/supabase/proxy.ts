@@ -39,6 +39,12 @@ export async function updateSession(request: NextRequest) {
       url.search = "";
       return NextResponse.redirect(url);
     }
+    // Klient hurtowni → logowanie do portalu zamówień (e-mail + hasło)
+    if (pathname === "/portal" || pathname.startsWith("/portal/")) {
+      url.pathname = "/portal/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/login";
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);

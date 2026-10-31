@@ -1,12 +1,11 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18";
+  };
   public: {
     Tables: {
       attachments: {
@@ -19,7 +18,6 @@ export type Database = {
           storage_path: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           event_id?: string | null;
@@ -73,7 +71,6 @@ export type Database = {
           tenant_id: string;
           user_id: string | null;
         };
-        ComputedFields: never;
         Insert: {
           action: string;
           created_at?: string;
@@ -114,7 +111,6 @@ export type Database = {
           phone: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
@@ -160,7 +156,6 @@ export type Database = {
           stop_id: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string;
@@ -231,6 +226,51 @@ export type Database = {
           },
         ];
       };
+      customer_portal_users: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          customer_id: string;
+          is_active: boolean;
+          login_email: string;
+          tenant_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          customer_id: string;
+          is_active?: boolean;
+          login_email: string;
+          tenant_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          customer_id?: string;
+          is_active?: boolean;
+          login_email?: string;
+          tenant_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_users_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "customer_portal_users_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       customers: {
         Row: {
           category: string | null;
@@ -245,7 +285,6 @@ export type Database = {
           sales_rep_phone: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           category?: string | null;
           created_at?: string;
@@ -289,21 +328,20 @@ export type Database = {
           id: string;
           location: unknown;
           occurred_at: string;
-          payload: NonNullable<Json>;
+          payload: Json;
           received_at: string;
           route_id: string;
           stop_id: string | null;
           tenant_id: string;
           type: string;
         };
-        ComputedFields: never;
         Insert: {
           client_event_id: string;
           driver_id?: string | null;
           id?: string;
           location?: unknown;
           occurred_at: string;
-          payload?: NonNullable<Json>;
+          payload?: Json;
           received_at?: string;
           route_id: string;
           stop_id?: string | null;
@@ -316,7 +354,7 @@ export type Database = {
           id?: string;
           location?: unknown;
           occurred_at?: string;
-          payload?: NonNullable<Json>;
+          payload?: Json;
           received_at?: string;
           route_id?: string;
           stop_id?: string | null;
@@ -365,7 +403,6 @@ export type Database = {
           reason: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           closes_at?: string | null;
           date: string;
@@ -414,7 +451,6 @@ export type Database = {
           valid_from: string;
           valid_to: string | null;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           created_by?: string | null;
@@ -461,7 +497,6 @@ export type Database = {
           tenant_id: string;
           weekday: number;
         };
-        ComputedFields: never;
         Insert: {
           closes_at: string;
           delivery_point_id: string;
@@ -522,7 +557,6 @@ export type Database = {
           tenant_id: string;
           unloading_zone: string | null;
         };
-        ComputedFields: never;
         Insert: {
           access_instructions?: string | null;
           active_from?: string | null;
@@ -601,7 +635,6 @@ export type Database = {
           name: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           address: string;
           created_at?: string;
@@ -630,7 +663,7 @@ export type Database = {
       };
       driver_pay_rules: {
         Row: {
-          components: NonNullable<Json>;
+          components: Json;
           created_at: string;
           driver_id: string | null;
           id: string;
@@ -638,9 +671,8 @@ export type Database = {
           valid_from: string;
           valid_to: string | null;
         };
-        ComputedFields: never;
         Insert: {
-          components: NonNullable<Json>;
+          components: Json;
           created_at?: string;
           driver_id?: string | null;
           id?: string;
@@ -649,7 +681,7 @@ export type Database = {
           valid_to?: string | null;
         };
         Update: {
-          components?: NonNullable<Json>;
+          components?: Json;
           created_at?: string;
           driver_id?: string | null;
           id?: string;
@@ -685,7 +717,6 @@ export type Database = {
           route_id: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           accuracy_m?: number | null;
           driver_id: string;
@@ -744,7 +775,6 @@ export type Database = {
           tenant_id: string;
           work_date: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           component: string;
@@ -814,7 +844,6 @@ export type Database = {
           tenant_id: string;
           total_amount: number;
         };
-        ComputedFields: never;
         Insert: {
           approved_by?: string | null;
           created_at?: string;
@@ -870,7 +899,6 @@ export type Database = {
           tenant_id: string;
           user_id: string | null;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           default_vehicle_id?: string | null;
@@ -925,7 +953,6 @@ export type Database = {
           tenant_id: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           role: Database["public"]["Enums"]["member_role"];
@@ -961,7 +988,6 @@ export type Database = {
           source: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           column_mapping?: Json | null;
           created_at?: string;
@@ -996,11 +1022,79 @@ export type Database = {
           },
         ];
       };
+      order_lines: {
+        Row: {
+          created_at: string;
+          id: string;
+          line_no: number;
+          order_id: string;
+          product_code: string | null;
+          product_id: string | null;
+          product_name: string;
+          qty: number;
+          tenant_id: string;
+          unit: string;
+          unit_price: number | null;
+          unit_weight_kg: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          line_no: number;
+          order_id: string;
+          product_code?: string | null;
+          product_id?: string | null;
+          product_name: string;
+          qty: number;
+          tenant_id: string;
+          unit: string;
+          unit_price?: number | null;
+          unit_weight_kg?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          line_no?: number;
+          order_id?: string;
+          product_code?: string | null;
+          product_id?: string | null;
+          product_name?: string;
+          qty?: number;
+          tenant_id?: string;
+          unit?: string;
+          unit_price?: number | null;
+          unit_weight_kg?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_lines_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_lines_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       orders: {
         Row: {
           cod_amount: number | null;
           crates: number;
           created_at: string;
+          customer_note: string | null;
           delivery_date: string;
           delivery_point_id: string | null;
           external_ref: string | null;
@@ -1012,9 +1106,12 @@ export type Database = {
           order_value: number | null;
           pallets: number;
           parent_order_id: string | null;
+          placed_at: string | null;
+          placed_by: string | null;
           priority: number;
           raw_address: string | null;
           readiness: Database["public"]["Enums"]["order_readiness"];
+          source: string;
           status: Database["public"]["Enums"]["order_status"];
           tenant_id: string;
           type: Database["public"]["Enums"]["order_type"];
@@ -1023,11 +1120,11 @@ export type Database = {
           window_end: string | null;
           window_start: string | null;
         };
-        ComputedFields: never;
         Insert: {
           cod_amount?: number | null;
           crates?: number;
           created_at?: string;
+          customer_note?: string | null;
           delivery_date: string;
           delivery_point_id?: string | null;
           external_ref?: string | null;
@@ -1039,9 +1136,12 @@ export type Database = {
           order_value?: number | null;
           pallets?: number;
           parent_order_id?: string | null;
+          placed_at?: string | null;
+          placed_by?: string | null;
           priority?: number;
           raw_address?: string | null;
           readiness?: Database["public"]["Enums"]["order_readiness"];
+          source?: string;
           status?: Database["public"]["Enums"]["order_status"];
           tenant_id: string;
           type?: Database["public"]["Enums"]["order_type"];
@@ -1054,6 +1154,7 @@ export type Database = {
           cod_amount?: number | null;
           crates?: number;
           created_at?: string;
+          customer_note?: string | null;
           delivery_date?: string;
           delivery_point_id?: string | null;
           external_ref?: string | null;
@@ -1065,9 +1166,12 @@ export type Database = {
           order_value?: number | null;
           pallets?: number;
           parent_order_id?: string | null;
+          placed_at?: string | null;
+          placed_by?: string | null;
           priority?: number;
           raw_address?: string | null;
           readiness?: Database["public"]["Enums"]["order_readiness"];
+          source?: string;
           status?: Database["public"]["Enums"]["order_status"];
           tenant_id?: string;
           type?: Database["public"]["Enums"]["order_type"];
@@ -1123,7 +1227,6 @@ export type Database = {
           stop_id: string | null;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           created_by?: string | null;
@@ -1194,7 +1297,6 @@ export type Database = {
           name: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           code: string;
           deposit_value?: number | null;
@@ -1214,6 +1316,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "packaging_types_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          category: string | null;
+          code: string | null;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          price: number | null;
+          sort: number;
+          tenant_id: string;
+          unit: string;
+          unit_weight_kg: number;
+        };
+        Insert: {
+          category?: string | null;
+          code?: string | null;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          price?: number | null;
+          sort?: number;
+          tenant_id: string;
+          unit?: string;
+          unit_weight_kg?: number;
+        };
+        Update: {
+          category?: string | null;
+          code?: string | null;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          price?: number | null;
+          sort?: number;
+          tenant_id?: string;
+          unit?: string;
+          unit_weight_kg?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_tenant_id_fkey";
             columns: ["tenant_id"];
             isOneToOne: false;
             referencedRelation: "tenants";
@@ -1243,7 +1395,6 @@ export type Database = {
           vehicles_count: number | null;
           window_conflicts: number | null;
         };
-        ComputedFields: never;
         Insert: {
           baseline_km?: number | null;
           baseline_minutes?: number | null;
@@ -1302,7 +1453,6 @@ export type Database = {
           stop_id: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           order_id: string;
           stop_id: string;
@@ -1351,7 +1501,6 @@ export type Database = {
           window_end: string | null;
           window_start: string | null;
         };
-        ComputedFields: never;
         Insert: {
           arrived_at?: string | null;
           completed_at?: string | null;
@@ -1409,7 +1558,6 @@ export type Database = {
           template_id: string;
           tenant_id: string;
         };
-        ComputedFields: never;
         Insert: {
           delivery_point_id: string;
           sequence: number;
@@ -1459,7 +1607,6 @@ export type Database = {
           tenant_id: string;
           weekdays: number[];
         };
-        ComputedFields: never;
         Insert: {
           alt_driver_id?: string | null;
           default_driver_id?: string | null;
@@ -1548,7 +1695,6 @@ export type Database = {
           tenant_id: string;
           vehicle_id: string | null;
         };
-        ComputedFields: never;
         Insert: {
           actual_km?: number | null;
           carrier_id?: string | null;
@@ -1652,7 +1798,6 @@ export type Database = {
           srid: number;
           srtext: string | null;
         };
-        ComputedFields: never;
         Insert: {
           auth_name?: string | null;
           auth_srid?: number | null;
@@ -1675,22 +1820,21 @@ export type Database = {
           id: string;
           name: string;
           nip: string | null;
-          settings: NonNullable<Json>;
+          settings: Json;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
           name: string;
           nip?: string | null;
-          settings?: NonNullable<Json>;
+          settings?: Json;
         };
         Update: {
           created_at?: string;
           id?: string;
           name?: string;
           nip?: string | null;
-          settings?: NonNullable<Json>;
+          settings?: Json;
         };
         Relationships: [];
       };
@@ -1715,7 +1859,6 @@ export type Database = {
           tenant_id: string;
           vehicle_type: string | null;
         };
-        ComputedFields: never;
         Insert: {
           body_type?: string | null;
           capacity_crates?: number;
@@ -1786,10 +1929,9 @@ export type Database = {
         Row: {
           balance: number | null;
           party_id: string | null;
-          party_type: Database["public"]["Enums"]["cash_party"];
-          tenant_id: string;
+          party_type: Database["public"]["Enums"]["cash_party"] | null;
+          tenant_id: string | null;
         };
-        ComputedFields: never;
         Relationships: [
           {
             foreignKeyName: "cash_movements_tenant_id_fkey";
@@ -1810,7 +1952,6 @@ export type Database = {
           srid: number | null;
           type: string | null;
         };
-        ComputedFields: never;
         Relationships: [];
       };
       geometry_columns: {
@@ -1823,7 +1964,6 @@ export type Database = {
           srid: number | null;
           type: string | null;
         };
-        ComputedFields: never;
         Insert: {
           coord_dimension?: number | null;
           f_geometry_column?: unknown;
@@ -1847,12 +1987,11 @@ export type Database = {
       packaging_balances: {
         Row: {
           balance: number | null;
-          packaging_type_id: string;
-          party_id: string;
-          party_type: Database["public"]["Enums"]["party_type"];
-          tenant_id: string;
+          packaging_type_id: string | null;
+          party_id: string | null;
+          party_type: Database["public"]["Enums"]["party_type"] | null;
+          tenant_id: string | null;
         };
-        ComputedFields: never;
         Relationships: [
           {
             foreignKeyName: "packaging_movements_packaging_type_id_fkey";
@@ -1880,14 +2019,8 @@ export type Database = {
         Args: { col: string; tbl: unknown };
         Returns: unknown;
       };
-      _postgis_pgsql_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      _postgis_scripts_pgsql_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
+      _postgis_pgsql_version: { Args: never; Returns: string };
+      _postgis_scripts_pgsql_version: { Args: never; Returns: string };
       _postgis_selectivity: {
         Args: { att_name: string; geom: unknown; mode?: string; tbl: unknown };
         Returns: number;
@@ -1927,10 +2060,7 @@ export type Database = {
         };
         Returns: boolean;
       };
-      _st_equals: {
-        Args: { geom1: unknown; geom2: unknown };
-        Returns: boolean;
-      };
+      _st_equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
       _st_intersects: {
         Args: { geom1: unknown; geom2: unknown };
         Returns: boolean;
@@ -1969,10 +2099,7 @@ export type Database = {
         };
         Returns: unknown;
       };
-      _st_within: {
-        Args: { geom1: unknown; geom2: unknown };
-        Returns: boolean;
-      };
+      _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
       addauth: { Args: { "": string }; Returns: boolean };
       addgeometrycolumn:
         | {
@@ -2019,18 +2146,11 @@ export type Database = {
         Args: { p_date: string; p_tenant: string };
         Returns: Json;
       };
-      create_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
+      create_demo_tenant: { Args: never; Returns: string };
       create_tenant: { Args: { p_name: string }; Returns: string };
-      current_driver_ids: {
-        Args: Record<PropertyKey, never>;
-        Returns: string[];
-      };
-      dearmor: { Args: { "": string }; Returns: string };
-      disablelongtransactions: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      driver_route_ids: { Args: Record<PropertyKey, never>; Returns: string[] };
+      current_driver_ids: { Args: never; Returns: string[] };
+      disablelongtransactions: { Args: never; Returns: string };
+      driver_route_ids: { Args: never; Returns: string[] };
       dropgeometrycolumn:
         | {
             Args: {
@@ -2049,10 +2169,7 @@ export type Database = {
             };
             Returns: string;
           }
-        | {
-            Args: { column_name: string; table_name: string };
-            Returns: string;
-          };
+        | { Args: { column_name: string; table_name: string }; Returns: string };
       dropgeometrytable:
         | {
             Args: {
@@ -2064,13 +2181,8 @@ export type Database = {
           }
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string };
-      enablelongtransactions: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
+      enablelongtransactions: { Args: never; Returns: string };
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
-      gen_random_uuid: { Args: Record<PropertyKey, never>; Returns: string };
-      gen_salt: { Args: { "": string }; Returns: string };
       geometry: { Args: { "": string }; Returns: unknown };
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown };
@@ -2169,30 +2281,42 @@ export type Database = {
         Returns: boolean;
       };
       geomfromewkt: { Args: { "": string }; Returns: unknown };
-      gettransactionid: { Args: Record<PropertyKey, never>; Returns: unknown };
+      gettransactionid: { Args: never; Returns: unknown };
       has_role: {
-        Args: {
-          roles: Database["public"]["Enums"]["member_role"][];
-          t: string;
-        };
+        Args: { roles: Database["public"]["Enums"]["member_role"][]; t: string };
         Returns: boolean;
       };
       is_member: { Args: { t: string }; Returns: boolean };
-      longtransactionsenabled: {
-        Args: Record<PropertyKey, never>;
-        Returns: boolean;
-      };
-      move_stop: {
-        Args: { p_dir: number; p_stop: string };
+      longtransactionsenabled: { Args: never; Returns: boolean };
+      move_stop: { Args: { p_dir: number; p_stop: string }; Returns: undefined };
+      move_template_point: {
+        Args: { p_dir: number; p_point: string; p_template: string };
         Returns: undefined;
-      };
-      pgp_armor_headers: {
-        Args: { "": string };
-        Returns: Record<string, unknown>[];
       };
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string };
+      portal_cancel_order: { Args: { p_order: string }; Returns: undefined };
+      portal_customer_ids: { Args: never; Returns: string[] };
+      portal_date_allowed: {
+        Args: { p_date: string; p_point: string };
+        Returns: boolean;
+      };
+      portal_earliest_date: { Args: { p_tenant: string }; Returns: string };
+      portal_has_access: {
+        Args: { p_customer: string; p_tenant: string };
+        Returns: boolean;
+      };
+      portal_place_order: {
+        Args: {
+          p_date: string;
+          p_lines: Json;
+          p_note?: string;
+          p_point: string;
+        };
+        Returns: string;
+      };
+      portal_point_ids: { Args: never; Returns: string[] };
       postgis_constraint_dims: {
         Args: { geomcolumn: string; geomschema: string; geomtable: string };
         Returns: number;
@@ -2205,116 +2329,21 @@ export type Database = {
         Args: { geomcolumn: string; geomschema: string; geomtable: string };
         Returns: string;
       };
-      postgis_extensions_upgrade: {
-        Args: { target_version?: string };
-        Returns: string;
-      };
-      postgis_full_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_geos_compiled_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_geos_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_lib_build_date: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_lib_revision: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_lib_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_libjson_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_liblwgeom_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_libprotobuf_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_libxml_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_proj_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_scripts_build_date: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_scripts_installed: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_scripts_released: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_srs: {
-        Args: { auth_name: string; auth_srid: string };
-        Returns: {
-          auth_name: string;
-          auth_srid: string;
-          point_ne: unknown;
-          point_sw: unknown;
-          proj4text: string;
-          srname: string;
-          srtext: string;
-        }[];
-      };
-      postgis_srs_all: {
-        Args: Record<PropertyKey, never>;
-        Returns: {
-          auth_name: string;
-          auth_srid: string;
-          point_ne: unknown;
-          point_sw: unknown;
-          proj4text: string;
-          srname: string;
-          srtext: string;
-        }[];
-      };
-      postgis_srs_codes: { Args: { auth_name: string }; Returns: string[] };
-      postgis_srs_search: {
-        Args: { authname?: string; bounds: unknown };
-        Returns: {
-          auth_name: string;
-          auth_srid: string;
-          point_ne: unknown;
-          point_sw: unknown;
-          proj4text: string;
-          srname: string;
-          srtext: string;
-        }[];
-      };
-      postgis_svn_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
-      postgis_transform_pipeline_geometry: {
-        Args: {
-          forward: boolean;
-          geom: unknown;
-          pipeline: string;
-          to_srid: number;
-        };
-        Returns: unknown;
-      };
+      postgis_extensions_upgrade: { Args: never; Returns: string };
+      postgis_full_version: { Args: never; Returns: string };
+      postgis_geos_version: { Args: never; Returns: string };
+      postgis_lib_build_date: { Args: never; Returns: string };
+      postgis_lib_revision: { Args: never; Returns: string };
+      postgis_lib_version: { Args: never; Returns: string };
+      postgis_libjson_version: { Args: never; Returns: string };
+      postgis_liblwgeom_version: { Args: never; Returns: string };
+      postgis_libprotobuf_version: { Args: never; Returns: string };
+      postgis_libxml_version: { Args: never; Returns: string };
+      postgis_proj_version: { Args: never; Returns: string };
+      postgis_scripts_build_date: { Args: never; Returns: string };
+      postgis_scripts_installed: { Args: never; Returns: string };
+      postgis_scripts_released: { Args: never; Returns: string };
+      postgis_svn_version: { Args: never; Returns: string };
       postgis_type_name: {
         Args: {
           coord_dimension: number;
@@ -2323,21 +2352,23 @@ export type Database = {
         };
         Returns: string;
       };
-      postgis_version: { Args: Record<PropertyKey, never>; Returns: string };
-      postgis_wagyu_version: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
+      postgis_version: { Args: never; Returns: string };
+      postgis_wagyu_version: { Args: never; Returns: string };
       resequence_route: { Args: { p_route: string }; Returns: undefined };
-      reset_demo_tenant: { Args: Record<PropertyKey, never>; Returns: string };
-      move_template_point: { Args: { p_template: string; p_point: string; p_dir: number }; Returns: undefined };
-      sort_template_by_window: { Args: { p_template: string }; Returns: undefined };
-      seed_demo_history: { Args: { p_tenant: string; p_days?: number }; Returns: Json };
+      reset_demo_tenant: { Args: never; Returns: string };
+      seed_demo_history: {
+        Args: { p_days?: number; p_tenant: string };
+        Returns: Json;
+      };
       set_driver_pin: {
         Args: { p_driver: string; p_pin: string };
         Returns: undefined;
       };
       sort_route_by_window: { Args: { p_route: string }; Returns: undefined };
+      sort_template_by_window: {
+        Args: { p_template: string };
+        Returns: undefined;
+      };
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown };
         Returns: unknown;
@@ -2376,9 +2407,7 @@ export type Database = {
             Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown };
             Returns: number;
           };
-      st_area:
-        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-        | { Args: { "": string }; Returns: number };
+      st_area: { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number } | { Args: { "": string }; Returns: number };
       st_asencodedpolyline: {
         Args: { geom: unknown; nprecision?: number };
         Returns: string;
@@ -2386,19 +2415,11 @@ export type Database = {
       st_asewkt: { Args: { "": string }; Returns: string };
       st_asgeojson:
         | {
-            Args: {
-              geog: unknown;
-              maxdecimaldigits?: number;
-              options?: number;
-            };
+            Args: { geog: unknown; maxdecimaldigits?: number; options?: number };
             Returns: string;
           }
         | {
-            Args: {
-              geom: unknown;
-              maxdecimaldigits?: number;
-              options?: number;
-            };
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number };
             Returns: string;
           }
         | {
@@ -2423,11 +2444,7 @@ export type Database = {
             Returns: string;
           }
         | {
-            Args: {
-              geom: unknown;
-              maxdecimaldigits?: number;
-              options?: number;
-            };
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number };
             Returns: string;
           }
         | { Args: { "": string }; Returns: string }
@@ -2455,19 +2472,11 @@ export type Database = {
           };
       st_askml:
         | {
-            Args: {
-              geog: unknown;
-              maxdecimaldigits?: number;
-              nprefix?: string;
-            };
+            Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string };
             Returns: string;
           }
         | {
-            Args: {
-              geom: unknown;
-              maxdecimaldigits?: number;
-              nprefix?: string;
-            };
+            Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string };
             Returns: string;
           }
         | { Args: { "": string }; Returns: string };
@@ -2475,10 +2484,7 @@ export type Database = {
         Args: { geom: unknown; tmpl?: string };
         Returns: string;
       };
-      st_asmarc21: {
-        Args: { format?: string; geom: unknown };
-        Returns: string;
-      };
+      st_asmarc21: { Args: { format?: string; geom: unknown }; Returns: string };
       st_asmvtgeom: {
         Args: {
           bounds: unknown;
@@ -2553,10 +2559,7 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown };
         Returns: unknown;
       };
-      st_collect: {
-        Args: { geom1: unknown; geom2: unknown };
-        Returns: unknown;
-      };
+      st_collect: { Args: { geom1: unknown; geom2: unknown }; Returns: unknown };
       st_concavehull: {
         Args: {
           param_allow_holes?: boolean;
@@ -2580,10 +2583,7 @@ export type Database = {
       st_covers:
         | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
         | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
-      st_crosses: {
-        Args: { geom1: unknown; geom2: unknown };
-        Returns: boolean;
-      };
+      st_crosses: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
       st_curvetoline: {
         Args: { flags?: number; geom: unknown; tol?: number; toltype?: number };
         Returns: unknown;
@@ -2642,10 +2642,7 @@ export type Database = {
             };
             Returns: unknown;
           };
-      st_force3d: {
-        Args: { geom: unknown; zvalue?: number };
-        Returns: unknown;
-      };
+      st_force3d: { Args: { geom: unknown; zvalue?: number }; Returns: unknown };
       st_force3dm: {
         Args: { geom: unknown; mvalue?: number };
         Returns: unknown;
@@ -2696,12 +2693,7 @@ export type Database = {
         Returns: number;
       };
       st_hexagon: {
-        Args: {
-          cell_i: number;
-          cell_j: number;
-          origin?: unknown;
-          size: number;
-        };
+        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number };
         Returns: unknown;
       };
       st_hexagongrid: {
@@ -2719,10 +2711,6 @@ export type Database = {
       st_intersects:
         | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
         | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
-      st_inversetransformpipeline: {
-        Args: { geom: unknown; pipeline: string; to_srid?: number };
-        Returns: unknown;
-      };
       st_isvaliddetail: {
         Args: { flags?: number; geom: unknown };
         Returns: Database["public"]["CompositeTypes"]["valid_detail"];
@@ -2733,25 +2721,11 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      st_largestemptycircle: {
-        Args: { boundary?: unknown; geom: unknown; tolerance?: number };
-        Returns: Record<string, unknown>;
-      };
-      st_length:
-        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-        | { Args: { "": string }; Returns: number };
+      st_length: { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number } | { Args: { "": string }; Returns: number };
       st_letters: { Args: { font?: Json; letters: string }; Returns: unknown };
       st_linecrossingdirection: {
         Args: { line1: unknown; line2: unknown };
         Returns: number;
-      };
-      st_lineextend: {
-        Args: {
-          distance_backward?: number;
-          distance_forward: number;
-          geom: unknown;
-        };
-        Returns: unknown;
       };
       st_linefromencodedpolyline: {
         Args: { nprecision?: number; txtin: string };
@@ -2859,23 +2833,10 @@ export type Database = {
       };
       st_polyfromtext: { Args: { "": string }; Returns: unknown };
       st_polygonfromtext: { Args: { "": string }; Returns: unknown };
-      st_project:
-        | {
-            Args: { azimuth: number; distance: number; geog: unknown };
-            Returns: unknown;
-          }
-        | {
-            Args: { distance: number; geog_from: unknown; geog_to: unknown };
-            Returns: unknown;
-          }
-        | {
-            Args: { azimuth: number; distance: number; geom1: unknown };
-            Returns: unknown;
-          }
-        | {
-            Args: { distance: number; geom1: unknown; geom2: unknown };
-            Returns: unknown;
-          };
+      st_project: {
+        Args: { azimuth: number; distance: number; geog: unknown };
+        Returns: unknown;
+      };
       st_quantizecoordinates: {
         Args: {
           g: unknown;
@@ -2900,8 +2861,7 @@ export type Database = {
         Returns: unknown;
       };
       st_setsrid:
-        | { Args: { geog: unknown; srid: number }; Returns: unknown }
-        | { Args: { geom: unknown; srid: number }; Returns: unknown };
+        { Args: { geog: unknown; srid: number }; Returns: unknown } | { Args: { geom: unknown; srid: number }; Returns: unknown };
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown };
         Returns: unknown;
@@ -2916,21 +2876,14 @@ export type Database = {
       };
       st_split: { Args: { geom1: unknown; geom2: unknown }; Returns: unknown };
       st_square: {
-        Args: {
-          cell_i: number;
-          cell_j: number;
-          origin?: unknown;
-          size: number;
-        };
+        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number };
         Returns: unknown;
       };
       st_squaregrid: {
         Args: { bounds: unknown; size: number };
         Returns: Record<string, unknown>[];
       };
-      st_srid:
-        | { Args: { geog: unknown }; Returns: number }
-        | { Args: { geom: unknown }; Returns: number };
+      st_srid: { Args: { geog: unknown }; Returns: number } | { Args: { geom: unknown }; Returns: number };
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number };
         Returns: unknown[];
@@ -2957,10 +2910,7 @@ export type Database = {
         };
         Returns: unknown;
       };
-      st_touches: {
-        Args: { geom1: unknown; geom2: unknown };
-        Returns: boolean;
-      };
+      st_touches: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
       st_transform:
         | {
             Args: { from_proj: string; geom: unknown; to_proj: string };
@@ -2971,10 +2921,6 @@ export type Database = {
             Returns: unknown;
           }
         | { Args: { geom: unknown; to_proj: string }; Returns: unknown };
-      st_transformpipeline: {
-        Args: { geom: unknown; pipeline: string; to_srid?: number };
-        Returns: unknown;
-      };
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown };
       st_union:
         | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
@@ -3016,56 +2962,19 @@ export type Database = {
       };
     };
     Enums: {
-      branch_type:
-        "restaurant" | "kitchen" | "bar" | "warehouse" | "hotel" | "other";
+      branch_type: "restaurant" | "kitchen" | "bar" | "warehouse" | "hotel" | "other";
       cash_party: "customer" | "driver" | "office";
       geocode_status: "pending" | "ok" | "ambiguous" | "failed" | "manual";
-      member_role:
-        | "admin"
-        | "dispatcher"
-        | "driver"
-        | "viewer"
-        | "customer_service"
-        | "management";
+      member_role: "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
       order_readiness: "awaiting_warehouse" | "ready";
-      order_status:
-        | "new"
-        | "unmatched"
-        | "planned"
-        | "in_progress"
-        | "delivered"
-        | "partial"
-        | "failed"
-        | "cancelled";
+      order_status: "new" | "unmatched" | "planned" | "in_progress" | "delivered" | "partial" | "failed" | "cancelled";
       order_type: "delivery" | "pickup";
       party_type: "customer" | "driver" | "carrier" | "depot";
-      route_kind:
-        | "regular"
-        | "second"
-        | "extra"
-        | "emergency"
-        | "weekend"
-        | "express"
-        | "dowozka";
-      route_status:
-        | "draft"
-        | "planned"
-        | "dispatched"
-        | "in_progress"
-        | "completed"
-        | "closed"
-        | "cancelled";
+      route_kind: "regular" | "second" | "extra" | "emergency" | "weekend" | "express" | "dowozka";
+      route_status: "draft" | "planned" | "dispatched" | "in_progress" | "completed" | "closed" | "cancelled";
       settlement_status: "draft" | "approved" | "exported";
       stop_status:
-        | "pending"
-        | "arrived"
-        | "delivered"
-        | "partial"
-        | "refused"
-        | "absent"
-        | "skipped"
-        | "in_progress"
-        | "complaint";
+        "pending" | "arrived" | "delivered" | "partial" | "refused" | "absent" | "skipped" | "in_progress" | "complaint";
       vehicle_status: "active" | "service" | "inactive";
     };
     CompositeTypes: {
@@ -3084,15 +2993,11 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof (DefaultSchema["Tables"] & DefaultSchema["Views"]) | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -3108,10 +3013,8 @@ export type Tables<
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R;
       }
       ? R
@@ -3119,8 +3022,7 @@ export type Tables<
     : never;
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -3143,8 +3045,7 @@ export type TablesInsert<
     : never;
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -3167,8 +3068,7 @@ export type TablesUpdate<
     : never;
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -3183,9 +3083,7 @@ export type Enums<
     : never;
 
 export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -3202,67 +3100,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      branch_type: [
-        "restaurant",
-        "kitchen",
-        "bar",
-        "warehouse",
-        "hotel",
-        "other",
-      ],
+      branch_type: ["restaurant", "kitchen", "bar", "warehouse", "hotel", "other"],
       cash_party: ["customer", "driver", "office"],
       geocode_status: ["pending", "ok", "ambiguous", "failed", "manual"],
-      member_role: [
-        "admin",
-        "dispatcher",
-        "driver",
-        "viewer",
-        "customer_service",
-        "management",
-      ],
+      member_role: ["admin", "dispatcher", "driver", "viewer", "customer_service", "management", "customer"],
       order_readiness: ["awaiting_warehouse", "ready"],
-      order_status: [
-        "new",
-        "unmatched",
-        "planned",
-        "in_progress",
-        "delivered",
-        "partial",
-        "failed",
-        "cancelled",
-      ],
+      order_status: ["new", "unmatched", "planned", "in_progress", "delivered", "partial", "failed", "cancelled"],
       order_type: ["delivery", "pickup"],
       party_type: ["customer", "driver", "carrier", "depot"],
-      route_kind: [
-        "regular",
-        "second",
-        "extra",
-        "emergency",
-        "weekend",
-        "express",
-        "dowozka",
-      ],
-      route_status: [
-        "draft",
-        "planned",
-        "dispatched",
-        "in_progress",
-        "completed",
-        "closed",
-        "cancelled",
-      ],
+      route_kind: ["regular", "second", "extra", "emergency", "weekend", "express", "dowozka"],
+      route_status: ["draft", "planned", "dispatched", "in_progress", "completed", "closed", "cancelled"],
       settlement_status: ["draft", "approved", "exported"],
-      stop_status: [
-        "pending",
-        "arrived",
-        "delivered",
-        "partial",
-        "refused",
-        "absent",
-        "skipped",
-        "in_progress",
-        "complaint",
-      ],
+      stop_status: ["pending", "arrived", "delivered", "partial", "refused", "absent", "skipped", "in_progress", "complaint"],
       vehicle_status: ["active", "service", "inactive"],
     },
   },

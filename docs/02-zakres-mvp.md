@@ -110,3 +110,6 @@ Do ustalenia z pilotem przed M3:
 - Zebra: model terminala i wersja Androida (PWA, aparat, GPS) — sprawdzić na jednym urządzeniu przed M4.
 - Gotówka: czy kierowca rozlicza się z dyspozytorem, czy z kasą/księgowością?
 - Opakowania: kaucja (wartość) za każdy typ oraz po ilu dniach opakowanie u klienta jest „zalegające” (makieta zakłada 30 dni).
+
+## Zmiana zakresu 2026-11-01
+Do MVP wchodzi **portal zamówień klienta** (składanie i anulowanie zamówień przez restaurację, katalog produktów, konta klientów) — szczegóły w `07-portal-klienta.md`. Poza nim: cenniki per klient, edycja zamówienia, synchronizacja z ERP.
