@@ -16,6 +16,11 @@ export type DayOrder = {
   crates: number;
   notes_sales: string | null;
   notes_logistics: string | null;
+  /** Skąd przyszło: panel, import, api, portal (klient zamówił sam). */
+  source: string;
+  customer_note: string | null;
+  /** Pozycje (produkty) — na razie tylko z portalu klienta. */
+  lines: { name: string; qty: number; unit: string }[];
   window: string;
   customerName: string;
   customerCode: string | null;
@@ -34,7 +39,7 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, external_ref, readiness, status, priority, order_value, cod_amount, weight_kg, pallets, crates, notes_sales, notes_logistics, window_start, window_end, delivery_points(name, city, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
+      "id, external_ref, readiness, status, priority, order_value, cod_amount, weight_kg, pallets, crates, notes_sales, notes_logistics, source, customer_note, window_start, window_end, order_lines(line_no, product_name, qty, unit), delivery_points(name, city, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
     )
     .eq("tenant_id", tenantId)
     .eq("delivery_date", day)
@@ -61,6 +66,11 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
       crates: o.crates ?? 0,
       notes_sales: o.notes_sales,
       notes_logistics: o.notes_logistics,
+      source: o.source,
+      customer_note: o.customer_note,
+      lines: [...(o.order_lines ?? [])]
+        .sort((a, b) => a.line_no - b.line_no)
+        .map((l) => ({ name: l.product_name, qty: Number(l.qty), unit: l.unit })),
       window,
       customerName: p?.customers?.name ?? "—",
       customerCode: p?.customers?.external_code ?? null,

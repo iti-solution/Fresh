@@ -7,7 +7,7 @@ import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Fresh", template: "%s · Fresh" },
+  title: { default: "Fresh TMS", template: "%s · Fresh TMS" },
   description: "Planowanie i realizacja tras dla hurtowni HoReCa",
 };
 

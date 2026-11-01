@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <AuthShell>
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Zaloguj się do Fresh</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Zaloguj się do Fresh TMS</h1>
           <p className="text-sm text-muted">Bez hasła. Wyślemy Ci jednorazowy link na e-mail.</p>
         </div>
         {failed && (

@@ -115,3 +115,21 @@ Reklamacje z decyzją (odrzucenie/uznanie/dowózka) · Analiza dowózek (przyczy
 
 ## Backlog P2
 Auto-planowanie całej floty (VRP multi-vehicle z przydziałem) · AI asystent dyspozytora ("przenieś punkty z chorego kierowcy") · KPI rentowności (koszt km, trasy, punktu) · Portal przewoźnika · Prognozowanie wolumenów · Samoobsługa kierowców
+
+## Portal zamówień klienta (2026-11-01) — szczegóły: `docs/07-portal-klienta.md`
+- [x] Nazwa produktu: **Fresh TMS** (logotyp FRESH + TMS, tytuły stron)
+- [x] Baza (migracje `0011`–`0012`): rola `customer`, katalog `products`, pozycje `order_lines`, dostęp `customer_portal_users`, źródło zamówienia (`orders.source`), funkcje `portal_place_order` / `portal_cancel_order` z kontrolą dostępu, terminu i katalogu; test `supabase/tests/portal.sql`
+- [x] Panel: **Katalog produktów** (`/kartoteki/produkty`, przykładowy katalog jednym kliknięciem, ukrywanie produktów); na karcie klienta **Portal zamówień** — login + hasło do przekazania, nowe hasło, wyłączenie dostępu
+- [x] Zamówienia: znacznik „portal”, uwaga klienta i rozwijana lista pozycji
+- [x] Portal (`/portal`, telefon): logowanie e-mail + hasło, najbliższy termin z godziną graniczną, nowe zamówienie (adres → dzień → produkty → uwagi), „Zamów to samo co ostatnio”, szczegóły i anulowanie przed godziną graniczną
+- [x] **Do sprawdzenia** (`/do-sprawdzenia`): wiadomość (SMS, e-mail, WhatsApp, notatka z rozmowy) → rozpoznanie (słownik klienta + katalog, opcjonalnie Claude) → ekran sprawdzenia jak „AI Order” u Fresho → zamówienie; wynik każdej pozycji i skuteczność 30 dni; słownik uczy się na poprawkach
+- [x] Portal: Ulubione z gwiazdką, Promocja, opis opakowania, zdjęcie produktu
+- [x] Portal: **Napisz lub nagraj zamówienie** (dyktowanie na żywo + nagranie), status wiadomości dla klienta; **BOK** odsłuchuje, potwierdza kompletność i zatwierdza, widzi skuteczność zamówienia na żywo
+- [ ] Transkrypcja nagrań po stronie serwera (adapter), gdy przeglądarka nie dyktuje
+- [ ] Automatyczne wejście wiadomości: bramka SMS (numer zwrotny), skrzynka e-mail (webhook), WhatsApp Business API; nagrania → transkrypcja (adapter)
+- [ ] Ostrzeżenie przy ilości nietypowej dla klienta (np. 10× więcej niż zwykle)
+- [ ] Decyzje produktowe: godzina graniczna per hurtownia (dziś domyślnie 20:00, dostawa od jutra) — ekran w Ustawieniach; czy klient może **edytować** zamówienie, a nie tylko anulować i złożyć ponownie
+- [ ] Import katalogu z ERP (WF-Mag: CSV/XLSX) i przekazanie zamówień z portalu do ERP (eksport / API)
+- [ ] Cenniki per klient (dziś jedna cena orientacyjna dla wszystkich), minimum logistyczne zamówienia
+- [ ] Powiadomienie dla hurtowni o nowym zamówieniu z portalu (licznik na pulpicie / mail) i dla klienta o statusie „W drodze” z ETA
+- [ ] Zmiana hasła przez klienta w portalu

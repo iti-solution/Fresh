@@ -1,4 +1,4 @@
-# Fresh — instrukcje dla Claude Code
+# Fresh TMS — instrukcje dla Claude Code
 
 Fresh to SaaS TMS dla hurtowni owoców i warzyw dostarczających do HoReCa własną flotą (5–100 pojazdów). Właściciel produktu: Arkadiusz — **nie programuje**, zarządza produktem. Tłumacz decyzje techniczne prostym językiem, pokazuj plan przed większą zmianą.
 
@@ -7,6 +7,7 @@ Fresh to SaaS TMS dla hurtowni owoców i warzyw dostarczających do HoReCa włas
 - `docs/02-zakres-mvp.md` — co jest w MVP, a co nie (nie dodawaj funkcji spoza zakresu bez pytania)
 - `docs/04-plan-milestones.md` — kamienie milowe i zadania; po zakończeniu zadania odhacz `[x]`
 - `docs/05-scenariusz-dnia.md` — dzień pilota krok po kroku (dziś vs Fresh); źródło wymagań z warsztatów
+- `docs/07-portal-klienta.md` — portal zamówień klienta (rola `customer`, katalog, terminy)
 - `docs/06-system-wizualny.md` — kolory, typografia i komponenty UI (używaj ich zamiast pisać style od zera)
 - `supabase/migrations/` — schemat bazy; zmiany tylko nowymi migracjami, nigdy edycją starych
 
@@ -23,7 +24,7 @@ src/
     ui/                # komponenty modułu
   lib/                 # supabase client, adaptery (geocoding, routing), utils
 ```
-Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, ops, growth.
+Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, ops, growth, portal.
 
 ## Zasady nienegocjowalne
 1. Każda tabela biznesowa ma `tenant_id` i włączony RLS. Nowa tabela = polityki RLS w tej samej migracji + test, że tenant A nie widzi danych tenanta B.

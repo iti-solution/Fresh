@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormRenderer } from "@/components/forms/form-renderer";
@@ -12,6 +13,7 @@ import { addNote, endNote, saveCustomer } from "@/modules/masterdata/server/acti
 import { AddNoteForm } from "@/modules/masterdata/ui/add-note-form";
 import { customerSections } from "@/modules/masterdata/ui/field-defs";
 import { todayInWarsaw } from "@/modules/orders/domain/orders";
+import { PortalAccess } from "@/modules/portal/ui/portal-access";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -35,6 +37,14 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
 
   const editable = canEdit(ctx.role);
   const today = todayInWarsaw();
+  const { data: portalUsers } = await supabase
+    .from("customer_portal_users")
+    .select("user_id, login_email, is_active, created_at")
+    .eq("tenant_id", ctx.tenantId)
+    .eq("customer_id", c.id)
+    .order("created_at");
+  const h = await headers();
+  const loginUrl = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}/portal/login`;
   const points = [...(c.delivery_points ?? [])].sort((a, b) => (a.external_code ?? "").localeCompare(b.external_code ?? ""));
   const flash =
     sp.nowy === "1"
@@ -179,6 +189,18 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
         </section>
 
         <aside aria-label="Dane klienta" className="flex min-w-0 flex-[1_1_360px] flex-col gap-3">
+          {editable && (
+            <PortalAccess
+              customerId={c.id}
+              loginUrl={loginUrl}
+              rows={(portalUsers ?? []).map((u) => ({
+                userId: u.user_id,
+                email: u.login_email,
+                isActive: u.is_active,
+                createdAt: u.created_at,
+              }))}
+            />
+          )}
           <h2 className="text-lg font-semibold">Dane klienta</h2>
           {editable ? (
             <FormRenderer action={saveCustomer.bind(null, c.id)} sections={customerSections(c)} />

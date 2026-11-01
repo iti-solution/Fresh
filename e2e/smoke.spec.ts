@@ -28,3 +28,19 @@ test("błędny e-mail pokazuje komunikat", async ({ page }) => {
   await page.getByRole("button", { name: "Wyślij link do logowania" }).click();
   await expect(page.getByText("Podaj poprawny adres e-mail.")).toBeVisible();
 });
+
+test("portal zamówień prowadzi niezalogowanego klienta na swoje logowanie", async ({ page }) => {
+  await page.goto("/portal/zamow");
+  await expect(page).toHaveURL(/\/portal\/login$/);
+  await expect(page.getByRole("heading", { name: "Zamów dostawę na jutro" })).toBeVisible();
+  await expect(page.getByLabel("E-mail")).toBeVisible();
+  await expect(page.getByLabel("Hasło")).toBeVisible();
+});
+
+test("logowanie do portalu wymaga e-maila i hasła", async ({ page }) => {
+  await page.goto("/portal/login");
+  await page.getByLabel("E-mail").fill("kuchnia@restauracja.pl");
+  await page.getByLabel("Hasło").evaluate((el: HTMLInputElement) => el.removeAttribute("required"));
+  await page.getByRole("button", { name: "Zaloguj się" }).click();
+  await expect(page.getByText("Podaj e-mail i hasło.")).toBeVisible();
+});

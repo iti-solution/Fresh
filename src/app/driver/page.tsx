@@ -14,11 +14,12 @@ export const metadata: Metadata = { title: "Moje trasy" };
 
 export default async function DriverHome() {
   const ctx = await requireTenantContext();
+  if (ctx.role === "customer") redirect("/portal");
 
   if (ctx.role !== "driver") {
     return (
       <main className="flex flex-col gap-4 p-5">
-        <p className="text-2xl font-semibold text-primary-strong">Fresh · aplikacja kierowcy</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh TMS · aplikacja kierowcy</p>
         <Card className="flex flex-col gap-3 text-sm">
           <p>
             Jesteś zalogowany jako <strong>{ctx.email}</strong> (nie kierowca).

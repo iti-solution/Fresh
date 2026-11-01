@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Apple,
   Building2,
   ChartNoAxesCombined,
   ChevronDown,
@@ -13,10 +14,11 @@ import {
   Route,
   Search,
   Settings,
+  Sparkles,
   Store,
   Truck,
-  Waypoints,
   Wallet,
+  Waypoints,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -44,6 +46,8 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   "/kartoteki/pojazdy": Truck,
   "/kartoteki/kierowcy": IdCard,
   "/kartoteki/przewoznicy": Building2,
+  "/kartoteki/produkty": Apple,
+  "/do-sprawdzenia": Sparkles,
   "/kartoteki/szablony": Waypoints,
   "/opakowania": Package,
   "/rozliczenia": Wallet,

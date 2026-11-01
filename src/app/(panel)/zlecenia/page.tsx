@@ -17,6 +17,7 @@ import {
 import { cancelOrder, setReadiness } from "@/modules/orders/server/actions";
 import { getDayOrders, nearestDayWithOrders, type DayOrder } from "@/modules/orders/server/queries";
 import { canEdit } from "@/modules/tenancy/domain/access";
+import { unitLabel } from "@/modules/portal/domain/portal";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Zamówienia" };
@@ -193,6 +194,20 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                       <tr key={o.id} className="border-t border-border align-top first:border-0 hover:bg-surface-2">
                         <td className="py-2.5 pr-3 pl-5">
                           <DocRef>{o.external_ref ?? "—"}</DocRef>
+                          {o.source === "ai" && (
+                            <Pill
+                              tone="plum"
+                              className="mt-1"
+                              title="Odczytane z wiadomości klienta i sprawdzone przez człowieka"
+                            >
+                              AI
+                            </Pill>
+                          )}
+                          {o.source === "portal" && (
+                            <Pill tone="info" className="mt-1" title="Klient złożył zamówienie sam w portalu zamówień">
+                              portal
+                            </Pill>
+                          )}
                           {o.priority > 0 && (
                             <Pill tone="danger" className="mt-1">
                               priorytet
@@ -215,6 +230,24 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                           </span>
                           {o.notes_sales && <p className="mt-1 text-xs text-info">Handlowa: {o.notes_sales}</p>}
                           {o.notes_logistics && <p className="mt-0.5 text-xs text-warning">Logistyczna: {o.notes_logistics}</p>}
+                          {o.customer_note && <p className="mt-0.5 text-xs text-plum">Klient: {o.customer_note}</p>}
+                          {o.lines.length > 0 && (
+                            <details className="mt-1 text-xs">
+                              <summary className="cursor-pointer text-muted hover:text-foreground">
+                                {o.lines.length} {o.lines.length === 1 ? "pozycja" : o.lines.length < 5 ? "pozycje" : "pozycji"}
+                              </summary>
+                              <ul className="mt-1 space-y-0.5">
+                                {o.lines.map((l, i) => (
+                                  <li key={i} className="flex justify-between gap-3">
+                                    <span>{l.name}</span>
+                                    <span className="whitespace-nowrap tabular-nums text-muted">
+                                      {l.qty.toLocaleString("pl-PL", { maximumFractionDigits: 3 })} {unitLabel(l.unit)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 tabular-nums">{o.window}</td>
                         <td className="px-3 py-2.5 text-right tabular-nums">{Math.round(o.weight_kg)}</td>

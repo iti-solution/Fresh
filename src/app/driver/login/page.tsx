@@ -14,7 +14,7 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
   if (!tenantId) {
     return (
       <main className="flex flex-1 flex-col justify-center gap-4 p-6">
-        <p className="text-2xl font-semibold text-primary-strong">Fresh · kierowca</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh TMS · kierowca</p>
         <div className="rounded-xl border border-border bg-surface p-5 text-sm">
           <p className="font-semibold">Ten telefon nie jest jeszcze przypisany do firmy.</p>
           <p className="mt-2 text-muted">
@@ -42,7 +42,7 @@ export default async function DriverLoginPage({ searchParams }: PageProps<"/driv
   return (
     <main className="flex flex-1 flex-col gap-5 p-5">
       <header>
-        <p className="text-2xl font-semibold text-primary-strong">Fresh · kierowca</p>
+        <p className="text-2xl font-semibold text-primary-strong">Fresh TMS · kierowca</p>
         <p className="text-sm text-muted">{tenant?.name}</p>
       </header>
       {sp.terminal === "1" && (
