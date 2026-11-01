@@ -3,6 +3,7 @@
 -- (trafiona / poprawiona / dodana / usunięta), słownik klienta się uczy, podgląd nie zatwierdza,
 -- a klient portalu zarządza tylko swoimi ulubionymi.
 insert into auth.users (id) values ('c0000000-0000-0000-0000-0000000000c1') on conflict do nothing;
+insert into auth.users (id) values ('b0000000-0000-0000-0000-0000000000b0') on conflict do nothing; -- BOK
 
 do $$
 declare
@@ -86,12 +87,29 @@ begin
     raise exception 'Klient nie może dodać ulubionych innemu klientowi';
   exception when insufficient_privilege then null;
   end;
-  select count(*) into n from order_drafts;
-  if n <> 0 then raise exception 'Klient nie może widzieć szkiców hurtowni'; end if;
+  select count(*) into n from order_drafts where customer_id is distinct from v_customer;
+  if n <> 0 then raise exception 'Klient widzi cudze wiadomości'; end if;
+  select count(*) into n from order_drafts where customer_id = v_customer;
+  if n = 0 then raise exception 'Klient powinien widzieć status swoich wiadomości (po 0015)'; end if;
+  select count(*) into n from order_draft_lines;
+  if n <> 0 then raise exception 'Klient nie może widzieć roboczych pozycji BOK'; end if;
   select count(*) into n from product_aliases;
   if n <> 0 then raise exception 'Klient nie może widzieć słownika hurtowni'; end if;
   delete from customer_favorites where product_id = p1;
   if (select count(*) from customer_favorites) <> 0 then raise exception 'Klient powinien móc usunąć ulubiony'; end if;
+  reset role;
+
+  -- BOK (customer_service) sprawdza i zatwierdza zamówienie z wiadomości
+  insert into memberships (tenant_id, user_id, role) values (v_tenant, 'b0000000-0000-0000-0000-0000000000b0', 'customer_service');
+  perform set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-0000000000b0', true);
+  set local role authenticated;
+  insert into inbound_messages (tenant_id, channel, body) values (v_tenant, 'portal', '3 skrzynki awokado') returning id into v_msg;
+  insert into order_drafts (tenant_id, message_id, customer_id, parser) values (v_tenant, v_msg, v_customer, 'rules') returning id into v_draft;
+  insert into order_draft_lines (tenant_id, draft_id, line_no, phrase, alias_key, proposed_product_id, proposed_qty, confidence)
+  values (v_tenant, v_draft, 1, '3 skrzynki awokado', 'awok', p1, 3, 0.9) returning id into l1;
+  v_order := intake_approve_draft(v_draft, v_point, (now() at time zone 'Europe/Warsaw')::date + 1,
+    jsonb_build_array(jsonb_build_object('product_id', p1, 'qty', 3, 'draft_line_id', l1)), null);
+  if (select outcome from order_draft_lines where id = l1) <> 'accepted' then raise exception 'BOK: pozycja powinna być trafiona'; end if;
   reset role;
 
   raise notice 'Przyjęcie zamówień: wszystkie testy przeszły';

@@ -1,6 +1,19 @@
 "use client";
 
-import { Mail, MessageCircle, MessageSquare, Mic, Phone, Plus, Sparkles, Trash2, Image as ImageIcon, Inbox } from "lucide-react";
+import {
+  Download,
+  Globe,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Mic,
+  Phone,
+  Plus,
+  Sparkles,
+  Trash2,
+  Image as ImageIcon,
+  Inbox,
+} from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/primitives";
@@ -8,7 +21,7 @@ import { Pill } from "@/components/ui/status";
 import type { FormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import { unitLabel } from "@/modules/portal/domain/portal";
-import { CHANNEL_LABELS, confidenceTone, type Channel } from "../domain/intake";
+import { CHANNEL_LABELS, confidenceTone, draftScore, type Channel } from "../domain/intake";
 import { highlight } from "../domain/parse";
 
 export type ReviewProduct = {
@@ -41,6 +54,7 @@ type EditLine = {
 };
 
 const CHANNEL_ICONS: Record<Channel, typeof Mail> = {
+  portal: Globe,
   sms: MessageSquare,
   email: Mail,
   whatsapp: MessageCircle,
@@ -74,7 +88,7 @@ export function DraftReview({
 }: {
   approve: (state: FormState, fd: FormData) => Promise<FormState>;
   reject: () => Promise<void>;
-  message: { channel: Channel; sender: string | null; body: string; received: string };
+  message: { channel: Channel; sender: string | null; body: string; received: string; audioUrl?: string | null };
   senderLabel: string;
   parser: string;
   lines: ReviewLine[];
@@ -85,6 +99,7 @@ export function DraftReview({
   initialNote: string | null;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(approve, {});
+  const [complete, setComplete] = useState(false);
   const [pointId, setPointId] = useState(initialPointId ?? "");
   const [active, setActive] = useState<string | null>(null);
   const [lines, setLines] = useState<EditLine[]>(() =>
@@ -170,6 +185,18 @@ export function DraftReview({
             ),
           )}
         </p>
+        {message.audioUrl && (
+          <div className="flex items-center gap-2 px-5 pb-4">
+            <audio src={message.audioUrl} controls preload="metadata" className="h-10 min-w-0 flex-1" />
+            <a
+              href={message.audioUrl}
+              download
+              className="flex h-10 items-center gap-1.5 rounded-lg border border-border-strong px-3 text-sm font-medium hover:bg-surface-2"
+            >
+              <Download className="size-4" /> Nagranie
+            </a>
+          </div>
+        )}
         <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border bg-surface-2 px-5 py-2.5 text-xs text-muted">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-0.5 w-4 rounded bg-success" /> pewne
@@ -324,8 +351,52 @@ export function DraftReview({
           />
         </label>
 
+        {(() => {
+          const sc = draftScore(
+            lines
+              .filter((l) => l.productId)
+              .map((l) => ({ draftLineId: l.draftLineId, productId: l.productId, qty: Number(l.qty.replace(",", ".")) })),
+            initialLines.map((l) => ({
+              id: l.id,
+              productId: l.proposed_product_id,
+              qty: l.proposed_qty === null ? null : Number(l.proposed_qty),
+            })),
+          );
+          const pct = sc.total ? Math.round((sc.hit / sc.total) * 100) : null;
+          return (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3">
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={complete}
+                  onChange={(e) => setComplete(e.target.checked)}
+                  className="size-5 accent-[var(--primary)]"
+                />
+                Sprawdziłem: zamówienie jest kompletne
+              </label>
+              <span className="text-sm text-muted">
+                Skuteczność odczytu:{" "}
+                <strong
+                  className={cn(
+                    "tabular-nums",
+                    pct === null ? "" : pct >= 80 ? "text-success" : pct >= 50 ? "text-warning" : "text-danger",
+                  )}
+                >
+                  {sc.hit} z {sc.total} {pct !== null && `(${pct}%)`}
+                </strong>{" "}
+                pozycji bez poprawek
+              </span>
+            </div>
+          );
+        })()}
+
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-          <Button type="submit" size="lg" disabled={pending}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={pending || !complete}
+            title={complete ? undefined : "Najpierw potwierdź, że zamówienie jest kompletne"}
+          >
             <Sparkles /> {pending ? "Zapisywanie…" : "Wprowadź zamówienie"}
           </Button>
           <Button

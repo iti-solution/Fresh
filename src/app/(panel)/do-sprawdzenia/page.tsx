@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CHANNEL_LABELS, confidenceTone, type Channel } from "@/modules/intake/domain/intake";
 import { getAccuracy, getReviewQueue } from "@/modules/intake/server/queries";
 import { NewMessageForm } from "@/modules/intake/ui/new-message-form";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canReviewIntake } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Do sprawdzenia" };
@@ -35,13 +35,13 @@ export default async function ReviewQueuePage({ searchParams }: PageProps<"/do-s
     supabase.from("customers").select("id, name").eq("tenant_id", ctx.tenantId).eq("is_active", true).order("name"),
   ]);
   const t = acc.total;
-  const editable = canEdit(ctx.role);
+  const editable = canReviewIntake(ctx.role);
 
   return (
     <>
       <PageHeader
         title="Do sprawdzenia"
-        description="Zamówienia z SMS-ów, e-maili, WhatsAppa i rozmów, odczytane automatycznie. Człowiek sprawdza każde, zanim trafi do zamówień — z tych decyzji liczymy skuteczność."
+        description="Klienci piszą albo nagrywają zamówienia w portalu (lub przysyłają SMS-y i e-maile). Automat zamienia je na pozycje, a BOK sprawdza kompletność i zatwierdza — z tych decyzji liczymy skuteczność."
       />
       {sp.zatwierdzono && <Notice>Zamówienie wprowadzone. Poprawki zapisane do słownika klienta.</Notice>}
       {sp.odrzucono && <Notice tone="info">Wiadomość odrzucona — nie trafi do zamówień.</Notice>}
@@ -96,7 +96,8 @@ export default async function ReviewQueuePage({ searchParams }: PageProps<"/do-s
                               {d.customers?.name ?? d.inbound_messages?.sender ?? "Nieznany nadawca"}
                             </span>
                             <span className="text-xs text-muted">
-                              {CHANNEL_LABELS[(d.inbound_messages?.channel ?? "other") as Channel]} · {fmt(d.created_at)}
+                              {CHANNEL_LABELS[(d.inbound_messages?.channel ?? "other") as Channel]}
+                              {d.inbound_messages?.audio_path ? " · nagranie" : ""} · {fmt(d.created_at)}
                             </span>
                           </span>
                           <span className="block truncate text-sm text-muted">{d.inbound_messages?.body}</span>
@@ -174,7 +175,10 @@ export default async function ReviewQueuePage({ searchParams }: PageProps<"/do-s
 
         {editable && (
           <div className="min-w-0 flex-[1_1_360px]">
-            <Panel title="Nowa wiadomość od klienta" description="Wklej SMS, e-mail, WhatsApp albo notatkę z rozmowy">
+            <Panel
+              title="Wiadomość spoza portalu"
+              description="Klient zadzwonił albo wysłał SMS? Wklej treść lub notatkę z rozmowy"
+            >
               <NewMessageForm customers={customers ?? []} />
             </Panel>
           </div>

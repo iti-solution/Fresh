@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured, TENANT_COOKIE } from "@/lib/env";
 import { formToObject, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { mergeCart, placeOrderSchema, portalErrorMessage } from "../domain/portal";
+import { adminKeyProblem, createAdminClient } from "@/lib/supabase/admin";
+import { audioExtension, audioProblem, portalMessageSchema } from "@/modules/intake/domain/intake";
+import { createDraft } from "@/modules/intake/server/create-draft";
+import { mergeCart, placeOrderSchema, PORTAL_ERRORS, portalErrorMessage } from "../domain/portal";
 import { requirePortalContext } from "./context";
 
 export type PortalLoginState = { error?: string; email?: string };
@@ -96,4 +99,57 @@ export async function toggleFavorite(productId: string, on: boolean): Promise<vo
   } else {
     await supabase.from("customer_favorites").delete().eq("customer_id", ctx.customerId).eq("product_id", productId);
   }
+}
+
+/**
+ * Klient pisze albo nagrywa zamówienie własnymi słowami. Serwer zapisuje nagranie, rozpoznaje pozycje
+ * i wysyła szkic do BOK — zamówieniem staje się dopiero po zatwierdzeniu przez człowieka.
+ */
+export async function submitPortalMessage(_prev: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await requirePortalContext();
+  const parsed = portalMessageSchema.safeParse(formToObject(fd));
+  if (!parsed.success) return toFormErrors(parsed.error, parsed.error.issues[0]?.message ?? "Popraw zamówienie.");
+  const v = parsed.data;
+  const audio = fd.get("audio");
+  const file = audio instanceof File && audio.size > 0 ? audio : null;
+  const audioErr = audioProblem(file);
+  if (audioErr) return { ok: false, message: audioErr };
+  if (!v.body && !file) return { ok: false, message: "Napisz albo nagraj, czego potrzebujesz." };
+
+  // Dostęp i termin sprawdzamy jako klient (RLS + funkcja bazy), dopiero potem zapis kluczem serwerowym
+  const supabase = await createClient();
+  const { data: point } = await supabase
+    .from("delivery_points")
+    .select("id, customer_id")
+    .eq("id", v.delivery_point_id)
+    .eq("customer_id", ctx.customerId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!point) return { ok: false, message: PORTAL_ERRORS.PORTAL_NO_ACCESS };
+  const { data: allowed } = await supabase.rpc("portal_date_allowed", { p_point: point.id, p_date: v.delivery_date });
+  if (!allowed) return { ok: false, message: PORTAL_ERRORS.PORTAL_DATE_NOT_ALLOWED };
+  if (adminKeyProblem()) return { ok: false, message: "Portal chwilowo nie przyjmuje wiadomości. Zadzwoń do hurtowni." };
+
+  const admin = createAdminClient();
+  let audioPath: string | null = null;
+  if (file) {
+    audioPath = `${ctx.tenantId}/${ctx.customerId}/${crypto.randomUUID()}.${audioExtension(file.type)}`;
+    const { error } = await admin.storage.from("order-audio").upload(audioPath, file, { contentType: file.type, upsert: false });
+    if (error) return { ok: false, message: "Nie udało się wysłać nagrania. Spróbuj ponownie albo napisz zamówienie." };
+  }
+
+  const res = await createDraft(admin, {
+    tenantId: ctx.tenantId,
+    channel: "portal",
+    sender: ctx.email,
+    body: v.body || "(nagranie głosowe bez transkrypcji — odsłuchaj)",
+    audioPath,
+    createdBy: ctx.userId,
+    customerId: ctx.customerId,
+    pointId: point.id,
+    deliveryDate: v.delivery_date,
+  });
+  if ("error" in res) return { ok: false, message: "Nie udało się wysłać zamówienia. Spróbuj ponownie." };
+  revalidatePath("/portal");
+  redirect(`/portal/wiadomosc/${res.draftId}?wyslano=1`);
 }

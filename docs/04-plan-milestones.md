@@ -124,6 +124,8 @@ Auto-planowanie całej floty (VRP multi-vehicle z przydziałem) · AI asystent d
 - [x] Portal (`/portal`, telefon): logowanie e-mail + hasło, najbliższy termin z godziną graniczną, nowe zamówienie (adres → dzień → produkty → uwagi), „Zamów to samo co ostatnio”, szczegóły i anulowanie przed godziną graniczną
 - [x] **Do sprawdzenia** (`/do-sprawdzenia`): wiadomość (SMS, e-mail, WhatsApp, notatka z rozmowy) → rozpoznanie (słownik klienta + katalog, opcjonalnie Claude) → ekran sprawdzenia jak „AI Order” u Fresho → zamówienie; wynik każdej pozycji i skuteczność 30 dni; słownik uczy się na poprawkach
 - [x] Portal: Ulubione z gwiazdką, Promocja, opis opakowania, zdjęcie produktu
+- [x] Portal: **Napisz lub nagraj zamówienie** (dyktowanie na żywo + nagranie), status wiadomości dla klienta; **BOK** odsłuchuje, potwierdza kompletność i zatwierdza, widzi skuteczność zamówienia na żywo
+- [ ] Transkrypcja nagrań po stronie serwera (adapter), gdy przeglądarka nie dyktuje
 - [ ] Automatyczne wejście wiadomości: bramka SMS (numer zwrotny), skrzynka e-mail (webhook), WhatsApp Business API; nagrania → transkrypcja (adapter)
 - [ ] Ostrzeżenie przy ilości nietypowej dla klienta (np. 10× więcej niż zwykle)
 - [ ] Decyzje produktowe: godzina graniczna per hurtownia (dziś domyślnie 20:00, dostawa od jutra) — ekran w Ustawieniach; czy klient może **edytować** zamówienie, a nie tylko anulować i złożyć ponownie

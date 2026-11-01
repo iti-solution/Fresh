@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, RotateCcw, ShoppingBasket } from "lucide-react";
+import { ChevronRight, Clock, Mic, Plus, RotateCcw, ShoppingBasket, XCircle } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/panel/page";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/modules/orders/domain/orders";
 import { orderDeadline, portalOrderStatus } from "@/modules/portal/domain/portal";
 import { requirePortalContext } from "@/modules/portal/server/context";
-import { getLastPortalOrderId, getPortalOrders, getPortalPoints } from "@/modules/portal/server/queries";
+import { getLastPortalOrderId, getPortalMessages, getPortalOrders, getPortalPoints } from "@/modules/portal/server/queries";
 
 export const metadata: Metadata = { title: "Moje zamówienia" };
 
@@ -39,7 +39,12 @@ function OrderItem({ o }: { o: OrderRow }) {
 
 export default async function PortalHome() {
   const ctx = await requirePortalContext();
-  const [points, orders, lastId] = await Promise.all([getPortalPoints(ctx), getPortalOrders(ctx), getLastPortalOrderId(ctx)]);
+  const [points, orders, lastId, messages] = await Promise.all([
+    getPortalPoints(ctx),
+    getPortalOrders(ctx),
+    getLastPortalOrderId(ctx),
+    getPortalMessages(ctx),
+  ]);
   const next = points.flatMap((p) => p.dates).sort()[0] ?? null;
   const deadline = next ? orderDeadline(next, ctx.settings) : null;
 
@@ -57,8 +62,11 @@ export default async function PortalHome() {
               </p>
             )}
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Link href="/portal/zamow" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
-                <Plus /> Nowe zamówienie
+              <Link href="/portal/napisz" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
+                <Mic /> Napisz lub nagraj zamówienie
+              </Link>
+              <Link href="/portal/zamow" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "w-full")}>
+                <Plus /> Wybierz z katalogu
               </Link>
               {lastId && (
                 <Link
@@ -78,6 +86,43 @@ export default async function PortalHome() {
           </EmptyState>
         )}
       </section>
+
+      {messages.length > 0 && (
+        <section aria-labelledby="wyslane">
+          <h2 id="wyslane" className="mb-2 px-1 text-[15px] font-semibold">
+            Wysłane wiadomości
+          </h2>
+          <ul className="overflow-hidden rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]">
+            {messages.map((m) => (
+              <li key={m.id}>
+                <Link
+                  href={`/portal/wiadomosc/${m.id}`}
+                  className="flex min-h-16 items-center gap-3 border-b border-border px-4 py-3 last:border-0 hover:bg-surface-2"
+                >
+                  {m.status === "rejected" ? (
+                    <XCircle className="size-5 shrink-0 text-danger" />
+                  ) : (
+                    <Clock className="size-5 shrink-0 text-info" />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold capitalize">
+                      {m.delivery_date ? formatDayLabel(m.delivery_date) : "—"}
+                    </span>
+                    <span className="block truncate text-sm text-muted">
+                      {m.inbound_messages?.audio_path ? "🎤 " : ""}
+                      {m.inbound_messages?.body}
+                    </span>
+                  </span>
+                  <Pill tone={m.status === "rejected" ? "danger" : "info"}>
+                    {m.status === "rejected" ? "nie przyjęto" : "BOK sprawdza"}
+                  </Pill>
+                  <ChevronRight className="size-4 shrink-0 text-subtle" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="nadchodzace">
         <h2 id="nadchodzace" className="mb-2 px-1 text-[15px] font-semibold">

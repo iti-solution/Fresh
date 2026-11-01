@@ -93,6 +93,11 @@ export function safeNextPath(next: string | null | undefined): string | null {
   return next;
 }
 
+/** Kto sprawdza i zatwierdza zamówienia z wiadomości klientów: BOK, dyspozytor, admin (zgodnie z RLS, migracja 0015). */
+export function canReviewIntake(role: Role): boolean {
+  return role === "admin" || role === "dispatcher" || role === "customer_service";
+}
+
 /** Kto może zmieniać kartoteki i zamówienia (zgodnie z RLS: admin i dyspozytor). */
 export function canEdit(role: Role): boolean {
   return role === "admin" || role === "dispatcher";

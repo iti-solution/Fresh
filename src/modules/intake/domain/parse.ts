@@ -273,7 +273,10 @@ export function parseOrderText(text: string, catalog: CatalogEntry[], aliases: A
     const { qty: parsedQty, unit, productWords, aliasKey } = analyzePhrase(toks.map((t) => t.word));
     // fraza zaczyna się od pierwszego ważnego słowa („Na jutro poproszę 2 skrzynki…” → „2 skrzynki…”)
     const first = toks.find((t) => numberOf(t.word) !== null || unitOf(t.word) || (!STOPWORDS.has(t.word) && t.word.length >= 3));
-    const seg = first && first.start > fullSeg.start ? { start: first.start, end: fullSeg.end, text: text.slice(first.start, fullSeg.end) } : fullSeg;
+    const seg =
+      first && first.start > fullSeg.start
+        ? { start: first.start, end: fullSeg.end, text: text.slice(first.start, fullSeg.end) }
+        : fullSeg;
     let qty = parsedQty;
     const wordStems = productWords.map(stem);
 

@@ -34,3 +34,10 @@ Wzorowane na Fresho OrderPilot: klient zamawia jak dotąd (SMS, e-mail, WhatsApp
 Model danych (migracja 0013): `inbound_messages`, `order_drafts`, `order_draft_lines` (propozycja + decyzja + wynik), `product_aliases` (słownik), `customer_favorites`; `products.pack_label`, `is_special`, `image_url`; `orders.source = 'ai'`. Zatwierdzenie w jednej transakcji: `intake_approve_draft`. Test: `supabase/tests/intake.sql`.
 
 Portal: zakładka **★ Ulubione** (gwiazdka przy produkcie; kto ma ulubione, zaczyna od nich), oznaczenie **Promocja**, opis opakowania („Skrzynka (18 szt.)”) i zdjęcie produktu.
+
+## Klient pisze lub nagrywa, BOK zatwierdza (v0.3, 2026-11-01)
+Główny przepływ wiadomości: **klient sam** wpisuje albo nagrywa zamówienie w portalu (*Napisz lub nagraj zamówienie*), wybiera adres i dzień. Przeglądarka dyktuje tekst na żywo (rozpoznawanie mowy w Chrome/Safari/Edge), klient widzi go i może poprawić; nagranie też jest wysyłane. Klient widzi status „BOK sprawdza” → „Zamówienie przyjęte” (link) albo „Nie przyjęto”.
+
+**BOK** (rola *Obsługa klienta*) w *Do sprawdzenia* widzi wiadomość, odsłuchuje nagranie i dostaje gotową propozycję zamówienia. Zanim wprowadzi, zaznacza „Sprawdziłem: zamówienie jest kompletne”; na ekranie widzi skuteczność odczytu tego zamówienia na żywo („4 z 5 pozycji bez poprawek”). Wklejanie SMS-ów i notatek z telefonu zostaje jako kanał pomocniczy.
+
+Technicznie: kanał `portal`, nagrania w prywatnym buckecie `order-audio` (BOK dostaje podpisany link na godzinę), BOK ma prawo zatwierdzać (`intake_approve_draft`, polityki — migracja 0015), klient widzi status swoich wiadomości, ale nie robocze pozycje ani słownik. Limit nagrania: 2 minuty.

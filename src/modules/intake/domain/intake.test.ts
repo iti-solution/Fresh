@@ -55,3 +55,28 @@ describe("formularze", () => {
     ]);
   });
 });
+
+describe("portal i nagrania", () => {
+  it("nagranie: rozmiar i typ", async () => {
+    const { audioProblem, audioExtension } = await import("./intake");
+    expect(audioProblem(null)).toBe(null);
+    expect(audioProblem({ size: 1000, type: "audio/webm;codecs=opus" })).toBe(null);
+    expect(audioProblem({ size: 4 * 1024 * 1024, type: "audio/webm" })).toMatch(/za długie/);
+    expect(audioProblem({ size: 1000, type: "image/png" })).toMatch(/nie jest nagraniem|nie jest nagranie/);
+    expect(audioExtension("audio/mp4")).toBe("m4a");
+  });
+  it("skuteczność jednego zamówienia: trafione / (zostawione + dodane + usunięte)", async () => {
+    const { draftScore } = await import("./intake");
+    const proposals = [
+      { id: "a", productId: "p1", qty: 10 },
+      { id: "b", productId: "p2", qty: 5 },
+      { id: "c", productId: null, qty: 4 },
+    ];
+    const lines = [
+      { draftLineId: "a", productId: "p1", qty: 10 }, // trafione
+      { draftLineId: "b", productId: "p2", qty: 6 }, // poprawione
+      { draftLineId: null, productId: "p3", qty: 1 }, // dodane; „c” usunięte
+    ];
+    expect(draftScore(lines, proposals)).toEqual({ hit: 1, total: 4 });
+  });
+});

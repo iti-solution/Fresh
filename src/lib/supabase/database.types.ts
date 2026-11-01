@@ -3291,7 +3291,7 @@ export type Database = {
       cash_party: "customer" | "driver" | "office";
       draft_status: "needs_review" | "approved" | "rejected";
       geocode_status: "pending" | "ok" | "ambiguous" | "failed" | "manual";
-      intake_channel: "sms" | "email" | "whatsapp" | "voice" | "phone" | "photo" | "other";
+      intake_channel: "sms" | "email" | "whatsapp" | "voice" | "phone" | "photo" | "other" | "portal";
       member_role: "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
       order_readiness: "awaiting_warehouse" | "ready";
       order_status: "new" | "unmatched" | "planned" | "in_progress" | "delivered" | "partial" | "failed" | "cancelled";
@@ -3431,7 +3431,7 @@ export const Constants = {
       cash_party: ["customer", "driver", "office"],
       draft_status: ["needs_review", "approved", "rejected"],
       geocode_status: ["pending", "ok", "ambiguous", "failed", "manual"],
-      intake_channel: ["sms", "email", "whatsapp", "voice", "phone", "photo", "other"],
+      intake_channel: ["sms", "email", "whatsapp", "voice", "phone", "photo", "other", "portal"],
       member_role: ["admin", "dispatcher", "driver", "viewer", "customer_service", "management", "customer"],
       order_readiness: ["awaiting_warehouse", "ready"],
       order_status: ["new", "unmatched", "planned", "in_progress", "delivered", "partial", "failed", "cancelled"],

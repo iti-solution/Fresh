@@ -133,3 +133,31 @@ export async function getLastPortalOrderId(ctx: PortalContext): Promise<string |
     .maybeSingle();
   return data?.id ?? null;
 }
+
+/** Wiadomości klienta czekające na BOK (i odrzucone z ostatnich 7 dni). */
+export async function getPortalMessages(ctx: PortalContext) {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - 7 * 864e5).toISOString();
+  const { data } = await supabase
+    .from("order_drafts")
+    .select("id, status, created_at, delivery_date, delivery_points(name), inbound_messages(body, audio_path)")
+    .eq("tenant_id", ctx.tenantId)
+    .eq("customer_id", ctx.customerId)
+    .in("status", ["needs_review", "rejected"])
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return data ?? [];
+}
+
+export async function getPortalMessage(ctx: PortalContext, draftId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("order_drafts")
+    .select("id, status, created_at, delivery_date, order_id, delivery_points(name), inbound_messages(body, audio_path)")
+    .eq("tenant_id", ctx.tenantId)
+    .eq("customer_id", ctx.customerId)
+    .eq("id", draftId)
+    .maybeSingle();
+  return data;
+}

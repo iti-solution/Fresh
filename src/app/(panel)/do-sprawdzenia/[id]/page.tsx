@@ -10,7 +10,8 @@ import { highlight } from "@/modules/intake/domain/parse";
 import { approveDraft, rejectDraft } from "@/modules/intake/server/actions";
 import { getCatalogForReview, getCustomersWithPoints, getDraft } from "@/modules/intake/server/queries";
 import { DraftReview } from "@/modules/intake/ui/draft-review";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canReviewIntake } from "@/modules/tenancy/domain/access";
+import { adminKeyProblem, createAdminClient } from "@/lib/supabase/admin";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Sprawdź zamówienie" };
@@ -41,6 +42,12 @@ export default async function DraftPage({ params }: PageProps<"/do-sprawdzenia/[
   ]);
   if (!draft || !draft.inbound_messages) notFound();
   const msg = draft.inbound_messages;
+  // Nagranie klienta: podpisany link na godzinę (bucket prywatny, czyta tylko serwer)
+  let audioUrl: string | null = null;
+  if (msg.audio_path && !adminKeyProblem()) {
+    const { data } = await createAdminClient().storage.from("order-audio").createSignedUrl(msg.audio_path, 3600);
+    audioUrl = data?.signedUrl ?? null;
+  }
   const back = (
     <nav className="mb-3 text-sm">
       <Link href="/do-sprawdzenia" className="inline-flex items-center gap-1 text-muted hover:text-foreground">
@@ -50,7 +57,7 @@ export default async function DraftPage({ params }: PageProps<"/do-sprawdzenia/[
   );
 
   // Już sprawdzone (albo brak uprawnień): podgląd decyzji człowieka
-  if (draft.status !== "needs_review" || !canEdit(ctx.role)) {
+  if (draft.status !== "needs_review" || !canReviewIntake(ctx.role)) {
     const name = new Map(products.map((p) => [p.id, p]));
     const parts = highlight(
       msg.body,
@@ -72,6 +79,7 @@ export default async function DraftPage({ params }: PageProps<"/do-sprawdzenia/[
         </p>
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
           <Panel title="Wiadomość">
+            {audioUrl && <audio src={audioUrl} controls preload="metadata" className="mb-3 h-10 w-full" />}
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
               {parts.map((p, i) => (p.key ? <strong key={i}>{p.text}</strong> : <span key={i}>{p.text}</span>))}
             </p>
@@ -124,7 +132,13 @@ export default async function DraftPage({ params }: PageProps<"/do-sprawdzenia/[
       <DraftReview
         approve={approveDraft.bind(null, draft.id)}
         reject={rejectDraft.bind(null, draft.id)}
-        message={{ channel: msg.channel as Channel, sender: msg.sender, body: msg.body, received: fmt(msg.received_at) }}
+        message={{
+          channel: msg.channel as Channel,
+          sender: msg.sender,
+          body: msg.body,
+          received: fmt(msg.received_at),
+          audioUrl,
+        }}
         senderLabel={draft.customers?.name ?? msg.sender ?? "Nieznany nadawca"}
         parser={draft.parser}
         lines={draft.order_draft_lines.filter((l) => l.outcome === null && l.line_no < 1000)}

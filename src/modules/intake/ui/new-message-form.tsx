@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/primitives";
 import type { FormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
-import { CHANNEL_LABELS, CHANNELS } from "../domain/intake";
+import { CHANNEL_LABELS, MANUAL_CHANNELS } from "../domain/intake";
 import { createDraftFromMessage } from "../server/actions";
 
 const EXAMPLE =
@@ -22,7 +22,7 @@ export function NewMessageForm({ customers }: { customers: { id: string; name: s
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Kanał</span>
           <select name="channel" defaultValue="sms" className={inputClass}>
-            {CHANNELS.map((c) => (
+            {MANUAL_CHANNELS.map((c) => (
               <option key={c} value={c}>
                 {CHANNEL_LABELS[c]}
               </option>

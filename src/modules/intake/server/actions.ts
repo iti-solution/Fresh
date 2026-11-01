@@ -2,29 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getOrderParser } from "@/lib/adapters/order-parser";
 import { formToObject, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { availableDeliveryDates, earliestDeliveryDate, portalSettings, warsawNow } from "@/modules/portal/domain/portal";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canReviewIntake } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { approveSchema, intakeErrorMessage, matchSender, messageSchema } from "../domain/intake";
+import { createDraft } from "./create-draft";
 
 /** Wiadomość od klienta → rozpoznanie → szkic do sprawdzenia. Nic nie trafia do zamówień bez człowieka. */
 export async function createDraftFromMessage(_prev: FormState, fd: FormData): Promise<FormState> {
   const ctx = await requireTenantContext();
-  if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
+  if (!canReviewIntake(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
   const parsed = messageSchema.safeParse(formToObject(fd));
   if (!parsed.success) return toFormErrors(parsed.error);
   const v = parsed.data;
   const supabase = await createClient();
-
-  const { data: msg, error: mErr } = await supabase
-    .from("inbound_messages")
-    .insert({ tenant_id: ctx.tenantId, channel: v.channel, sender: v.sender, body: v.body, created_by: ctx.userId })
-    .select("id")
-    .single();
-  if (mErr || !msg) return { ok: false, message: "Nie udało się zapisać wiadomości." };
 
   // Kto napisał: wybrany ręcznie albo po telefonie oddziału / e-mailu konta w portalu
   let customerId = v.customer_id;
@@ -46,98 +38,24 @@ export async function createDraftFromMessage(_prev: FormState, fd: FormData): Pr
     pointId = hit?.pointId ?? null;
   }
 
-  const [{ data: products }, { data: aliases }, { data: points }, { data: tenant }] = await Promise.all([
-    supabase.from("products").select("id, name, code, unit, category").eq("tenant_id", ctx.tenantId).eq("is_active", true),
-    customerId
-      ? supabase
-          .from("product_aliases")
-          .select("alias_key, product_id, customer_id")
-          .eq("tenant_id", ctx.tenantId)
-          .or(`customer_id.is.null,customer_id.eq.${customerId}`)
-      : supabase
-          .from("product_aliases")
-          .select("alias_key, product_id, customer_id")
-          .eq("tenant_id", ctx.tenantId)
-          .is("customer_id", null),
-    customerId
-      ? supabase
-          .from("delivery_points")
-          .select("id, delivery_weekdays, active_from, active_to")
-          .eq("tenant_id", ctx.tenantId)
-          .eq("customer_id", customerId)
-          .eq("is_active", true)
-          .order("name")
-      : Promise.resolve({
-          data: [] as { id: string; delivery_weekdays: number[]; active_from: string | null; active_to: string | null }[],
-        }),
-    supabase.from("tenants").select("settings").eq("id", ctx.tenantId).single(),
-  ]);
-  if (!pointId && points?.length === 1) pointId = points[0].id;
-
-  const now = warsawNow();
-  const parser = getOrderParser();
-  const result = await parser.parse({
-    text: v.body,
-    catalog: products ?? [],
-    aliases: (aliases ?? []).map((a) => ({
-      alias_key: a.alias_key,
-      product_id: a.product_id,
-      customerSpecific: a.customer_id !== null,
-    })),
-    today: now.date,
+  const res = await createDraft(supabase, {
+    tenantId: ctx.tenantId,
+    channel: v.channel,
+    sender: v.sender,
+    body: v.body,
+    createdBy: ctx.userId,
+    customerId,
+    pointId,
   });
-
-  // Dzień: z wiadomości, inaczej najbliższy dzień dostaw oddziału
-  const settings = portalSettings(tenant?.settings);
-  const point = points?.find((p) => p.id === pointId);
-  const fallbackDate = point
-    ? (availableDeliveryDates(now, settings, {
-        weekdays: point.delivery_weekdays ?? [],
-        activeFrom: point.active_from,
-        activeTo: point.active_to,
-      })[0] ?? earliestDeliveryDate(now, settings))
-    : earliestDeliveryDate(now, settings);
-
-  const { data: draft, error: dErr } = await supabase
-    .from("order_drafts")
-    .insert({
-      tenant_id: ctx.tenantId,
-      message_id: msg.id,
-      customer_id: customerId,
-      delivery_point_id: pointId,
-      delivery_date: result.dateHint ?? fallbackDate,
-      note: result.note,
-      parser: result.parser,
-    })
-    .select("id")
-    .single();
-  if (dErr || !draft) return { ok: false, message: "Nie udało się zapisać rozpoznanego zamówienia." };
-
-  if (result.lines.length) {
-    const { error: lErr } = await supabase.from("order_draft_lines").insert(
-      result.lines.map((l, i) => ({
-        tenant_id: ctx.tenantId,
-        draft_id: draft.id,
-        line_no: i + 1,
-        phrase: l.phrase,
-        alias_key: l.aliasKey || null,
-        span_start: l.spanStart,
-        span_end: l.spanEnd,
-        proposed_product_id: l.productId,
-        proposed_qty: l.qty,
-        confidence: l.confidence,
-      })),
-    );
-    if (lErr) return { ok: false, message: "Nie udało się zapisać pozycji." };
-  }
+  if ("error" in res) return { ok: false, message: res.error };
   revalidatePath("/do-sprawdzenia");
-  redirect(`/do-sprawdzenia/${draft.id}`);
+  redirect(`/do-sprawdzenia/${res.draftId}`);
 }
 
 /** Człowiek zatwierdza (po poprawkach) → zamówienie + wynik każdej pozycji + nauka słownika. */
 export async function approveDraft(draftId: string, _prev: FormState, fd: FormData): Promise<FormState> {
   const ctx = await requireTenantContext();
-  if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
+  if (!canReviewIntake(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
   const parsed = approveSchema.safeParse(formToObject(fd));
   if (!parsed.success) return toFormErrors(parsed.error, parsed.error.issues[0]?.message ?? "Popraw zamówienie.");
   const v = parsed.data;
@@ -157,7 +75,7 @@ export async function approveDraft(draftId: string, _prev: FormState, fd: FormDa
 
 export async function rejectDraft(draftId: string): Promise<void> {
   const ctx = await requireTenantContext();
-  if (!canEdit(ctx.role)) return;
+  if (!canReviewIntake(ctx.role)) return;
   const supabase = await createClient();
   await supabase
     .from("order_drafts")

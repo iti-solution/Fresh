@@ -6,7 +6,7 @@ import { accuracy, type Accuracy, type Outcome } from "../domain/parse";
 export async function getReviewQueue(tenantId: string) {
   const supabase = await createClient();
   const cols =
-    "id, status, parser, created_at, reviewed_at, delivery_date, order_id, customers(name), inbound_messages(channel, sender, body, received_at), order_draft_lines(confidence, proposed_product_id, outcome), orders(external_ref)";
+    "id, status, parser, created_at, reviewed_at, delivery_date, order_id, customers(name), inbound_messages(channel, sender, body, received_at, audio_path), order_draft_lines(confidence, proposed_product_id, outcome), orders(external_ref)";
   const [{ data: pending, error }, { data: done }] = await Promise.all([
     supabase
       .from("order_drafts")
@@ -54,7 +54,7 @@ export async function getDraft(tenantId: string, draftId: string) {
   const { data, error } = await supabase
     .from("order_drafts")
     .select(
-      "id, status, parser, note, delivery_date, customer_id, delivery_point_id, created_at, reviewed_at, order_id, orders(external_ref), customers(name), inbound_messages(channel, sender, body, received_at), order_draft_lines(id, line_no, phrase, span_start, span_end, proposed_product_id, proposed_qty, confidence, final_product_id, final_qty, outcome)",
+      "id, status, parser, note, delivery_date, customer_id, delivery_point_id, created_at, reviewed_at, order_id, orders(external_ref), customers(name), inbound_messages(channel, sender, body, received_at, audio_path), order_draft_lines(id, line_no, phrase, span_start, span_end, proposed_product_id, proposed_qty, confidence, final_product_id, final_qty, outcome)",
     )
     .eq("tenant_id", tenantId)
     .eq("id", draftId)
