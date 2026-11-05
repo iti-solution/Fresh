@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/panel/module-placeholder";
@@ -52,6 +52,11 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
         description={`${rows.length} klientów · każdy może mieć kilka adresów dostaw (sklep, magazyn, budowa…).`}
         actions={
           <>
+            {canEdit(ctx.role) && (
+              <Link href="/kartoteki/klienci/import" className={buttonVariants({ variant: "outline" })}>
+                <Upload /> Import z Excela
+              </Link>
+            )}
             {canEdit(ctx.role) && (
               <Link href="/kartoteki/klienci/nowy" className={buttonVariants()}>
                 <Plus /> Nowy klient
