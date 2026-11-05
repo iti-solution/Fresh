@@ -100,7 +100,9 @@ export function parseDecimal(raw: string): number | null {
   const s = raw.replace(/\s| /g, "").replace(/zł|pln|kg|szt\.?/gi, "");
   if (s === "") return null;
   let t = s;
-  if (/,\d{1,3}$/.test(t) && t.includes(".")) t = t.replace(/\./g, ""); // 1.234,50
+  if (/,\d{1,3}$/.test(t) && t.includes("."))
+    t = t.replace(/\./g, ""); // 1.234,50
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, ""); // 1.250 = 1250 (polski separator tysięcy)
   t = t.replace(",", ".");
   const n = Number(t);
   return Number.isFinite(n) ? n : NaN;

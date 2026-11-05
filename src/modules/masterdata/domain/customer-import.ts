@@ -232,6 +232,9 @@ export type NormalizedCustomerRow = {
     active_to: string | null;
   };
   warnings: string[];
+  /** Czy plik podał nazwę / typ adresu (jeśli nie — przy aktualizacji zostają dotychczasowe). */
+  pointNameGiven: boolean;
+  pointTypeGiven: boolean;
 };
 
 export type CustomerRowResult =
@@ -316,6 +319,7 @@ export function normalizeCustomerRow(
     if (ty) typeId = ty.id;
     else warnings.push(`nieznany typ adresu „${g("point_type")}” — ustawiono „Inny”`);
   }
+  const typeResolved = typeId !== null;
   if (!typeId) typeId = types.find((x) => x.code === "other")?.id ?? null;
 
   if (errors.length) return { ok: false, line, ref: g("customer_code") || name, errors };
@@ -351,6 +355,8 @@ export function normalizeCustomerRow(
         active_to,
       },
       warnings,
+      pointNameGiven: Boolean(g("point_name")),
+      pointTypeGiven: typeResolved,
     },
   };
 }

@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
   }
   const events = Array.isArray(body.events) ? body.events.slice(0, MAX_EVENTS) : [];
   const results: ApplyResult[] = [];
+  // po pierwszym „retry” na trasie kolejne zdarzenia tej trasy też czekają — zależą od wcześniejszych (kolejność)
+  const blocked = new Set<string>();
   for (const raw of events) {
     const e = parseIncomingEvent(raw);
     const id = String((raw as { client_event_id?: unknown })?.client_event_id ?? "");
@@ -29,12 +31,18 @@ export async function POST(request: NextRequest) {
       results.push({ id, status: "rejected", reason: e });
       continue;
     }
-    try {
-      results.push(await applyDriverEvent(c, e));
-    } catch {
-      // błąd przejściowy — telefon spróbuje ponownie
+    if (blocked.has(e.route_id)) {
       results.push({ id, status: "rejected", reason: "retry" });
+      continue;
     }
+    let r: ApplyResult;
+    try {
+      r = await applyDriverEvent(c, e);
+    } catch {
+      r = { id, status: "rejected", reason: "retry" };
+    }
+    if (r.reason === "retry") blocked.add(e.route_id);
+    results.push(r);
   }
 
   const positions: IncomingPosition[] = (Array.isArray(body.positions) ? body.positions.slice(0, MAX_POSITIONS) : [])

@@ -1,6 +1,7 @@
 // Silnik reguł wynagrodzeń kierowców (M5.3) — czyste funkcje, kwoty w groszach (integer).
 // Każda pozycja rozliczenia ma „skąd się wzięła”: ilość × stawka i opis z danych trasy.
 import { z } from "zod";
+import { parseGrosze } from "@/lib/forms";
 
 export const PAY_MODELS = { employee: "Etatowy (dniówka + premia)", delivery: "Dowózkowy (od obrotu / punktów)" } as const;
 export type PayModel = keyof typeof PAY_MODELS;
@@ -64,12 +65,12 @@ const money = z
   .optional()
   .transform((v, ctx) => {
     if (v === undefined || v === "") return 0;
-    const n = Number(String(v).replace(/\s/g, "").replace(",", "."));
-    if (!Number.isFinite(n) || n < 0 || n > 1_000_000) {
-      ctx.addIssue({ code: "custom", message: "Kwota 0–1 000 000 zł" });
+    const g = parseGrosze(v);
+    if (g === null || g > 100_000_000) {
+      ctx.addIssue({ code: "custom", message: "Kwota 0–1 000 000 zł, maks. 2 miejsca po przecinku" });
       return z.NEVER;
     }
-    return Math.round(n * 100);
+    return g;
   });
 const pct = z
   .union([z.string(), z.number()])

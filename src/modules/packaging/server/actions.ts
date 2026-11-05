@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { parseCash } from "@/modules/execution/domain/execution";
 import { recomputeSettlement } from "@/modules/payroll/server/settlement";
 import { createClient } from "@/lib/supabase/server";
-import type { FormState } from "@/lib/forms";
+import { parseGrosze, type FormState } from "@/lib/forms";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { CORRECTION_REASONS, type CorrectionReason } from "../domain/ledger";
@@ -103,10 +103,8 @@ export async function addCashCorrection(_prev: FormState, fd: FormData): Promise
   const ctx = await requireTenantContext();
   if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
   const driverId = String(fd.get("driver_id") ?? "");
-  const raw = String(fd.get("amount") ?? "")
-    .replace(/\s/g, "")
-    .replace(",", ".");
-  const amount = Number(raw);
+  const grosze = parseGrosze(fd.get("amount"), true);
+  const amount = grosze === null ? NaN : grosze / 100;
   const note = String(fd.get("note") ?? "").trim();
   if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1_000_000)
     return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0"] }, message: "Popraw kwotę." };
@@ -115,7 +113,7 @@ export async function addCashCorrection(_prev: FormState, fd: FormData): Promise
   const { data: d } = await db.from("drivers").select("id").eq("id", driverId).eq("tenant_id", ctx.tenantId).maybeSingle();
   if (!d) return { ok: false, message: "Wybierz kierowcę." };
   const g = randomUUID();
-  const a = Math.round(amount * 100) / 100;
+  const a = grosze! / 100;
   const common = { tenant_id: ctx.tenantId, movement_group: g, reason: "correction", note, created_by: ctx.userId };
   const { error } = await db.from("cash_movements").insert([
     { ...common, party_type: "driver" as const, party_id: driverId, amount: a },

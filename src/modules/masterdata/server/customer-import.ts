@@ -73,23 +73,45 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
   });
 
   // istniejąca kartoteka
-  const [{ data: customers, error: cErr }, { data: points, error: pErr }] = await Promise.all([
-    db.from("customers").select("id, external_code, name").eq("tenant_id", tenantId).limit(20000),
-    db
-      .from("delivery_points")
-      .select("id, customer_id, external_code, address_line, city, location_locked")
-      .eq("tenant_id", tenantId)
-      .limit(50000),
+  // stronicowanie: Supabase zwraca maks. 1000 wierszy na zapytanie
+  async function all<T>(q: (from: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[] | null> {
+    const out: T[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await q(from);
+      if (error) return null;
+      out.push(...(data ?? []));
+      if (!data || data.length < 1000) return out;
+    }
+  }
+  const [customers, points] = await Promise.all([
+    all((f) =>
+      db
+        .from("customers")
+        .select("id, external_code, name")
+        .eq("tenant_id", tenantId)
+        .order("id")
+        .range(f, f + 999),
+    ),
+    all((f) =>
+      db
+        .from("delivery_points")
+        .select("id, customer_id, external_code, address_line, city, location_locked")
+        .eq("tenant_id", tenantId)
+        .order("id")
+        .range(f, f + 999),
+    ),
   ]);
-  if (cErr || pErr) return { ok: false, message: "Nie udało się wczytać kartoteki." };
-  const custByKey = new Map<string, string>();
-  for (const c of customers ?? []) {
-    custByKey.set(customerKey({ external_code: null, name: c.name }), c.id);
-    if (c.external_code) custByKey.set(customerKey(c), c.id);
+  if (!customers || !points) return { ok: false, message: "Nie udało się wczytać kartoteki." };
+  const custByCode = new Map<string, string>();
+  // po nazwie dopasowujemy tylko klientów, którzy w kartotece nie mają jeszcze kodu (inaczej dwóch różnych „Bistro” zlałoby się w jedno)
+  const custByNameNoCode = new Map<string, string>();
+  for (const c of customers) {
+    if (c.external_code) custByCode.set(customerKey(c), c.id);
+    else custByNameNoCode.set(customerKey({ external_code: null, name: c.name }), c.id);
   }
   const pointByCode = new Map<string, { id: string; locked: boolean }>();
   const pointByCustAddr = new Map<string, { id: string; locked: boolean }>();
-  for (const pt of points ?? []) {
+  for (const pt of points) {
     const v = { id: pt.id, locked: pt.location_locked };
     if (pt.external_code) pointByCode.set(pointKey(pt), v);
     pointByCustAddr.set(`${pt.customer_id}|${pointKey({ ...pt, external_code: null })}`, v);
@@ -108,9 +130,10 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
   for (const r of rows) {
     const ref = r.customer.external_code ?? r.customer.name;
     // ---- klient
-    const ck = customerKey(r.customer);
-    // po kodzie, a gdy w kartotece klient nie ma jeszcze kodu — po nazwie
-    let customerId = custByKey.get(ck) ?? custByKey.get(customerKey({ external_code: null, name: r.customer.name }));
+    const nameKey = customerKey({ external_code: null, name: r.customer.name });
+    // po kodzie; gdy plik nie ma kodu albo klient w kartotece jest jeszcze bez kodu — po nazwie
+    let customerId =
+      (r.customer.external_code ? custByCode.get(customerKey(r.customer)) : undefined) ?? custByNameNoCode.get(nameKey);
     const custPatch = withoutNulls(r.customer);
     if (customerId) {
       if (!touchedCustomers.has(customerId)) {
@@ -125,6 +148,10 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
           continue;
         }
         summary.customers_updated += 1;
+        if (r.customer.external_code) {
+          custByCode.set(customerKey(r.customer), customerId);
+          custByNameNoCode.delete(nameKey);
+        }
       }
     } else {
       const { data, error } = await db
@@ -138,8 +165,8 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
         continue;
       }
       customerId = data.id;
-      custByKey.set(ck, customerId);
-      custByKey.set(customerKey({ external_code: null, name: r.customer.name }), customerId);
+      if (r.customer.external_code) custByCode.set(customerKey(r.customer), customerId);
+      else custByNameNoCode.set(nameKey, customerId);
       summary.customers_created += 1;
     }
     touchedCustomers.add(customerId);
@@ -167,7 +194,14 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
     const address = { address_line: pt.address_line, postal_code: pt.postal_code, city: pt.city };
     let pointId: string;
     if (existing) {
-      const patch = withoutNulls({ ...base, ...(existing.locked ? {} : address) });
+      // przy aktualizacji nie nadpisujemy nazwy i typu wartościami domyślnymi, gdy plik ich nie podaje
+      const { name, point_type_id, ...rest } = base;
+      const patch = withoutNulls({
+        ...rest,
+        ...(r.pointNameGiven ? { name } : {}),
+        ...(r.pointTypeGiven ? { point_type_id } : {}),
+        ...(existing.locked ? {} : address),
+      });
       const { error } = await db.from("delivery_points").update(patch).eq("id", existing.id).eq("tenant_id", tenantId);
       if (error) {
         summary.errors += 1;

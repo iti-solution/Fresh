@@ -50,52 +50,65 @@ async function insertEvent(
   return error ? "error" : "ok";
 }
 
+/** Rzuca wyjątek przy błędzie zapisu — żeby zdarzenie wróciło do telefonu jako „spróbuj ponownie”. */
+function must<T extends { error: { message: string } | null }>(r: T): T {
+  if (r.error) throw new Error(r.error.message);
+  return r;
+}
+
 async function setStopStatus(c: DriverCtx, routeId: string, stopId: string, status: StopStatus, at: string) {
-  const { data: stop } = await c.admin
-    .from("route_stops")
-    .select("arrived_at")
-    .eq("id", stopId)
-    .eq("route_id", routeId)
-    .maybeSingle();
+  const { data: stop } = must(
+    await c.admin.from("route_stops").select("arrived_at").eq("id", stopId).eq("route_id", routeId).maybeSingle(),
+  );
   if (status === "in_progress") {
+    must(
+      await c.admin
+        .from("route_stops")
+        .update({ status: "pending" })
+        .eq("route_id", routeId)
+        .eq("status", "in_progress")
+        .neq("id", stopId),
+    );
+  }
+  must(
     await c.admin
       .from("route_stops")
-      .update({ status: "pending" })
-      .eq("route_id", routeId)
-      .eq("status", "in_progress")
-      .neq("id", stopId);
-  }
-  await c.admin
-    .from("route_stops")
-    .update({
-      status: status as "pending",
-      arrived_at: status === "in_progress" || isFinished(status) ? (stop?.arrived_at ?? at) : (stop?.arrived_at ?? null),
-      completed_at: isFinished(status) ? at : null,
-    })
-    .eq("id", stopId)
-    .eq("route_id", routeId);
-  const { data: links } = await c.admin.from("route_stop_orders").select("order_id").eq("stop_id", stopId);
+      .update({
+        status: status as "pending",
+        arrived_at: status === "in_progress" || isFinished(status) ? (stop?.arrived_at ?? at) : (stop?.arrived_at ?? null),
+        completed_at: isFinished(status) ? at : null,
+      })
+      .eq("id", stopId)
+      .eq("route_id", routeId),
+  );
+  const { data: links } = must(await c.admin.from("route_stop_orders").select("order_id").eq("stop_id", stopId));
   const ids = (links ?? []).map((l) => l.order_id);
   if (ids.length) {
-    await c.admin
-      .from("orders")
-      .update({ status: ORDER_STATUS[status] as "planned" })
-      .in("id", ids)
-      .neq("status", "cancelled");
+    must(
+      await c.admin
+        .from("orders")
+        .update({ status: ORDER_STATUS[status] as "planned" })
+        .in("id", ids)
+        .neq("status", "cancelled"),
+    );
   }
 }
 
 /** Opakowania i gotówka z punktu: zdarzenie niesie stan absolutny, do księgi dopisujemy tylko różnicę (bez nadpisywania). */
 async function applyStopMoney(c: DriverCtx, e: Extract<DriverEvent, { type: "stop_saved" }>, eventRowId: string | null) {
-  const { data: point } = await c.admin.from("route_stops").select("delivery_points(customer_id)").eq("id", e.stop_id).single();
+  const { data: point } = must(
+    await c.admin.from("route_stops").select("delivery_points(customer_id)").eq("id", e.stop_id).single(),
+  );
   const customerId = point?.delivery_points?.customer_id;
   if (!customerId) return;
-  const { data: types } = await c.admin.from("packaging_types").select("id").eq("tenant_id", c.tenantId);
-  const { data: existing } = await c.admin
-    .from("packaging_movements")
-    .select("packaging_type_id, qty, reason")
-    .eq("stop_id", e.stop_id)
-    .eq("party_type", "customer");
+  const { data: types } = must(await c.admin.from("packaging_types").select("id").eq("tenant_id", c.tenantId));
+  const { data: existing } = must(
+    await c.admin
+      .from("packaging_movements")
+      .select("packaging_type_id, qty, reason")
+      .eq("stop_id", e.stop_id)
+      .eq("party_type", "customer"),
+  );
   const sum = (typeId: string, r: string) =>
     (existing ?? []).filter((m) => m.packaging_type_id === typeId && m.reason === r).reduce((a, m) => a + m.qty, 0);
   const rows = [];
@@ -127,15 +140,17 @@ async function applyStopMoney(c: DriverCtx, e: Extract<DriverEvent, { type: "sto
       );
     }
   }
-  if (rows.length) await c.admin.from("packaging_movements").insert(rows);
+  if (rows.length) must(await c.admin.from("packaging_movements").insert(rows));
 
   if (e.cash_grosze !== null) {
-    const { data: prev } = await c.admin
-      .from("cash_movements")
-      .select("amount")
-      .eq("stop_id", e.stop_id)
-      .eq("party_type", "driver")
-      .eq("reason", "cod_collected");
+    const { data: prev } = must(
+      await c.admin
+        .from("cash_movements")
+        .select("amount")
+        .eq("stop_id", e.stop_id)
+        .eq("party_type", "driver")
+        .eq("reason", "cod_collected"),
+    );
     const already = Math.round((prev ?? []).reduce((a, m) => a + Number(m.amount) * 100, 0));
     const delta = e.cash_grosze - already;
     if (delta !== 0) {
@@ -150,91 +165,43 @@ async function applyStopMoney(c: DriverCtx, e: Extract<DriverEvent, { type: "sto
         created_by: c.userId,
         source_event_id: eventRowId,
       };
-      await c.admin.from("cash_movements").insert([
-        { ...common, party_type: "driver" as const, party_id: c.driverId, amount },
-        { ...common, party_type: "customer" as const, party_id: customerId, amount: -amount },
-      ]);
+      must(
+        await c.admin.from("cash_movements").insert([
+          { ...common, party_type: "driver" as const, party_id: c.driverId, amount },
+          { ...common, party_type: "customer" as const, party_id: customerId, amount: -amount },
+        ]),
+      );
     }
   }
 }
 
-export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<ApplyResult> {
-  const id = e.client_event_id;
-  const reject = (reason: string): ApplyResult => ({ id, status: "rejected", reason });
-
-  // już przyjęte? (ponowne wysłanie po zerwanym połączeniu)
-  const { data: seen } = await c.admin
-    .from("delivery_events")
-    .select("id")
-    .eq("tenant_id", c.tenantId)
-    .eq("client_event_id", id)
-    .maybeSingle();
-  if (seen) return { id, status: "duplicate" };
-
-  const { data: route } = await c.admin
-    .from("routes")
-    .select("id, status, odometer_start, route_stops(id)")
-    .eq("id", e.route_id)
-    .eq("tenant_id", c.tenantId)
-    .eq("driver_id", c.driverId)
-    .maybeSingle();
-  if (!route) return reject("To nie jest Twoja trasa (dyspozytor mógł ją przydzielić innemu kierowcy).");
-  const problem = validateEvent(
-    { status: route.status, odometerStart: route.odometer_start, stops: route.route_stops as never },
-    e,
-  );
-  if (problem) return reject(problem);
-
+/** Skutki zdarzenia w bazie. Idempotentne: ponowne wykonanie (po zerwanym połączeniu) daje ten sam stan. */
+async function applyEffects(c: DriverCtx, e: DriverEvent, odometerStart: number | null, eventRowId: string | null) {
   const at = e.occurred_at;
   switch (e.type) {
-    case "route_started": {
-      const r = await insertEvent(
-        c,
-        id,
-        e.route_id,
-        null,
-        "route_started",
-        { odometer_start: e.odometer_start, vehicle_id: e.vehicle_id },
-        at,
-        e.location,
+    case "route_started":
+      must(
+        await c.admin
+          .from("routes")
+          .update({
+            status: "in_progress",
+            odometer_start: e.odometer_start,
+            ...(e.vehicle_id ? { vehicle_id: e.vehicle_id } : {}),
+          })
+          .eq("id", e.route_id)
+          .in("status", ["planned", "dispatched", "in_progress"]),
       );
-      if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
-      await c.admin
-        .from("routes")
-        .update({
-          status: "in_progress",
-          odometer_start: e.odometer_start,
-          ...(e.vehicle_id ? { vehicle_id: e.vehicle_id } : {}),
-        })
-        .eq("id", e.route_id);
-      return { id, status: "ok" };
-    }
-    case "stop_quick": {
-      const st = QUICK_STATUSES[e.status];
-      const r = await insertEvent(c, id, e.route_id, e.stop_id, `stop_${st.stop}`, { source: "route_list" }, at, e.location);
-      if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
-      await setStopStatus(c, e.route_id, e.stop_id, st.stop, at);
-      return { id, status: "ok" };
-    }
+      return;
+    case "stop_quick":
+      await setStopStatus(c, e.route_id, e.stop_id, QUICK_STATUSES[e.status].stop, at);
+      return;
     case "stop_saved": {
-      const next = outcomeStopStatus(e.outcome);
-      const type = next ? `stop_${next}` : "stop_saved";
-      const payload: Record<string, unknown> = { source: "stop_screen", photos: e.photos, signature: e.signature };
-      if (e.reason.trim()) payload.reason = e.reason.trim();
-      if (e.comment.trim()) payload.comment = e.comment.trim();
-      const r = await insertEvent(c, id, e.route_id, e.stop_id, type, payload, at, e.location);
-      if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
-      const { data: row } = await c.admin
-        .from("delivery_events")
-        .select("id")
-        .eq("tenant_id", c.tenantId)
-        .eq("client_event_id", id)
-        .maybeSingle();
-      await applyStopMoney(c, e, row?.id ?? null);
+      await applyStopMoney(c, e, eventRowId);
+      // pochodne zapisy z deterministycznym id — ponowienie nie dubluje
       if (e.return_text.trim())
-        await insertEvent(
+        await insertOrThrow(
           c,
-          derivedUuid(id, "return"),
+          derivedUuid(e.client_event_id, "return"),
           e.route_id,
           e.stop_id,
           "return_recorded",
@@ -243,9 +210,9 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
           e.location,
         );
       if (e.comment.trim())
-        await insertEvent(
+        await insertOrThrow(
           c,
-          derivedUuid(id, "comment"),
+          derivedUuid(e.client_event_id, "comment"),
           e.route_id,
           e.stop_id,
           "comment",
@@ -253,35 +220,108 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
           at,
           e.location,
         );
+      const next = outcomeStopStatus(e.outcome);
       if (next) await setStopStatus(c, e.route_id, e.stop_id, next, at);
-      return { id, status: "ok" };
+      return;
     }
-    case "problem_reported": {
-      const r = await insertEvent(
-        c,
-        id,
-        e.route_id,
-        e.stop_id,
-        "problem_reported",
-        { kind: e.kind, text: e.text.trim(), photos: e.photos },
-        at,
-        e.location,
+    case "problem_reported":
+      return;
+    case "route_finished":
+      must(
+        await c.admin
+          .from("routes")
+          .update({
+            status: "completed",
+            odometer_end: e.odometer_end,
+            actual_km: e.odometer_end - (odometerStart ?? e.odometer_end),
+          })
+          .eq("id", e.route_id)
+          .eq("status", "in_progress"),
       );
-      return r === "ok" ? { id, status: "ok" } : r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
+      return;
+  }
+}
+
+async function insertOrThrow(...args: Parameters<typeof insertEvent>) {
+  if ((await insertEvent(...args)) === "error") throw new Error("insert");
+}
+
+function eventRow(e: DriverEvent): { stopId: string | null; type: string; payload: Record<string, unknown> } {
+  switch (e.type) {
+    case "route_started":
+      return { stopId: null, type: "route_started", payload: { odometer_start: e.odometer_start, vehicle_id: e.vehicle_id } };
+    case "stop_quick":
+      return { stopId: e.stop_id, type: `stop_${QUICK_STATUSES[e.status].stop}`, payload: { source: "route_list" } };
+    case "stop_saved": {
+      const next = outcomeStopStatus(e.outcome);
+      const payload: Record<string, unknown> = { source: "stop_screen", photos: e.photos, signature: e.signature };
+      if (e.reason.trim()) payload.reason = e.reason.trim();
+      if (e.comment.trim()) payload.comment = e.comment.trim();
+      return { stopId: e.stop_id, type: next ? `stop_${next}` : "stop_saved", payload };
     }
-    case "route_finished": {
-      const r = await insertEvent(c, id, e.route_id, null, "route_finished", { odometer_end: e.odometer_end }, at, e.location);
-      if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
+    case "problem_reported":
+      return { stopId: e.stop_id, type: "problem_reported", payload: { kind: e.kind, text: e.text.trim(), photos: e.photos } };
+    case "route_finished":
+      return { stopId: null, type: "route_finished", payload: { odometer_end: e.odometer_end } };
+  }
+}
+
+/**
+ * Przyjęcie zdarzenia z telefonu. Błąd przejściowy (baza, sieć) → „retry” (telefon wyśle ponownie);
+ * odrzucenie tylko, gdy zdarzenie jest niezgodne ze stanem trasy. Ponowione zdarzenie wykonuje skutki jeszcze raz
+ * (są idempotentne), więc przerwany zapis zawsze się dokończy.
+ */
+export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<ApplyResult> {
+  const id = e.client_event_id;
+  const reject = (reason: string): ApplyResult => ({ id, status: "rejected", reason });
+  const retry: ApplyResult = { id, status: "rejected", reason: "retry" };
+  try {
+    const { data: route } = must(
       await c.admin
         .from("routes")
-        .update({
-          status: "completed",
-          odometer_end: e.odometer_end,
-          actual_km: e.odometer_end - (route.odometer_start ?? e.odometer_end),
-        })
-        .eq("id", e.route_id);
-      return { id, status: "ok" };
+        .select("id, status, odometer_start, route_stops(id)")
+        .eq("id", e.route_id)
+        .eq("tenant_id", c.tenantId)
+        .eq("driver_id", c.driverId)
+        .maybeSingle(),
+    );
+    const { data: seen } = must(
+      await c.admin.from("delivery_events").select("id").eq("tenant_id", c.tenantId).eq("client_event_id", id).maybeSingle(),
+    );
+    if (seen) {
+      // już przyjęte: dokończ skutki (gdyby poprzednia próba przerwała się w połowie), chyba że trasa jest zamknięta
+      if (route && route.status !== "closed" && route.status !== "cancelled")
+        await applyEffects(c, e, route.odometer_start, seen.id);
+      return { id, status: "duplicate" };
     }
+    if (!route) return reject("To nie jest Twoja trasa (dyspozytor mógł ją przydzielić innemu kierowcy).");
+    const problem = validateEvent(
+      { status: route.status, odometerStart: route.odometer_start, stops: route.route_stops as never },
+      e,
+    );
+    if (problem) return reject(problem);
+    if (e.type === "route_started" && e.vehicle_id) {
+      const { data: v } = must(
+        await c.admin
+          .from("vehicles")
+          .select("id")
+          .eq("id", e.vehicle_id)
+          .eq("tenant_id", c.tenantId)
+          .eq("status", "active")
+          .maybeSingle(),
+      );
+      if (!v) return reject("Wybrany pojazd jest nieaktywny albo nie należy do firmy.");
+    }
+    const row = eventRow(e);
+    const r = await insertEvent(c, id, e.route_id, row.stopId, row.type, row.payload, e.occurred_at, e.location);
+    if (r === "error") return retry;
+    const { data: stored } = must(
+      await c.admin.from("delivery_events").select("id").eq("tenant_id", c.tenantId).eq("client_event_id", id).maybeSingle(),
+    );
+    await applyEffects(c, e, route.odometer_start, stored?.id ?? null);
+    return { id, status: r === "duplicate" ? "duplicate" : "ok" };
+  } catch {
+    return retry;
   }
 }
 

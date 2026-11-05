@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { formToObject, toFormErrors, type FormState } from "@/lib/forms";
+import { formToObject, parseGrosze, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
@@ -87,11 +87,8 @@ export async function addManualLine(settlementId: string, _prev: FormState, fd: 
   if (!ok) return NO_RIGHTS;
   const note = String(fd.get("note") ?? "").trim();
   const date = String(fd.get("date") ?? "");
-  const amount = Number(
-    String(fd.get("amount") ?? "")
-      .replace(/\s/g, "")
-      .replace(",", "."),
-  );
+  const grosze = parseGrosze(fd.get("amount"), true);
+  const amount = grosze === null ? NaN : grosze / 100;
   if (note.length < 3) return { ok: false, fieldErrors: { note: ["Opisz, za co"] }, message: "Podaj opis dodatku." };
   if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 100000)
     return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0, np. 150 albo -50"] }, message: "Popraw kwotę." };
@@ -112,8 +109,8 @@ export async function addManualLine(settlementId: string, _prev: FormState, fd: 
     code: "manual",
     label: amount > 0 ? "Dodatek ręczny" : "Potrącenie",
     quantity: 1,
-    rate: Math.round(amount * 100) / 100,
-    amount: Math.round(amount * 100) / 100,
+    rate: grosze! / 100,
+    amount: grosze! / 100,
     note,
     is_manual: true,
     created_by: ctx.userId,

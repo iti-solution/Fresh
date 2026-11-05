@@ -159,6 +159,13 @@ export async function assignOrderPoint(orderId: string, _prev: FormState, fd: Fo
       .maybeSingle(),
   ]);
   if (!order || !point) return { ok: false, message: "Nie znaleziono zamówienia albo adresu." };
+  if (!["unmatched", "new"].includes(order.status))
+    return { ok: false, message: "Zamówienie jest już na trasie albo zrealizowane — zmień adres w planowaniu." };
+  const { count: onStop } = await supabase
+    .from("route_stop_orders")
+    .select("order_id", { count: "exact", head: true })
+    .eq("order_id", orderId);
+  if (onStop) return { ok: false, message: "Zamówienie jest już na trasie — najpierw zdejmij je z trasy w planowaniu." };
   const { error } = await supabase
     .from("orders")
     .update({ delivery_point_id: pointId, status: order.status === "unmatched" ? "new" : order.status })

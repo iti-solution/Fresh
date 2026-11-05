@@ -57,3 +57,11 @@ describe("tabular", () => {
     expect(guessMapping(fields, ["Dokument", "Masa"], { ref: "Dokument" })).toEqual({ ref: "Dokument", kg: "Masa" });
   });
 });
+
+describe("separator tysięcy", () => {
+  it("1.250 to 1250", () => {
+    expect(parseDecimal("1.250")).toBe(1250);
+    expect(parseDecimal("12.500.000")).toBe(12500000);
+    expect(parseDecimal("1.25")).toBe(1.25);
+  });
+});

@@ -112,13 +112,18 @@ export async function runOrderImport(
   };
   const inserts: Database["public"]["Tables"]["orders"]["Insert"][] = [];
 
+  const first = args.firstLine ?? 2;
   for (const o of orders) {
     const m = matchOrderToPoint(o, idx);
     const pointId = m.pointId;
-    if (!pointId) {
+    const prevRow = existing.get(`${o.external_ref}|${o.delivery_date}`);
+    if (!pointId && !prevRow?.delivery_point_id) {
       summary.unmatched += 1;
       issues.push({ line: o.line, ref: o.external_ref, problem: `do dopasowania: ${(m as { reason: string }).reason}` });
     }
+    // przy aktualizacji zmieniamy tylko pola, które plik/API faktycznie podaje (brak kolumny ≠ wyczyść wartość)
+    const raw = args.rows[o.line - first] ?? {};
+    const has = (k: keyof typeof args.mapping) => Boolean(args.mapping[k]) && (args.mapping[k] as string) in raw;
     const fields = {
       weight_kg: o.weight_kg,
       pallets: o.pallets,
@@ -149,8 +154,15 @@ export async function runOrderImport(
         });
         continue;
       }
+      const given = Object.fromEntries(
+        Object.entries(fields).filter(([k]) => {
+          if (k === "window_start" || k === "window_end") return has("window") || has("window_start") || has("window_end");
+          if (k.startsWith("raw_") || k === "readiness") return true;
+          return has(k as keyof typeof args.mapping);
+        }),
+      ) as Partial<typeof fields>;
       const update = {
-        ...fields,
+        ...given,
         import_id: importId,
         // dopasowanie z pliku nie zmienia adresu zamówienia już przypiętego ręcznie
         ...(prev.delivery_point_id

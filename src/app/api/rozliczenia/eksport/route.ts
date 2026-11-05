@@ -89,9 +89,6 @@ export async function GET(request: NextRequest) {
       ],
     },
   ]).toBuffer();
-  const approvedIds = rows.filter((s) => s.status === "approved").map((s) => s.id);
-  if (approvedIds.length)
-    await db.from("driver_settlements").update({ exported_at: new Date().toISOString() }).in("id", approvedIds);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

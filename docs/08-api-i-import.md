@@ -41,3 +41,8 @@ Jeden wiersz = jeden adres dostawy. Klient po kodzie (albo nazwie), adres po kod
 - Zdarzenie niezgodne ze stanem (np. punkt przeniesiony przez dyspozytora) jest odrzucane z powodem i pokazane kierowcy.
 - Pozycje GPS co 3 min w paczkach (`driver_positions`, unikalne po kierowcy i czasie). GPS zapisany też w treści zdarzenia (`payload.gps`).
 - Zdjęcia/podpis: `POST /api/driver/upload` po przyjęciu zdarzenia, prywatny bucket `delivery-photos`, biuro widzi przez podpisane linki (1 h).
+
+## 5. Znane ograniczenia (po przeglądzie kodu 2026-11-05)
+- **Zamknięcie trasy przed synchronizacją telefonu:** gdy dyspozytor zamknie trasę, a w telefonie czekają jeszcze niewysłane zapisy, serwer je odrzuci (kierowca zobaczy komunikat). Przed zamknięciem trasy upewnij się, że kierowca ma w aplikacji „Wszystko wysłane”.
+- **Duże importy kartoteki** (tysiące wierszy) zapisują się wiersz po wierszu — przy ~5 000 wierszy może to trwać kilka minut albo przekroczyć limit czasu na Vercelu. Podziel plik na części po ~1 000 wierszy.
+- Skutki zdarzenia kierowcy (status, opakowania, gotówka) nie są jedną transakcją z samym zdarzeniem — przerwany zapis dokończy się przy ponownym wysłaniu z telefonu (skutki są idempotentne).

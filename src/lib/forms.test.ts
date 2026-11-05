@@ -8,3 +8,14 @@ describe("formatPlnCompact", () => {
     expect(formatPlnCompact(140_000_000)).toBe(`${(1.4).toLocaleString("pl-PL")} mln zł`);
   });
 });
+
+describe("parseGrosze", () => {
+  it("bez błędów zaokrągleń", async () => {
+    const { parseGrosze } = await import("./forms");
+    expect(parseGrosze("1,005")).toBeNull();
+    expect(parseGrosze("1 240,5")).toBe(124050);
+    expect(parseGrosze("0.29")).toBe(29);
+    expect(parseGrosze("-40,50")).toBeNull();
+    expect(parseGrosze("-40,50", true)).toBe(-4050);
+  });
+});
