@@ -66,7 +66,7 @@ export default async function SelectTenantPage() {
               <div>
                 <h2 className="font-semibold">Firma demo</h2>
                 <p className="text-sm text-muted">
-                  Hurtownia spod Krakowa: 40 oddziałów klientów, 7 aut, 6 tras stałych, zamówienia na jutro i 4 tygodnie
+                  Hurtownia spod Krakowa: 40 adresów dostaw, 7 aut, 6 tras stałych, zamówienia na jutro i 4 tygodnie
                   zrealizowanych tras do raportów.
                 </p>
               </div>

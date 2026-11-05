@@ -33,14 +33,16 @@ export function formatSeason(from: string | null, to: string | null): string {
   return `${f(from)}–${f(to)}`;
 }
 
-export const BRANCH_LABELS: Record<string, string> = {
-  restaurant: "restauracja",
-  kitchen: "kuchnia",
-  bar: "bar",
-  warehouse: "magazyn",
-  hotel: "hotel",
-  other: "inny",
-};
+/** Nazwa typu adresu z relacji point_types (małą literą do etykiet w tekście). */
+export function pointTypeLabel(t: { name: string } | null | undefined): string {
+  return t?.name ? t.name.charAt(0).toLowerCase() + t.name.slice(1) : "inny";
+}
+
+/** Okres „czynny od–do”: dla adresów tymczasowych (budowa) to czas trwania, dla zwykłych — sezon. */
+export function formatActivePeriod(from: string | null, to: string | null, temporary: boolean): string | null {
+  if (!from && !to) return null;
+  return `${temporary ? "czynny" : "sezon"} ${formatSeason(from, to)}`;
+}
 
 export const VEHICLE_STATUS_LABELS: Record<string, string> = { active: "aktywny", service: "serwis", inactive: "nieaktywny" };
 

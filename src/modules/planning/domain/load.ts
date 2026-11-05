@@ -93,7 +93,7 @@ export function routeIssues(r: RouteForIssues): Issue[] {
     issues.push({ code: "overloaded", label: `przeciążenie: ${parts}`, severity: "confirm" });
   }
   if (r.awaitingCount > 0) issues.push({ code: "awaiting_warehouse", label: `${r.awaitingCount} do realizacji w magazynie`, severity: "info" });
-  if (r.closedPointsCount) issues.push({ code: "closed_points", label: `${r.closedPointsCount} oddz. zamknięte tego dnia`, severity: "info" });
+  if (r.closedPointsCount) issues.push({ code: "closed_points", label: `${r.closedPointsCount} adr. zamknięte tego dnia`, severity: "info" });
   return issues;
 }
 

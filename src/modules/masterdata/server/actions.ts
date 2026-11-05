@@ -67,7 +67,7 @@ export async function savePoint(customerId: string, pointId: string | null, _pre
 
   const row = {
     name: v.name,
-    branch_type: v.branch_type,
+    point_type_id: v.point_type_id,
     external_code: v.external_code,
     address_line: v.address_line,
     postal_code: v.postal_code,
@@ -75,6 +75,8 @@ export async function savePoint(customerId: string, pointId: string | null, _pre
     contact_phone: v.contact_phone,
     delivery_weekdays: v.delivery_weekdays,
     service_minutes: v.service_minutes ?? 10,
+    site_manager_name: v.site_manager_name,
+    site_manager_phone: v.site_manager_phone,
     call_instructions: v.call_instructions,
     access_instructions: v.access_instructions,
     floor: v.floor,

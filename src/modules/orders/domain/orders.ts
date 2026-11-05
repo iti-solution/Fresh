@@ -12,7 +12,7 @@ export const READINESS_LABELS: Record<Readiness, string> = {
 
 export const orderSchema = z
   .object({
-    delivery_point_id: z.string().uuid({ message: "Wybierz oddział klienta" }),
+    delivery_point_id: z.string().uuid({ message: "Wybierz adres dostawy klienta" }),
     delivery_date: z.string().regex(DATE_RE, "Wybierz datę dostawy"),
     external_ref: optionalText(40),
     order_value: numberField({ min: 0, max: 10_000_000 }),

@@ -18,7 +18,7 @@ export async function createOrder(_prev: FormState, fd: FormData): Promise<FormS
 
   // Oddział musi należeć do tej firmy (RLS i tak to wymusza — tu dajemy czytelny błąd)
   const { data: point } = await supabase.from("delivery_points").select("id").eq("tenant_id", ctx.tenantId).eq("id", v.delivery_point_id).maybeSingle();
-  if (!point) return { ok: false, fieldErrors: { delivery_point_id: ["Nie znaleziono oddziału"] }, message: "Popraw zaznaczone pola." };
+  if (!point) return { ok: false, fieldErrors: { delivery_point_id: ["Nie znaleziono adresu dostawy"] }, message: "Popraw zaznaczone pola." };
 
   const { error } = await supabase.from("orders").insert({
     tenant_id: ctx.tenantId,

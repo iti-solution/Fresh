@@ -40,7 +40,7 @@ const approveLine = z.object({
 });
 
 export const approveSchema = z.object({
-  delivery_point_id: z.string().uuid({ message: "Wybierz klienta i oddział" }),
+  delivery_point_id: z.string().uuid({ message: "Wybierz klienta i adres dostawy" }),
   delivery_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Wybierz dzień dostawy"),
   note: optionalText(500),
   lines: z
@@ -59,7 +59,7 @@ export const approveSchema = z.object({
 export const INTAKE_ERRORS: Record<string, string> = {
   INTAKE_NO_ACCESS: "Nie masz uprawnień do zatwierdzania zamówień.",
   INTAKE_ALREADY_REVIEWED: "Tę wiadomość ktoś już sprawdził.",
-  INTAKE_BAD_POINT: "Wybierz oddział klienta.",
+  INTAKE_BAD_POINT: "Wybierz adres dostawy klienta.",
   INTAKE_BAD_DATE: "Wybierz dzień dostawy.",
   INTAKE_EMPTY: "Dodaj co najmniej jedną pozycję.",
   INTAKE_BAD_LINE: "Któryś produkt nie istnieje w katalogu.",

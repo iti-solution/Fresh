@@ -53,7 +53,7 @@ export default async function TemplatesPage() {
     <>
       <PageHeader
         title="Szablony tras"
-        description="Trasy stałe: jakie oddziały klientów obsługują, w które dni i o której wyjeżdżają. Auto i kierowcy są tylko sugestią — przydział na dany dzień robi dyspozytor."
+        description="Trasy stałe: jakie adresy dostaw klientów obsługują, w które dni i o której wyjeżdżają. Auto i kierowcy są tylko sugestią — przydział na dany dzień robi dyspozytor."
         actions={
           editable ? (
             <Link href="/kartoteki/szablony/nowy" className={buttonVariants({ size: "sm" })}>
@@ -80,7 +80,7 @@ export default async function TemplatesPage() {
               ) : undefined
             }
           >
-            Szablon to trasa stała, np. „Kraków Zachód” — z listą oddziałów klientów, dniami i godziną wyjazdu.
+            Szablon to trasa stała, np. „Kraków Zachód” — z listą adresów dostaw klientów, dniami i godziną wyjazdu.
           </EmptyState>
         ) : (
           <div className="overflow-x-auto">

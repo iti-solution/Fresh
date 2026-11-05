@@ -175,7 +175,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                   <thead className="border-b border-border bg-surface-2 text-left text-xs text-muted">
                     <tr>
                       <th className="py-2 pr-3 pl-5 font-medium">Nr</th>
-                      <th className="px-3 py-2 font-medium">Klient i oddział</th>
+                      <th className="px-3 py-2 font-medium">Klient i adres dostawy</th>
                       <th className="px-3 py-2 font-medium">Okno</th>
                       <th className="px-3 py-2 text-right font-medium">Kg</th>
                       <th className="px-3 py-2 text-right font-medium">Pal.</th>

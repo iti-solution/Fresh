@@ -202,7 +202,7 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
             }
           >
             W ten dzień jeździ {plan.templatesForDay} tras stałych, zamówień jest {unassigned.length}. System utworzy trasy z
-            szablonów i sam przypisze zamówienia według oddziałów.
+            szablonów i sam przypisze zamówienia według adresów dostaw.
           </EmptyState>
         </Panel>
       ) : (
@@ -291,7 +291,7 @@ function WindowChip({ window, closed }: { window: string; closed?: boolean }) {
         "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums",
         closed ? "bg-danger-soft text-danger" : "bg-steel-soft text-ink-2",
       )}
-      title={closed ? "Oddział zamknięty tego dnia" : "Okno przyjęć"}
+      title={closed ? "Adres zamknięty tego dnia" : "Okno przyjęć"}
     >
       <Clock className="size-3" />
       {window}

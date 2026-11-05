@@ -13,7 +13,7 @@ import {
 
 const point = {
   name: "Kuchnia",
-  branch_type: "kitchen",
+  point_type_id: "8d6f2b1e-3c4a-4f5b-9a7c-1e2d3c4b5a69",
   address_line: "ul. Przykładowa 12",
   postal_code: "30-198",
   city: "Kraków",

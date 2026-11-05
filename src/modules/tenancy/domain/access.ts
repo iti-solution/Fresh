@@ -48,7 +48,7 @@ export const NAV_ITEMS: NavItem[] = [
     built: true,
     roles: ["admin", "dispatcher", "management", "viewer"],
   },
-  { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  { href: "/kartoteki/klienci", label: "Klienci i adresy dostaw", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/przewoznicy", label: "Przewoźnicy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
@@ -57,7 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
-  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", roles: ["admin"] },
+  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
 
 export function navForRole(role: Role): NavItem[] {

@@ -180,7 +180,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
           </h2>
           {hits.length + orderHits.length === 0 && (
             <p className="text-sm text-muted">
-              Sprawdź pisownię albo zmień dzień strzałkami u góry. Szukamy po kliencie, oddziale, mieście, numerze zamówienia,
+              Sprawdź pisownię albo zmień dzień strzałkami u góry. Szukamy po kliencie, adresie dostawy, mieście, numerze zamówienia,
               telefonie, kierowcy, aucie i nazwie trasy.
             </p>
           )}

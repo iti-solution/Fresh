@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { vehicleOptionLabel } from "@/modules/masterdata/domain/format";
 import { computeLoad, routeIssues, type Issue, type RouteLoad } from "../domain/load";
+import { firmDay } from "@/modules/masterdata/domain/holidays";
 
 const t = (s?: string | null) => (s ? s.slice(0, 5) : "");
 
@@ -89,7 +90,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .eq("delivery_date", day)
       .not("status", "in", "(cancelled,delivered,failed)")
       .order("external_ref"),
-    supabase.from("delivery_point_exceptions").select("delivery_point_id, is_closed, reason").eq("tenant_id", tenantId).eq("date", day),
+    supabase.from("delivery_point_exceptions").select("delivery_point_id, date, is_closed, reason").eq("tenant_id", tenantId).eq("date", day),
     supabase.from("vehicles").select("id, registration, name, vehicle_type, body_type, status").eq("tenant_id", tenantId).order("registration"),
     supabase.from("drivers").select("id, first_name, last_name, is_active").eq("tenant_id", tenantId).order("last_name"),
     supabase.from("route_templates").select("id, weekdays, is_active").eq("tenant_id", tenantId),
@@ -97,7 +98,9 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
   for (const r of [routesRes, ordersRes, excRes, vehRes, drvRes, tplRes]) if (r.error) throw r.error;
 
   const exceptions = excRes.data ?? [];
-  const holiday = exceptions.find((e) => e.delivery_point_id === null && e.is_closed)?.reason ?? null;
+  // święta ustawowe + zamknięcia firmy (M1.3); firma może też oznaczyć święto jako dzień pracujący
+  const firm = firmDay(day, exceptions);
+  const holiday = firm.closed ? firm.reason : null;
   const closedPoints = new Set(exceptions.filter((e) => e.delivery_point_id && e.is_closed).map((e) => e.delivery_point_id as string));
 
   type Win = { weekday: number; opens_at: string; closes_at: string };
