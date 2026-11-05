@@ -14,14 +14,24 @@ export async function compressPhoto(file: File, max = 1600, quality = 0.75): Pro
     canvas.height = Math.round(bitmap.height * scale);
     canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    return await new Promise<Blob>((ok, fail) => canvas.toBlob((b) => (b ? ok(b) : fail(new Error("toBlob"))), "image/jpeg", quality));
+    return await new Promise<Blob>((ok, fail) =>
+      canvas.toBlob((b) => (b ? ok(b) : fail(new Error("toBlob"))), "image/jpeg", quality),
+    );
   } catch {
     return file; // stara przeglądarka: wysyłamy oryginał
   }
 }
 
 /** Zdjęcia z punktu: duży przycisk aparatu, miniatury z możliwością usunięcia przed zapisem. */
-export function PhotoPicker({ photos, onChange, label = "Zrób zdjęcie" }: { photos: Blob[]; onChange: (p: Blob[]) => void; label?: string }) {
+export function PhotoPicker({
+  photos,
+  onChange,
+  label = "Zrób zdjęcie",
+}: {
+  photos: Blob[];
+  onChange: (p: Blob[]) => void;
+  label?: string;
+}) {
   const urls = useMemo(() => photos.map((p) => URL.createObjectURL(p)), [photos]);
   useEffect(() => () => urls.forEach((x) => URL.revokeObjectURL(x)), [urls]);
   return (
@@ -97,7 +107,10 @@ export function SignaturePad({ onChange }: { onChange: (png: Blob | null) => voi
       <canvas
         ref={ref}
         aria-label="Pole podpisu odbiorcy"
-        className={cn("h-36 w-full touch-none rounded-xl border-2 bg-white", empty ? "border-dashed border-border-strong" : "border-success")}
+        className={cn(
+          "h-36 w-full touch-none rounded-xl border-2 bg-white",
+          empty ? "border-dashed border-border-strong" : "border-success",
+        )}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
           drawing.current = true;

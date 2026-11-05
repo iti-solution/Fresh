@@ -7,7 +7,15 @@ import { buttonVariants } from "@/components/ui/button";
 import { Dot, Plate, TONE_TEXT } from "@/components/ui/status";
 import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
 import { cn } from "@/lib/utils";
-import { dayKpis, dispatcherAlerts, miniKpis, nowForDay, packagingSummary, routeProgress, type Alert } from "@/modules/ops/domain/reports";
+import {
+  dayKpis,
+  dispatcherAlerts,
+  miniKpis,
+  nowForDay,
+  packagingSummary,
+  routeProgress,
+  type Alert,
+} from "@/modules/ops/domain/reports";
 import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { getDayReports } from "@/modules/ops/server/proof";
 import { RouteStatePill, RouteStrip } from "@/modules/ops/ui/route-strip";
@@ -165,13 +173,20 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
               return (
                 <>
                   <span>
-                    km na punkt: <b className="font-semibold text-foreground tabular-nums">{m.kmPerStop?.toLocaleString("pl-PL") ?? "—"}</b>
+                    km na punkt:{" "}
+                    <b className="font-semibold text-foreground tabular-nums">{m.kmPerStop?.toLocaleString("pl-PL") ?? "—"}</b>
                   </span>
                   <span>
-                    punkty na trasę: <b className="font-semibold text-foreground tabular-nums">{m.stopsPerRoute?.toLocaleString("pl-PL") ?? "—"}</b>
+                    punkty na trasę:{" "}
+                    <b className="font-semibold text-foreground tabular-nums">
+                      {m.stopsPerRoute?.toLocaleString("pl-PL") ?? "—"}
+                    </b>
                   </span>
                   <span>
-                    średni czas obsługi punktu: <b className="font-semibold text-foreground tabular-nums">{m.serviceMinutesAvg !== null ? `${m.serviceMinutesAvg} min` : "—"}</b>
+                    średni czas obsługi punktu:{" "}
+                    <b className="font-semibold text-foreground tabular-nums">
+                      {m.serviceMinutesAvg !== null ? `${m.serviceMinutesAvg} min` : "—"}
+                    </b>
                   </span>
                 </>
               );
@@ -251,7 +266,10 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                           <p className="text-muted">
                             Ostatni punkt {p.lastCompletedAt ?? "—"}
                             {r.km !== null && <span> · {r.km} km</span>}{" "}
-                            <Link href={`/rozliczenia/zamkniecie/${r.id}`} className="font-medium text-primary-strong hover:underline">
+                            <Link
+                              href={`/rozliczenia/zamkniecie/${r.id}`}
+                              className="font-medium text-primary-strong hover:underline"
+                            >
                               {p.state === "closed" ? "zamknięcie ›" : "zamknij trasę ›"}
                             </Link>
                           </p>
@@ -286,7 +304,13 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                 )}
               </Panel>
 
-              <Panel title="Zgłoszenia z trasy" description={reports.length ? `${reports.length} z dnia, najnowsze na górze` : "problemy, opóźnienia, reklamacje i zwroty"} flush>
+              <Panel
+                title="Zgłoszenia z trasy"
+                description={
+                  reports.length ? `${reports.length} z dnia, najnowsze na górze` : "problemy, opóźnienia, reklamacje i zwroty"
+                }
+                flush
+              >
                 {reports.length === 0 ? (
                   <p className="px-5 py-4 text-sm text-muted">Kierowcy nic nie zgłosili.</p>
                 ) : (
@@ -302,9 +326,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                                 {x.customer ? `: ${x.customer}` : ""} ›
                               </Link>
                             ) : (
-                              <>
-                                {x.label} · cała trasa
-                              </>
+                              <>{x.label} · cała trasa</>
                             )}
                           </p>
                           <p className="text-xs text-muted">
@@ -324,7 +346,11 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                           )}
                         </div>
                         {x.driverPhone && (
-                          <a href={`tel:${x.driverPhone.replace(/\s/g, "")}`} className="self-start text-xs font-medium text-primary-strong" title="Zadzwoń do kierowcy">
+                          <a
+                            href={`tel:${x.driverPhone.replace(/\s/g, "")}`}
+                            className="self-start text-xs font-medium text-primary-strong"
+                            title="Zadzwoń do kierowcy"
+                          >
                             <Phone className="size-4" />
                           </a>
                         )}

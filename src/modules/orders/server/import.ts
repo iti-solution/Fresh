@@ -102,7 +102,14 @@ export async function runOrderImport(
     .single();
   const importId = imp?.id ?? null;
 
-  const summary: ImportSummary = { total: args.rows.length, created: 0, updated: 0, unmatched: 0, skipped: duplicates, errors: issues.length };
+  const summary: ImportSummary = {
+    total: args.rows.length,
+    created: 0,
+    updated: 0,
+    unmatched: 0,
+    skipped: duplicates,
+    errors: issues.length,
+  };
   const inserts: Database["public"]["Tables"]["orders"]["Insert"][] = [];
 
   for (const o of orders) {
@@ -135,14 +142,20 @@ export async function runOrderImport(
     if (prev) {
       if ((LOCKED_ORDER_STATUSES as readonly string[]).includes(prev.status)) {
         summary.skipped += 1;
-        issues.push({ line: o.line, ref: o.external_ref, problem: "pominięte — zamówienie jest już w realizacji albo zakończone" });
+        issues.push({
+          line: o.line,
+          ref: o.external_ref,
+          problem: "pominięte — zamówienie jest już w realizacji albo zakończone",
+        });
         continue;
       }
       const update = {
         ...fields,
         import_id: importId,
         // dopasowanie z pliku nie zmienia adresu zamówienia już przypiętego ręcznie
-        ...(prev.delivery_point_id ? {} : { delivery_point_id: pointId, status: pointId ? ("new" as const) : ("unmatched" as const) }),
+        ...(prev.delivery_point_id
+          ? {}
+          : { delivery_point_id: pointId, status: pointId ? ("new" as const) : ("unmatched" as const) }),
       };
       const { error } = await db.from("orders").update(update).eq("id", prev.id).eq("tenant_id", tenantId);
       if (error) {

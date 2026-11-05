@@ -537,7 +537,10 @@ function RouteCard({
         )}
         {editable && (
           <details className="relative">
-            <summary className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "cursor-pointer list-none")} title="Skopiuj trasę na inny dzień">
+            <summary
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "cursor-pointer list-none")}
+              title="Skopiuj trasę na inny dzień"
+            >
               <Copy /> Kopiuj
             </summary>
             <form

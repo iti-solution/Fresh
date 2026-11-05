@@ -41,19 +41,41 @@ function Row({ o, points, byId }: { o: MatchOrder; points: MatchPoint[]; byId: M
       <div className="min-w-0 text-sm">
         <p>
           <span className="font-mono text-xs font-medium">{o.ref ?? "bez numeru"}</span>{" "}
-          <span className="text-muted">· {o.date.slice(8, 10)}.{o.date.slice(5, 7)}</span>
+          <span className="text-muted">
+            · {o.date.slice(8, 10)}.{o.date.slice(5, 7)}
+          </span>
         </p>
         <p className="font-medium">{o.customerName ?? "— brak nazwy klienta —"}</p>
         <p className="text-muted">{o.address ?? "— brak adresu —"}</p>
         <p className="text-xs text-muted">
-          {o.customerCode && <>kod klienta <code>{o.customerCode}</code> </>}
-          {o.pointCode && <>· kod adresu <code>{o.pointCode}</code></>}
+          {o.customerCode && (
+            <>
+              kod klienta <code>{o.customerCode}</code>{" "}
+            </>
+          )}
+          {o.pointCode && (
+            <>
+              · kod adresu <code>{o.pointCode}</code>
+            </>
+          )}
         </p>
       </div>
       <form action={action} className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Szukaj klienta lub adresu…" className="h-9 min-w-48 flex-1" aria-label="Szukaj adresu" />
-          <select name="point_id" required defaultValue="" className={cn(inputClass, "h-9 min-w-64 flex-[2]")} aria-label="Adres dostawy">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Szukaj klienta lub adresu…"
+            className="h-9 min-w-48 flex-1"
+            aria-label="Szukaj adresu"
+          />
+          <select
+            name="point_id"
+            required
+            defaultValue=""
+            className={cn(inputClass, "h-9 min-w-64 flex-[2]")}
+            aria-label="Adres dostawy"
+          >
             <option value="" disabled>
               — wybierz adres dostawy —
             </option>
@@ -80,7 +102,8 @@ function Row({ o, points, byId }: { o: MatchOrder; points: MatchPoint[]; byId: M
         <div className="flex flex-wrap items-center gap-3">
           {(o.pointCode || o.customerCode) && (
             <label className="flex items-center gap-1.5 text-xs">
-              <input type="checkbox" name="remember" defaultChecked /> zapamiętaj kod {o.pointCode ?? o.customerCode} — następny import trafi sam
+              <input type="checkbox" name="remember" defaultChecked /> zapamiętaj kod {o.pointCode ?? o.customerCode} — następny
+              import trafi sam
             </label>
           )}
           <Button size="sm" disabled={pending}>

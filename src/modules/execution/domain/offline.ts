@@ -131,9 +131,15 @@ export function validateEvent(s: Pick<RouteSnapshot, "status" | "odometerStart" 
       if (!stopExists(e.stop_id)) return "Ten punkt został przeniesiony przez dyspozytora.";
       const ex = EXCEPTION_STATUSES[e.outcome as ExceptionStatus];
       if (ex?.needsReason && e.reason.trim().length < 3) return "Dla reklamacji i odmowy podaj przyczynę.";
-      if (e.packaging.some((p) => !Number.isInteger(p.out) || !Number.isInteger(p.back) || p.out < 0 || p.back < 0 || p.out > 10000 || p.back > 10000))
+      if (
+        e.packaging.some(
+          (p) =>
+            !Number.isInteger(p.out) || !Number.isInteger(p.back) || p.out < 0 || p.back < 0 || p.out > 10000 || p.back > 10000,
+        )
+      )
         return "Popraw liczby opakowań.";
-      if (e.cash_grosze !== null && (!Number.isInteger(e.cash_grosze) || e.cash_grosze < 0 || e.cash_grosze > 100_000_000)) return "Popraw kwotę.";
+      if (e.cash_grosze !== null && (!Number.isInteger(e.cash_grosze) || e.cash_grosze < 0 || e.cash_grosze > 100_000_000))
+        return "Popraw kwotę.";
       return null;
     }
     case "problem_reported":
@@ -146,7 +152,9 @@ export function validateEvent(s: Pick<RouteSnapshot, "status" | "odometerStart" 
 }
 
 const hhmm = (iso: string) =>
-  new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+  new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).format(
+    new Date(iso),
+  );
 
 function setStopStatus(stops: SnapshotStop[], stopId: string, status: StopStatus, at: string): SnapshotStop[] {
   return stops.map((x) => {
@@ -162,7 +170,13 @@ export function applyEvent(s: RouteSnapshot, e: DriverEvent): RouteSnapshot {
   if (validateEvent(s, e)) return s;
   switch (e.type) {
     case "route_started":
-      return { ...s, status: "in_progress", odometerStart: e.odometer_start, vehicleId: e.vehicle_id ?? s.vehicleId, vehicle: s.vehicles.find((v) => v.id === e.vehicle_id)?.registration ?? s.vehicle };
+      return {
+        ...s,
+        status: "in_progress",
+        odometerStart: e.odometer_start,
+        vehicleId: e.vehicle_id ?? s.vehicleId,
+        vehicle: s.vehicles.find((v) => v.id === e.vehicle_id)?.registration ?? s.vehicle,
+      };
     case "stop_quick":
       return { ...s, stops: setStopStatus(s.stops, e.stop_id, QUICK_STATUSES[e.status].stop, e.occurred_at) };
     case "stop_saved": {
@@ -187,7 +201,9 @@ export function applyEvent(s: RouteSnapshot, e: DriverEvent): RouteSnapshot {
       return { ...s, stops };
     }
     case "problem_reported":
-      return e.stop_id ? { ...s, stops: s.stops.map((x) => (x.id === e.stop_id ? { ...x, photos: x.photos + e.photos } : x)) } : s;
+      return e.stop_id
+        ? { ...s, stops: s.stops.map((x) => (x.id === e.stop_id ? { ...x, photos: x.photos + e.photos } : x)) }
+        : s;
     case "route_finished":
       return { ...s, status: "completed", odometerEnd: e.odometer_end };
   }
@@ -237,13 +253,27 @@ export function parseIncomingEvent(raw: unknown): DriverEvent | string {
     loc && typeof loc.lat === "number" && typeof loc.lng === "number" && Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180
       ? { lat: loc.lat, lng: loc.lng, accuracy: typeof loc.accuracy === "number" ? loc.accuracy : null }
       : null;
-  const base = { client_event_id: str("client_event_id"), route_id: str("route_id"), occurred_at: new Date(occurred).toISOString(), location };
+  const base = {
+    client_event_id: str("client_event_id"),
+    route_id: str("route_id"),
+    occurred_at: new Date(occurred).toISOString(),
+    location,
+  };
   const stop = str("stop_id");
   switch (e.type) {
     case "route_started":
-      return Number.isNaN(int("odometer_start")) ? "zły licznik" : { ...base, type: "route_started", odometer_start: int("odometer_start"), vehicle_id: UUID_RE.test(str("vehicle_id")) ? str("vehicle_id") : null };
+      return Number.isNaN(int("odometer_start"))
+        ? "zły licznik"
+        : {
+            ...base,
+            type: "route_started",
+            odometer_start: int("odometer_start"),
+            vehicle_id: UUID_RE.test(str("vehicle_id")) ? str("vehicle_id") : null,
+          };
     case "stop_quick":
-      return UUID_RE.test(stop) && str("status") in QUICK_STATUSES ? { ...base, type: "stop_quick", stop_id: stop, status: str("status") as QuickStatus } : "zły status";
+      return UUID_RE.test(stop) && str("status") in QUICK_STATUSES
+        ? { ...base, type: "stop_quick", stop_id: stop, status: str("status") as QuickStatus }
+        : "zły status";
     case "stop_saved": {
       if (!UUID_RE.test(stop)) return "brak punktu";
       const outcome = str("outcome");
@@ -278,7 +308,9 @@ export function parseIncomingEvent(raw: unknown): DriverEvent | string {
         photos: Math.max(0, Math.min(20, int("photos") || 0)),
       };
     case "route_finished":
-      return Number.isNaN(int("odometer_end")) ? "zły licznik" : { ...base, type: "route_finished", odometer_end: int("odometer_end") };
+      return Number.isNaN(int("odometer_end"))
+        ? "zły licznik"
+        : { ...base, type: "route_finished", odometer_end: int("odometer_end") };
     default:
       return "nieznany typ zdarzenia";
   }

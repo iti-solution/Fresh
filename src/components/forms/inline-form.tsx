@@ -25,7 +25,9 @@ export function InlineForm({
     const r = await action(prev, fd);
     return { ...r, n: (prev.n ?? 0) + 1 };
   }, {});
-  const errors = Object.values(state.fieldErrors ?? {}).flat().filter(Boolean);
+  const errors = Object.values(state.fieldErrors ?? {})
+    .flat()
+    .filter(Boolean);
   return (
     <form
       key={resetOnSuccess && state.ok ? state.n : "form"}

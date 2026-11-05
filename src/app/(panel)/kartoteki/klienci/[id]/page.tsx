@@ -195,7 +195,10 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
                     .filter((e) => e.is_closed && e.date >= today)
                     .sort((a, b) => a.date.localeCompare(b.date))
                     .map((e) => (
-                      <div key={e.id} className="flex items-center justify-between gap-2 rounded-md bg-danger-soft px-3 py-1.5 text-sm">
+                      <div
+                        key={e.id}
+                        className="flex items-center justify-between gap-2 rounded-md bg-danger-soft px-3 py-1.5 text-sm"
+                      >
                         <span>
                           <strong className="tabular-nums text-danger">
                             {e.date.slice(8, 10)}.{e.date.slice(5, 7)}
@@ -210,7 +213,11 @@ export default async function CustomerCardPage({ params, searchParams }: PagePro
                       </div>
                     ))}
                   {editable && (
-                    <InlineForm action={addClosure.bind(null, p.id, `/kartoteki/klienci/${c.id}`)} submitLabel="Dodaj" variant="outline">
+                    <InlineForm
+                      action={addClosure.bind(null, p.id, `/kartoteki/klienci/${c.id}`)}
+                      submitLabel="Dodaj"
+                      variant="outline"
+                    >
                       <Input type="date" name="date" min={today} aria-label="Data zamknięcia" className="h-8 w-40" />
                       <Input name="reason" placeholder="powód" aria-label="Powód" className="h-8 w-48" />
                     </InlineForm>

@@ -16,7 +16,11 @@ import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Rozliczenia kierowców" };
 
-const STATUS = { draft: ["robocze", "warning"], approved: ["zatwierdzone", "success"], exported: ["wyeksportowane", "info"] } as const;
+const STATUS = {
+  draft: ["robocze", "warning"],
+  approved: ["zatwierdzone", "success"],
+  exported: ["wyeksportowane", "info"],
+} as const;
 
 export default async function SettlementsPage({ searchParams }: PageProps<"/rozliczenia">) {
   const ctx = await requireAccess("/rozliczenia");
@@ -26,7 +30,11 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
   const { from, to } = monthRange(month);
   const db = await createClient();
   const [drivers, settlements, routes, toClose, rules] = await Promise.all([
-    db.from("drivers").select("id, first_name, last_name, employment_type, is_active").eq("tenant_id", ctx.tenantId).order("last_name"),
+    db
+      .from("drivers")
+      .select("id, first_name, last_name, employment_type, is_active")
+      .eq("tenant_id", ctx.tenantId)
+      .order("last_name"),
     db
       .from("driver_settlements")
       .select("id, driver_id, total_amount, status, approved_at")
@@ -78,7 +86,10 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
             </a>
             {editable && (
               <form action={recomputeMonth.bind(null, month)}>
-                <button className={buttonVariants({ size: "sm" })} title="Liczy od nowa pozycje automatyczne; dodatki ręczne i zatwierdzone rozliczenia zostają">
+                <button
+                  className={buttonVariants({ size: "sm" })}
+                  title="Liczy od nowa pozycje automatyczne; dodatki ręczne i zatwierdzone rozliczenia zostają"
+                >
                   <RefreshCw /> Przelicz miesiąc
                 </button>
               </form>
@@ -87,17 +98,31 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
         }
       />
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <Link href={href(shiftMonth(month, -1))} aria-label="Poprzedni miesiąc" className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <Link
+          href={href(shiftMonth(month, -1))}
+          aria-label="Poprzedni miesiąc"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
           <ChevronLeft />
         </Link>
-        <span className={cn(buttonVariants({ variant: "outline", size: "sm" }), "pointer-events-none min-w-40 capitalize")}>{monthLabel(month)}</span>
-        <Link href={href(shiftMonth(month, 1))} aria-label="Następny miesiąc" className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <span className={cn(buttonVariants({ variant: "outline", size: "sm" }), "pointer-events-none min-w-40 capitalize")}>
+          {monthLabel(month)}
+        </span>
+        <Link
+          href={href(shiftMonth(month, 1))}
+          aria-label="Następny miesiąc"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
           <ChevronRight />
         </Link>
       </div>
       {(rules.count ?? 0) === 0 && (
         <Notice tone="warning">
-          Nie ma jeszcze stawek. <Link href="/rozliczenia/stawki" className="font-medium underline">Ustaw stawki</Link> — dniówkę, kilometrówkę, stawki za punkty albo % od obrotu.
+          Nie ma jeszcze stawek.{" "}
+          <Link href="/rozliczenia/stawki" className="font-medium underline">
+            Ustaw stawki
+          </Link>{" "}
+          — dniówkę, kilometrówkę, stawki za punkty albo % od obrotu.
         </Notice>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -121,7 +146,10 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
                   return (
                     <tr key={d.id} className="border-t border-border hover:bg-surface-2">
                       <td className="px-4 py-2.5">
-                        <Link href={`/rozliczenia/${d.id}?miesiac=${month}`} className="font-medium hover:text-primary-strong hover:underline">
+                        <Link
+                          href={`/rozliczenia/${d.id}?miesiac=${month}`}
+                          className="font-medium hover:text-primary-strong hover:underline"
+                        >
                           {d.first_name} {d.last_name}
                         </Link>
                         {d.employment_type && <span className="ml-2 text-xs text-muted">{d.employment_type}</span>}
@@ -129,8 +157,12 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
                       <td className="px-4 py-2.5 tabular-nums">
                         {days.get(d.id)?.size ?? 0} / {routeCount.get(d.id) ?? 0}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{s ? formatPln(toGrosze(s.total_amount)) : "—"}</td>
-                      <td className="px-4 py-2.5">{st ? <Pill tone={st[1]}>{st[0]}</Pill> : <span className="text-xs text-muted">nie przeliczono</span>}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
+                        {s ? formatPln(toGrosze(s.total_amount)) : "—"}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {st ? <Pill tone={st[1]}>{st[0]}</Pill> : <span className="text-xs text-muted">nie przeliczono</span>}
+                      </td>
                     </tr>
                   );
                 })}
@@ -144,14 +176,19 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
             {(toClose.data ?? []).map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                 <span className="min-w-0">
-                  <Link href={`/rozliczenia/zamkniecie/${r.id}`} className="font-medium hover:text-primary-strong hover:underline">
+                  <Link
+                    href={`/rozliczenia/zamkniecie/${r.id}`}
+                    className="font-medium hover:text-primary-strong hover:underline"
+                  >
                     {r.name}
                   </Link>
                   <span className="block text-xs capitalize text-muted">
                     {formatDayLabel(r.route_date)} · {r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—"}
                   </span>
                 </span>
-                <Pill tone={r.status === "completed" ? "info" : "warning"}>{r.status === "completed" ? "wróciła" : "w trasie"}</Pill>
+                <Pill tone={r.status === "completed" ? "info" : "warning"}>
+                  {r.status === "completed" ? "wróciła" : "w trasie"}
+                </Pill>
               </li>
             ))}
           </ul>

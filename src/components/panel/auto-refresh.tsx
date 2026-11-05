@@ -49,7 +49,13 @@ export function AutoRefresh({ seconds = 60, stamp, tenantId }: { seconds?: numbe
       type="button"
       onClick={() => setPaused((p) => !p)}
       className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted hover:border-border-strong"
-      title={paused ? "Wznów automatyczne odświeżanie" : live ? "Zmiany z tras pojawiają się od razu" : "Wstrzymaj automatyczne odświeżanie"}
+      title={
+        paused
+          ? "Wznów automatyczne odświeżanie"
+          : live
+            ? "Zmiany z tras pojawiają się od razu"
+            : "Wstrzymaj automatyczne odświeżanie"
+      }
     >
       <span className={paused ? "h-2 w-2 rounded-full bg-subtle" : "live-dot h-2 w-2 rounded-full bg-success"} />
       {paused ? `Wstrzymano · stan na ${stamp}` : `${live ? "Na żywo" : "Odświeżanie co minutę"} · stan na ${stamp}`}

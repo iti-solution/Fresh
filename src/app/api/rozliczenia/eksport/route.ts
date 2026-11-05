@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
   if (!MONTH_RE.test(month)) return NextResponse.json({ error: "bad_month" }, { status: 400 });
   const user = await getUserWithMemberships();
   const selected = request.cookies.get(TENANT_COOKIE)?.value;
-  const m = user?.memberships.find((x) => x.tenantId === selected) ?? (user?.memberships.length === 1 ? user.memberships[0] : undefined);
+  const m =
+    user?.memberships.find((x) => x.tenantId === selected) ?? (user?.memberships.length === 1 ? user.memberships[0] : undefined);
   if (!m || !canAccess(m.role, "/rozliczenia")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const { from, to } = monthRange(month);
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
     head(["Kierowca", "Forma zatrudnienia", "Status", "Dni pracy", ...codes.map((c) => LINE_LABELS[c]), "Razem [zł]"]),
     ...rows.map((s) => {
       const lines = s.driver_settlement_lines ?? [];
-      const sum = (c: string) => lines.filter((l) => (l.code ?? "manual") === c).reduce((a, l) => a + toGrosze(l.amount), 0) / 100;
+      const sum = (c: string) =>
+        lines.filter((l) => (l.code ?? "manual") === c).reduce((a, l) => a + toGrosze(l.amount), 0) / 100;
       return [
         `${s.drivers?.last_name ?? ""} ${s.drivers?.first_name ?? ""}`.trim(),
         s.drivers?.employment_type ?? "",
@@ -67,11 +69,29 @@ export async function GET(request: NextRequest) {
     ),
   ];
   const buffer = await writeXlsxFile([
-    { sheet: "Podsumowanie", data: summary, columns: [{ width: 28 }, { width: 18 }, { width: 14 }, { width: 10 }, ...codes.map(() => ({ width: 14 })), { width: 14 }] },
-    { sheet: "Pozycje", data: detail, columns: [{ width: 28 }, { width: 12 }, { width: 26 }, { width: 22 }, { width: 10 }, { width: 10 }, { width: 12 }, { width: 70 }] },
+    {
+      sheet: "Podsumowanie",
+      data: summary,
+      columns: [{ width: 28 }, { width: 18 }, { width: 14 }, { width: 10 }, ...codes.map(() => ({ width: 14 })), { width: 14 }],
+    },
+    {
+      sheet: "Pozycje",
+      data: detail,
+      columns: [
+        { width: 28 },
+        { width: 12 },
+        { width: 26 },
+        { width: 22 },
+        { width: 10 },
+        { width: 10 },
+        { width: 12 },
+        { width: 70 },
+      ],
+    },
   ]).toBuffer();
   const approvedIds = rows.filter((s) => s.status === "approved").map((s) => s.id);
-  if (approvedIds.length) await db.from("driver_settlements").update({ exported_at: new Date().toISOString() }).in("id", approvedIds);
+  if (approvedIds.length)
+    await db.from("driver_settlements").update({ exported_at: new Date().toISOString() }).in("id", approvedIds);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

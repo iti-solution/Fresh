@@ -137,7 +137,13 @@ export const ruleFormSchema = z
     } satisfies PayComponents,
   }));
 
-export type RuleRow = { id: string; driver_id: string | null; valid_from: string; valid_to: string | null; components: PayComponents };
+export type RuleRow = {
+  id: string;
+  driver_id: string | null;
+  valid_from: string;
+  valid_to: string | null;
+  components: PayComponents;
+};
 
 /** Reguła obowiązująca kierowcę w dniu: najpierw jego własna, potem domyślna firmy; najnowsza wersja wygrywa. */
 export function ruleFor(rules: RuleRow[], driverId: string, day: string): RuleRow | null {
@@ -147,7 +153,11 @@ export function ruleFor(rules: RuleRow[], driverId: string, day: string): RuleRo
 }
 
 /** Nowa wersja reguły zamyka poprzednią (dzień przed startem nowej) — historia rozliczeń się nie zmienia. */
-export function closePreviousVersion(rules: RuleRow[], driverId: string | null, validFrom: string): { id: string; valid_to: string }[] {
+export function closePreviousVersion(
+  rules: RuleRow[],
+  driverId: string | null,
+  validFrom: string,
+): { id: string; valid_to: string }[] {
   const d = new Date(`${validFrom}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() - 1);
   const dayBefore = d.toISOString().slice(0, 10);
@@ -172,7 +182,16 @@ export type RouteFacts = {
   deliveredValueGrosze: number; // wartość zamówień dostarczonych (także częściowo)
 };
 
-export type PayLineCode = "daily_rate" | "per_km" | "per_stop" | "per_pallet" | "per_extra_route" | "turnover" | "delivered_value" | "on_time_bonus" | "manual";
+export type PayLineCode =
+  | "daily_rate"
+  | "per_km"
+  | "per_stop"
+  | "per_pallet"
+  | "per_extra_route"
+  | "turnover"
+  | "delivered_value"
+  | "on_time_bonus"
+  | "manual";
 
 export type ComputedLine = {
   code: PayLineCode;
@@ -213,27 +232,77 @@ export function computeDayPay(rule: PayComponents, day: string, routes: RouteFac
     if (l.amountGrosze !== 0) lines.push({ ...l, label: LINE_LABELS[l.code], date: day });
   };
 
-  if (rule.daily_rate) push({ code: "daily_rate", routeId: null, quantity: 1, rateGrosze: rule.daily_rate, amountGrosze: rule.daily_rate, note: `dzień pracy (${mine.map((r) => r.name).join(", ")})` });
+  if (rule.daily_rate)
+    push({
+      code: "daily_rate",
+      routeId: null,
+      quantity: 1,
+      rateGrosze: rule.daily_rate,
+      amountGrosze: rule.daily_rate,
+      note: `dzień pracy (${mine.map((r) => r.name).join(", ")})`,
+    });
 
   const km = mine.reduce((a, r) => a + (r.km ?? 0), 0);
   if (rule.per_km) {
     const paid = Math.max(0, km - rule.km_threshold);
-    push({ code: "per_km", routeId: null, quantity: paid, rateGrosze: rule.per_km, amountGrosze: paid * rule.per_km, note: `${km} km w dniu${rule.km_threshold ? `, próg ${rule.km_threshold} km` : ""} × ${plnRate(rule.per_km)}` });
+    push({
+      code: "per_km",
+      routeId: null,
+      quantity: paid,
+      rateGrosze: rule.per_km,
+      amountGrosze: paid * rule.per_km,
+      note: `${km} km w dniu${rule.km_threshold ? `, próg ${rule.km_threshold} km` : ""} × ${plnRate(rule.per_km)}`,
+    });
   }
 
   for (const r of mine) {
     if (rule.per_stop && r.stopsDone)
-      push({ code: "per_stop", routeId: r.routeId, quantity: r.stopsDone, rateGrosze: rule.per_stop, amountGrosze: r.stopsDone * rule.per_stop, note: `${r.name}: ${r.stopsDone} zrealizowanych punktów × ${plnRate(rule.per_stop)}` });
+      push({
+        code: "per_stop",
+        routeId: r.routeId,
+        quantity: r.stopsDone,
+        rateGrosze: rule.per_stop,
+        amountGrosze: r.stopsDone * rule.per_stop,
+        note: `${r.name}: ${r.stopsDone} zrealizowanych punktów × ${plnRate(rule.per_stop)}`,
+      });
     if (rule.per_pallet && r.palletsDelivered) {
       const amount = Math.round(r.palletsDelivered * rule.per_pallet);
-      push({ code: "per_pallet", routeId: r.routeId, quantity: r.palletsDelivered, rateGrosze: rule.per_pallet, amountGrosze: amount, note: `${r.name}: ${r.palletsDelivered} palet × ${plnRate(rule.per_pallet)}` });
+      push({
+        code: "per_pallet",
+        routeId: r.routeId,
+        quantity: r.palletsDelivered,
+        rateGrosze: rule.per_pallet,
+        amountGrosze: amount,
+        note: `${r.name}: ${r.palletsDelivered} palet × ${plnRate(rule.per_pallet)}`,
+      });
     }
     if (rule.per_extra_route && isExtra(r))
-      push({ code: "per_extra_route", routeId: r.routeId, quantity: 1, rateGrosze: rule.per_extra_route, amountGrosze: rule.per_extra_route, note: `${r.name} (${r.courseNo > 1 ? `kurs ${r.courseNo}` : r.kind})` });
+      push({
+        code: "per_extra_route",
+        routeId: r.routeId,
+        quantity: 1,
+        rateGrosze: rule.per_extra_route,
+        amountGrosze: rule.per_extra_route,
+        note: `${r.name} (${r.courseNo > 1 ? `kurs ${r.courseNo}` : r.kind})`,
+      });
     if (rule.turnover_bp && r.turnoverGrosze)
-      push({ code: "turnover", routeId: r.routeId, quantity: r.turnoverGrosze / 100, rateGrosze: rule.turnover_bp, amountGrosze: Math.round((r.turnoverGrosze * rule.turnover_bp) / 10000), note: `${r.name}: ${bpRate(rule.turnover_bp)} od obrotu ${plnRate(r.turnoverGrosze)}` });
+      push({
+        code: "turnover",
+        routeId: r.routeId,
+        quantity: r.turnoverGrosze / 100,
+        rateGrosze: rule.turnover_bp,
+        amountGrosze: Math.round((r.turnoverGrosze * rule.turnover_bp) / 10000),
+        note: `${r.name}: ${bpRate(rule.turnover_bp)} od obrotu ${plnRate(r.turnoverGrosze)}`,
+      });
     if (rule.delivered_value_bp && r.deliveredValueGrosze)
-      push({ code: "delivered_value", routeId: r.routeId, quantity: r.deliveredValueGrosze / 100, rateGrosze: rule.delivered_value_bp, amountGrosze: Math.round((r.deliveredValueGrosze * rule.delivered_value_bp) / 10000), note: `${r.name}: ${bpRate(rule.delivered_value_bp)} od dostaw ${plnRate(r.deliveredValueGrosze)}` });
+      push({
+        code: "delivered_value",
+        routeId: r.routeId,
+        quantity: r.deliveredValueGrosze / 100,
+        rateGrosze: rule.delivered_value_bp,
+        amountGrosze: Math.round((r.deliveredValueGrosze * rule.delivered_value_bp) / 10000),
+        note: `${r.name}: ${bpRate(rule.delivered_value_bp)} od dostaw ${plnRate(r.deliveredValueGrosze)}`,
+      });
   }
 
   if (rule.on_time_bonus) {
@@ -241,13 +310,24 @@ export function computeDayPay(rule: PayComponents, day: string, routes: RouteFac
     const onTime = mine.reduce((a, r) => a + r.stopsOnTime, 0);
     const pctOnTime = withWindow ? Math.round((onTime / withWindow) * 100) : null;
     if (pctOnTime !== null && pctOnTime >= rule.on_time_threshold_pct)
-      push({ code: "on_time_bonus", routeId: null, quantity: 1, rateGrosze: rule.on_time_bonus, amountGrosze: rule.on_time_bonus, note: `terminowość ${pctOnTime}% (${onTime}/${withWindow}), próg ${rule.on_time_threshold_pct}%` });
+      push({
+        code: "on_time_bonus",
+        routeId: null,
+        quantity: 1,
+        rateGrosze: rule.on_time_bonus,
+        amountGrosze: rule.on_time_bonus,
+        note: `terminowość ${pctOnTime}% (${onTime}/${withWindow}), próg ${rule.on_time_threshold_pct}%`,
+      });
   }
   return lines;
 }
 
 /** Rozliczenie okresu: dzień po dniu, każdy dzień z regułą obowiązującą w tym dniu. */
-export function computePeriodPay(rules: RuleRow[], driverId: string, routes: RouteFacts[]): { lines: (ComputedLine & { ruleId: string | null })[]; missingRuleDays: string[] } {
+export function computePeriodPay(
+  rules: RuleRow[],
+  driverId: string,
+  routes: RouteFacts[],
+): { lines: (ComputedLine & { ruleId: string | null })[]; missingRuleDays: string[] } {
   const days = [...new Set(routes.map((r) => r.date))].sort();
   const lines: (ComputedLine & { ruleId: string | null })[] = [];
   const missingRuleDays: string[] = [];

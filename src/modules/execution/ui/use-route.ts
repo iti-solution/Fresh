@@ -35,14 +35,26 @@ export function useRoute(routeId: string, initial: RouteSnapshot | null) {
   const [snapshot, setSnapshot] = useState<RouteSnapshot | null>(initial);
   const [queue, setQueue] = useState<QueuedEvent[]>([]);
   const [filesPending, setFilesPending] = useState(0);
-  const [sync, setSync] = useState<Omit<SyncState, "online" | "pending">>({ syncing: false, lastSyncAt: null, sessionExpired: false, rejected: [] });
-  const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
+  const [sync, setSync] = useState<Omit<SyncState, "online" | "pending">>({
+    syncing: false,
+    lastSyncAt: null,
+    sessionExpired: false,
+    rejected: [],
+  });
+  const online = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
+  );
   const lastPos = useRef<GeoPoint | null>(null);
   const syncing = useRef(false);
 
   const refreshLocal = useCallback(async () => {
     const db = driverDb();
-    const [q, f] = await Promise.all([db.queue.where("route_id").equals(routeId).sortBy("created_at"), db.files.where("route_id").equals(routeId).count()]);
+    const [q, f] = await Promise.all([
+      db.queue.where("route_id").equals(routeId).sortBy("created_at"),
+      db.files.where("route_id").equals(routeId).count(),
+    ]);
     setQueue(q);
     setFilesPending(f);
   }, [routeId]);
@@ -66,7 +78,16 @@ export function useRoute(routeId: string, initial: RouteSnapshot | null) {
     };
   }, [routeId, initial, refreshLocal]);
 
-  const view = useMemo(() => (snapshot ? replay(snapshot, queue.map((q) => q.event)) : null), [snapshot, queue]);
+  const view = useMemo(
+    () =>
+      snapshot
+        ? replay(
+            snapshot,
+            queue.map((q) => q.event),
+          )
+        : null,
+    [snapshot, queue],
+  );
 
   const runSync = useCallback(async () => {
     if (syncing.current || typeof navigator === "undefined" || !navigator.onLine) return;
@@ -96,11 +117,17 @@ export function useRoute(routeId: string, initial: RouteSnapshot | null) {
             const ev = q.find((x) => x.client_event_id === r.id);
             if (ev) confirmed.push(ev.event);
             await db.queue.delete(r.id);
-          }
-          else if (r.reason === "retry") await db.queue.update(r.id, { attempts: (q.find((x) => x.client_event_id === r.id)?.attempts ?? 0) + 1 });
+          } else if (r.reason === "retry")
+            await db.queue.update(r.id, { attempts: (q.find((x) => x.client_event_id === r.id)?.attempts ?? 0) + 1 });
           else {
             const ev = q.find((x) => x.client_event_id === r.id);
-            await db.rejected.put({ client_event_id: r.id, route_id: ev?.route_id ?? routeId, type: ev?.event.type ?? "?", reason: r.reason ?? "odrzucone", at: new Date().toISOString() });
+            await db.rejected.put({
+              client_event_id: r.id,
+              route_id: ev?.route_id ?? routeId,
+              type: ev?.event.type ?? "?",
+              reason: r.reason ?? "odrzucone",
+              at: new Date().toISOString(),
+            });
             await db.queue.delete(r.id);
             await db.files.where("client_event_id").equals(r.id).delete();
             rejected.push({ id: r.id, reason: r.reason ?? "odrzucone" });
@@ -182,7 +209,11 @@ export function useRoute(routeId: string, initial: RouteSnapshot | null) {
         lastPos.current = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: Math.round(p.coords.accuracy) };
         if (p.timestamp - lastSaved >= POSITION_EVERY_MS) {
           lastSaved = p.timestamp;
-          void driverDb().positions.add({ route_id: routeId, ...lastPos.current, recorded_at: new Date(p.timestamp).toISOString() });
+          void driverDb().positions.add({
+            route_id: routeId,
+            ...lastPos.current,
+            recorded_at: new Date(p.timestamp).toISOString(),
+          });
         }
       },
       () => undefined,
@@ -195,15 +226,36 @@ export function useRoute(routeId: string, initial: RouteSnapshot | null) {
   const record = useCallback(
     async (input: EventInput, files: NewFile[] = []): Promise<string | null> => {
       if (!view) return "Trasa się jeszcze wczytuje.";
-      const event = { ...input, client_event_id: newId(), route_id: routeId, occurred_at: new Date().toISOString(), location: lastPos.current } as DriverEvent;
+      const event = {
+        ...input,
+        client_event_id: newId(),
+        route_id: routeId,
+        occurred_at: new Date().toISOString(),
+        location: lastPos.current,
+      } as DriverEvent;
       const problem = validateEvent(view, event);
       if (problem) return problem;
       const db = driverDb();
       const now = new Date().toISOString();
       await db.transaction("rw", db.queue, db.files, async () => {
-        await db.queue.put({ client_event_id: event.client_event_id, route_id: routeId, event, created_at: now, attempts: 0, last_error: null });
+        await db.queue.put({
+          client_event_id: event.client_event_id,
+          route_id: routeId,
+          event,
+          created_at: now,
+          attempts: 0,
+          last_error: null,
+        });
         for (const f of files)
-          await db.files.put({ client_file_id: newId(), client_event_id: event.client_event_id, route_id: routeId, kind: f.kind, blob: f.blob, created_at: now, attempts: 0 });
+          await db.files.put({
+            client_file_id: newId(),
+            client_event_id: event.client_event_id,
+            route_id: routeId,
+            kind: f.kind,
+            blob: f.blob,
+            created_at: now,
+            attempts: 0,
+          });
       });
       await refreshLocal();
       void runSync();

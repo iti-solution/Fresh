@@ -52,8 +52,12 @@ export default async function OrderImportPage() {
               <li key={r.id} className="px-4 py-2.5">
                 <p className="truncate font-medium">{r.file_name ?? (r.source === "api" ? "API" : "plik")}</p>
                 <p className="text-xs text-muted tabular-nums">
-                  {new Date(r.created_at).toLocaleString("pl-PL", { timeZone: "Europe/Warsaw", dateStyle: "short", timeStyle: "short" })} ·{" "}
-                  {r.rows_total ?? 0} wierszy · {r.rows_unmatched ?? 0} do dopasowania · {r.rows_updated ?? 0} aktualizacji
+                  {new Date(r.created_at).toLocaleString("pl-PL", {
+                    timeZone: "Europe/Warsaw",
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}{" "}
+                  · {r.rows_total ?? 0} wierszy · {r.rows_unmatched ?? 0} do dopasowania · {r.rows_updated ?? 0} aktualizacji
                 </p>
               </li>
             ))}

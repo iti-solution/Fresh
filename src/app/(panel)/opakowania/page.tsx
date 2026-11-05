@@ -51,7 +51,13 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
       />
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         {totals.slice(0, 3).map((t) => (
-          <StatTile key={t.id} label={`${t.name} u klientów`} value={t.atCustomers.toLocaleString("pl-PL")} sub={t.overdue ? `${t.overdue} zalega > 30 dni` : "nic nie zalega"} tone={t.overdue ? "warning" : undefined} />
+          <StatTile
+            key={t.id}
+            label={`${t.name} u klientów`}
+            value={t.atCustomers.toLocaleString("pl-PL")}
+            sub={t.overdue ? `${t.overdue} zalega > 30 dni` : "nic nie zalega"}
+            tone={t.overdue ? "warning" : undefined}
+          />
         ))}
         <StatTile label="Kaucja u klientów" value={formatPln(deposit)} sub={`${rows.length} klientów z saldem`} />
       </div>
@@ -69,7 +75,9 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
           {view === "" && (
             <Panel flush>
               {rows.length === 0 ? (
-                <EmptyState title="Brak opakowań u klientów">Salda pojawią się, gdy kierowcy zaczną wpisywać wydania i zwroty.</EmptyState>
+                <EmptyState title="Brak opakowań u klientów">
+                  Salda pojawią się, gdy kierowcy zaczną wpisywać wydania i zwroty.
+                </EmptyState>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -88,7 +96,10 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                       {rows.map((r) => (
                         <tr key={r.customerId} className="border-t border-border hover:bg-surface-2">
                           <td className="px-4 py-2">
-                            <Link href={`/opakowania?widok=historia&klient=${r.customerId}`} className="font-medium hover:text-primary-strong hover:underline">
+                            <Link
+                              href={`/opakowania?widok=historia&klient=${r.customerId}`}
+                              className="font-medium hover:text-primary-strong hover:underline"
+                            >
                               {r.customer}
                             </Link>
                             {r.code && <span className="ml-1 text-xs text-muted">{r.code}</span>}
@@ -106,7 +117,9 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                               </td>
                             );
                           })}
-                          <td className="px-4 py-2 text-right tabular-nums">{r.depositGrosze ? formatPln(r.depositGrosze) : "—"}</td>
+                          <td className="px-4 py-2 text-right tabular-nums">
+                            {r.depositGrosze ? formatPln(r.depositGrosze) : "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -117,7 +130,11 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
           )}
 
           {view === "kierowcy" && (
-            <Panel title="Kierowcy z niezdanymi opakowaniami lub gotówką" description="Po zamknięciu trasy saldo kierowcy powinno wynosić zero. Dodatnie = ma u siebie, ujemne = oddał więcej niż zebrał." flush>
+            <Panel
+              title="Kierowcy z niezdanymi opakowaniami lub gotówką"
+              description="Po zamknięciu trasy saldo kierowcy powinno wynosić zero. Dodatnie = ma u siebie, ujemne = oddał więcej niż zebrał."
+              flush
+            >
               {drivers.length === 0 ? (
                 <EmptyState title="Brak różnic">Wszyscy kierowcy rozliczeni.</EmptyState>
               ) : (
@@ -134,7 +151,9 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                               {p.balance}
                             </Pill>
                           ))}
-                        {d.cashGrosze !== 0 && <Pill tone={d.cashGrosze > 0 ? "warning" : "danger"}>gotówka {formatPln(d.cashGrosze)}</Pill>}
+                        {d.cashGrosze !== 0 && (
+                          <Pill tone={d.cashGrosze > 0 ? "warning" : "danger"}>gotówka {formatPln(d.cashGrosze)}</Pill>
+                        )}
                       </span>
                     </li>
                   ))}
@@ -149,7 +168,11 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
               actions={
                 <form className="flex gap-2" action="/opakowania">
                   <input type="hidden" name="widok" value="historia" />
-                  <select name="klient" defaultValue={customerId} className="h-8 max-w-64 rounded-md border border-border-strong bg-surface px-2 text-sm">
+                  <select
+                    name="klient"
+                    defaultValue={customerId}
+                    className="h-8 max-w-64 rounded-md border border-border-strong bg-surface px-2 text-sm"
+                  >
                     <option value="">— wybierz klienta —</option>
                     {(customers ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
@@ -180,9 +203,20 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                   <tbody>
                     {history.map((m) => (
                       <tr key={m.id} className="border-t border-border">
-                        <td className="px-4 py-2 tabular-nums">{new Date(m.created_at).toLocaleString("pl-PL", { timeZone: "Europe/Warsaw", dateStyle: "short", timeStyle: "short" })}</td>
+                        <td className="px-4 py-2 tabular-nums">
+                          {new Date(m.created_at).toLocaleString("pl-PL", {
+                            timeZone: "Europe/Warsaw",
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </td>
                         <td className="px-4 py-2">{m.packaging_types?.name}</td>
-                        <td className={cn("px-4 py-2 text-right font-semibold tabular-nums", m.qty > 0 ? "text-warning" : "text-success")}>
+                        <td
+                          className={cn(
+                            "px-4 py-2 text-right font-semibold tabular-nums",
+                            m.qty > 0 ? "text-warning" : "text-success",
+                          )}
+                        >
                           {m.qty > 0 ? "+" : ""}
                           {m.qty}
                         </td>
@@ -210,7 +244,17 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                   title: "Korekta opakowań",
                   description: "Np. inwentaryzacja u klienta albo uszkodzone skrzynki. Ilość dodatnia zwiększa saldo strony.",
                   fields: [
-                    { kind: "select", name: "party_type", label: "Kogo dotyczy", defaultValue: "customer", options: [{ value: "customer", label: "Klient" }, { value: "driver", label: "Kierowca" }], span: 3 },
+                    {
+                      kind: "select",
+                      name: "party_type",
+                      label: "Kogo dotyczy",
+                      defaultValue: "customer",
+                      options: [
+                        { value: "customer", label: "Klient" },
+                        { value: "driver", label: "Kierowca" },
+                      ],
+                      span: 3,
+                    },
                     {
                       kind: "select",
                       name: "party_id",
@@ -222,7 +266,13 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                       ],
                       span: 3,
                     },
-                    { kind: "select", name: "packaging_type_id", label: "Opakowanie", options: types.map((t) => ({ value: t.id, label: t.name })), span: 2 },
+                    {
+                      kind: "select",
+                      name: "packaging_type_id",
+                      label: "Opakowanie",
+                      options: types.map((t) => ({ value: t.id, label: t.name })),
+                      span: 2,
+                    },
                     { kind: "number", name: "qty", label: "Ilość (±)" },
                     {
                       kind: "select",
@@ -249,7 +299,14 @@ export default async function PackagingPage({ searchParams }: PageProps<"/opakow
                   title: "Korekta gotówki kierowcy",
                   description: "Wyjaśniona różnica kasowa. Ujemna kwota zmniejsza saldo kierowcy.",
                   fields: [
-                    { kind: "select", name: "driver_id", label: "Kierowca", emptyLabel: "— wybierz —", options: (driverList ?? []).map((d) => ({ value: d.id, label: `${d.first_name} ${d.last_name}` })), span: 3 },
+                    {
+                      kind: "select",
+                      name: "driver_id",
+                      label: "Kierowca",
+                      emptyLabel: "— wybierz —",
+                      options: (driverList ?? []).map((d) => ({ value: d.id, label: `${d.first_name} ${d.last_name}` })),
+                      span: 3,
+                    },
                     { kind: "text", name: "amount", label: "Kwota (zł)", placeholder: "np. -40,50" },
                     { kind: "text", name: "note", label: "Opis", span: 2 },
                   ],

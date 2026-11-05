@@ -5,7 +5,14 @@ import type { DriverEvent, RouteSnapshot } from "../domain/offline";
 
 // Pamięć telefonu kierowcy (IndexedDB). Przeżywa brak zasięgu, zamknięcie przeglądarki i restart telefonu.
 
-export type QueuedEvent = { client_event_id: string; route_id: string; event: DriverEvent; created_at: string; attempts: number; last_error: string | null };
+export type QueuedEvent = {
+  client_event_id: string;
+  route_id: string;
+  event: DriverEvent;
+  created_at: string;
+  attempts: number;
+  last_error: string | null;
+};
 export type QueuedFile = {
   client_file_id: string;
   client_event_id: string;
@@ -15,7 +22,14 @@ export type QueuedFile = {
   created_at: string;
   attempts: number;
 };
-export type QueuedPosition = { id?: number; route_id: string; lat: number; lng: number; accuracy: number | null; recorded_at: string };
+export type QueuedPosition = {
+  id?: number;
+  route_id: string;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  recorded_at: string;
+};
 export type StoredSnapshot = { route_id: string; snapshot: RouteSnapshot; saved_at: string };
 export type RejectedEvent = { client_event_id: string; route_id: string; type: string; reason: string; at: string };
 

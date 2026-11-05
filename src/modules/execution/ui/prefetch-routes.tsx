@@ -18,7 +18,8 @@ export function PrefetchRoutes({ ids }: { ids: string[] }) {
             const snap = (await res.json()) as RouteSnapshot;
             const db = driverDb();
             const stored = await db.snapshots.get(id);
-            if (!stored || stored.snapshot.fetchedAt < snap.fetchedAt) await db.snapshots.put({ route_id: id, snapshot: snap, saved_at: new Date().toISOString() });
+            if (!stored || stored.snapshot.fetchedAt < snap.fetchedAt)
+              await db.snapshots.put({ route_id: id, snapshot: snap, saved_at: new Date().toISOString() });
           }
           // strona trasy trafia do pamięci service workera
           await fetch(`/driver/trasa/${id}`, { signal: ctrl.signal, credentials: "same-origin" });

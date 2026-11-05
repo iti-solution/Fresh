@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
   }
   const list = Array.isArray(body) ? body : (body as { orders?: unknown })?.orders;
   if (!Array.isArray(list) || list.length === 0) return json(400, { error: "no_orders", message: "Podaj tablicę `orders`." });
-  if (list.length > MAX_ORDERS) return json(413, { error: "too_many_orders", message: `Maksymalnie ${MAX_ORDERS} zamówień w jednym żądaniu.` });
-  if (!list.every((o) => o && typeof o === "object" && !Array.isArray(o))) return json(400, { error: "invalid_order", message: "Każde zamówienie musi być obiektem." });
+  if (list.length > MAX_ORDERS)
+    return json(413, { error: "too_many_orders", message: `Maksymalnie ${MAX_ORDERS} zamówień w jednym żądaniu.` });
+  if (!list.every((o) => o && typeof o === "object" && !Array.isArray(o)))
+    return json(400, { error: "invalid_order", message: "Każde zamówienie musi być obiektem." });
 
   await admin.from("tenant_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", apiKey.id);
   const result = await runOrderImport(admin, {

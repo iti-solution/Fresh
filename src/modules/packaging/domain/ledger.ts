@@ -6,7 +6,11 @@ export type Movement = { qty: number; created_at: string; reason: string };
  * Opakowania zalegające u klienta dłużej niż `days` dni: wydania rozliczane zwrotami od najstarszych (FIFO).
  * Zwraca ilość nadal u klienta wydaną przed progiem i datę najstarszego niezwróconego wydania.
  */
-export function overdueAtCustomer(movements: Movement[], today: string, days = 30): { overdue: number; oldest: string | null; balance: number } {
+export function overdueAtCustomer(
+  movements: Movement[],
+  today: string,
+  days = 30,
+): { overdue: number; oldest: string | null; balance: number } {
   const limit = new Date(`${today}T23:59:59Z`);
   limit.setUTCDate(limit.getUTCDate() - days);
   const issues: { qty: number; at: string }[] = [];
@@ -47,15 +51,36 @@ export function closeChecklist(r: CloseInput): CheckItem[] {
       ok: r.status === "completed",
       detail: r.status === "completed" ? "raport zmiany wysłany" : "trasa nadal w realizacji — wpisz licznik końcowy",
     },
-    { key: "stops", label: "Wszystkie punkty potwierdzone", ok: r.openStops === 0, detail: r.openStops ? `${r.openStops} bez potwierdzenia (zostaną oznaczone jako pominięte)` : "tak" },
-    { key: "km", label: "Kilometry wpisane", ok: km !== null && km >= 0, detail: km !== null ? `${km} km (licznik ${r.odometerStart} → ${r.odometerEnd})` : "brak licznika" },
+    {
+      key: "stops",
+      label: "Wszystkie punkty potwierdzone",
+      ok: r.openStops === 0,
+      detail: r.openStops ? `${r.openStops} bez potwierdzenia (zostaną oznaczone jako pominięte)` : "tak",
+    },
+    {
+      key: "km",
+      label: "Kilometry wpisane",
+      ok: km !== null && km >= 0,
+      detail: km !== null ? `${km} km (licznik ${r.odometerStart} → ${r.odometerEnd})` : "brak licznika",
+    },
     {
       key: "packaging",
       label: "Opakowania do zdania",
       ok: true,
-      detail: r.packaging.filter((p) => p.collected || p.issued).map((p) => `${p.name}: zebrano ${p.collected}`).join(", ") || "brak ruchów",
+      detail:
+        r.packaging
+          .filter((p) => p.collected || p.issued)
+          .map((p) => `${p.name}: zebrano ${p.collected}`)
+          .join(", ") || "brak ruchów",
     },
-    { key: "cash", label: "Gotówka do przyjęcia", ok: true, detail: r.cashCollectedGrosze ? `${(r.cashCollectedGrosze / 100).toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł` : "brak pobrań" },
+    {
+      key: "cash",
+      label: "Gotówka do przyjęcia",
+      ok: true,
+      detail: r.cashCollectedGrosze
+        ? `${(r.cashCollectedGrosze / 100).toLocaleString("pl-PL", { minimumFractionDigits: 2 })} zł`
+        : "brak pobrań",
+    },
   ];
 }
 

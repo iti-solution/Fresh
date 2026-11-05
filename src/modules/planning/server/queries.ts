@@ -48,7 +48,13 @@ export type PlanRoute = {
   issues: Issue[];
 };
 
-export type UnassignedOrder = PlanOrder & { customer: string; customerCode: string | null; branch: string; city: string; window: string };
+export type UnassignedOrder = PlanOrder & {
+  customer: string;
+  customerCode: string | null;
+  branch: string;
+  city: string;
+  window: string;
+};
 
 export type PlanningDay = {
   routes: PlanRoute[];
@@ -66,7 +72,8 @@ function isoWeekday(day: string) {
 export async function getPlanningDay(tenantId: string, day: string): Promise<PlanningDay> {
   const supabase = await createClient();
   const weekday = isoWeekday(day);
-  const orderCols = "id, external_ref, weight_kg, pallets, crates, volume_m3, readiness, priority, notes_logistics, window_start, window_end, status";
+  const orderCols =
+    "id, external_ref, weight_kg, pallets, crates, volume_m3, readiness, priority, notes_logistics, window_start, window_end, status";
   const pointCols = "id, name, city, customers(name, external_code), delivery_point_windows(weekday, opens_at, closes_at)";
 
   const [routesRes, ordersRes, excRes, vehRes, drvRes, tplRes] = await Promise.all([
@@ -90,8 +97,16 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .eq("delivery_date", day)
       .not("status", "in", "(cancelled,delivered,failed)")
       .order("external_ref"),
-    supabase.from("delivery_point_exceptions").select("delivery_point_id, date, is_closed, reason").eq("tenant_id", tenantId).eq("date", day),
-    supabase.from("vehicles").select("id, registration, name, vehicle_type, body_type, status").eq("tenant_id", tenantId).order("registration"),
+    supabase
+      .from("delivery_point_exceptions")
+      .select("delivery_point_id, date, is_closed, reason")
+      .eq("tenant_id", tenantId)
+      .eq("date", day),
+    supabase
+      .from("vehicles")
+      .select("id, registration, name, vehicle_type, body_type, status")
+      .eq("tenant_id", tenantId)
+      .order("registration"),
     supabase.from("drivers").select("id, first_name, last_name, is_active").eq("tenant_id", tenantId).order("last_name"),
     supabase.from("route_templates").select("id, weekdays, is_active").eq("tenant_id", tenantId),
   ]);
@@ -101,7 +116,9 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
   // święta ustawowe + zamknięcia firmy (M1.3); firma może też oznaczyć święto jako dzień pracujący
   const firm = firmDay(day, exceptions);
   const holiday = firm.closed ? firm.reason : null;
-  const closedPoints = new Set(exceptions.filter((e) => e.delivery_point_id && e.is_closed).map((e) => e.delivery_point_id as string));
+  const closedPoints = new Set(
+    exceptions.filter((e) => e.delivery_point_id && e.is_closed).map((e) => e.delivery_point_id as string),
+  );
 
   type Win = { weekday: number; opens_at: string; closes_at: string };
   const pointWindow = (wins: Win[] | undefined) =>
@@ -112,7 +129,12 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .join(", ");
 
   type RawOrder = NonNullable<typeof ordersRes.data>[number];
-  const toPlanOrder = (o: Pick<RawOrder, "id" | "external_ref" | "weight_kg" | "pallets" | "crates" | "volume_m3" | "readiness" | "priority" | "notes_logistics">): PlanOrder => ({
+  const toPlanOrder = (
+    o: Pick<
+      RawOrder,
+      "id" | "external_ref" | "weight_kg" | "pallets" | "crates" | "volume_m3" | "readiness" | "priority" | "notes_logistics"
+    >,
+  ): PlanOrder => ({
     id: o.id,
     ref: o.external_ref,
     weight_kg: Number(o.weight_kg ?? 0),
@@ -139,7 +161,9 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
           customerCode: p?.customers?.external_code ?? null,
           branch: p?.name ?? "—",
           city: p?.city ?? "",
-          window: override ? `${t(override.window_start)}–${t(override.window_end)}` : pointWindow(p?.delivery_point_windows) || "—",
+          window: override
+            ? `${t(override.window_start)}–${t(override.window_end)}`
+            : pointWindow(p?.delivery_point_windows) || "—",
           closed: closedPoints.has(s.delivery_point_id),
           orders: orders.map(toPlanOrder),
         };
@@ -162,7 +186,9 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       status: r.status,
       extraReason: r.extra_reason,
       plannedStart: r.planned_start
-        ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(r.planned_start))
+        ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(
+            new Date(r.planned_start),
+          )
         : null,
       vehicleId: r.vehicle_id,
       vehicleLabel: r.vehicles?.registration ?? null,

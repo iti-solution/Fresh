@@ -17,7 +17,19 @@ export default async function OnboardingPage() {
   const t = ctx.tenantId;
   const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
   const head = { count: "exact" as const, head: true };
-  const [customers, points, vehicles, drivers, driversWithPin, packagingTypes, templates, templatePoints, payRules, orders, routes] = await Promise.all([
+  const [
+    customers,
+    points,
+    vehicles,
+    drivers,
+    driversWithPin,
+    packagingTypes,
+    templates,
+    templatePoints,
+    payRules,
+    orders,
+    routes,
+  ] = await Promise.all([
     count(db.from("customers").select("id", head).eq("tenant_id", t)),
     count(db.from("delivery_points").select("id", head).eq("tenant_id", t)),
     count(db.from("vehicles").select("id", head).eq("tenant_id", t)),
@@ -30,7 +42,19 @@ export default async function OnboardingPage() {
     count(db.from("orders").select("id", head).eq("tenant_id", t)),
     count(db.from("routes").select("id", head).eq("tenant_id", t)),
   ]);
-  const steps = onboardingSteps({ customers, points, vehicles, drivers, driversWithPin, packagingTypes, templates, templatePoints, payRules, orders, routes });
+  const steps = onboardingSteps({
+    customers,
+    points,
+    vehicles,
+    drivers,
+    driversWithPin,
+    packagingTypes,
+    templates,
+    templatePoints,
+    payRules,
+    orders,
+    routes,
+  });
   const p = onboardingProgress(steps);
 
   return (
@@ -62,7 +86,11 @@ export default async function OnboardingPage() {
                 p.next?.key === s.key ? "border-primary" : "border-border",
               )}
             >
-              {s.done ? <CircleCheck className="size-6 shrink-0 text-success" /> : <Circle className="size-6 shrink-0 text-subtle" />}
+              {s.done ? (
+                <CircleCheck className="size-6 shrink-0 text-success" />
+              ) : (
+                <Circle className="size-6 shrink-0 text-subtle" />
+              )}
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2 font-medium">
                   {i + 1}. {s.title} {s.optional && <Pill dot={false}>opcjonalnie</Pill>}

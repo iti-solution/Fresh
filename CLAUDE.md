@@ -3,18 +3,22 @@
 Driver (nazwa robocza, w kodzie i repo nadal `fresh`) to SaaS TMS dla **hurtowni dowożących towar własną flotą** (5–100 pojazdów) — dowolna branża: spożywcza, budowlana, przemysłowa; odbiorcy to sklepy, lokale, zakłady, **budowy** i adresy prywatne. Pierwszy pilot to hurtownia owocowo-warzywna. Nazwa produktu w UI pochodzi wyłącznie z `src/lib/brand.ts`. Właściciel produktu: Arkadiusz — **nie programuje**, zarządza produktem. Tłumacz decyzje techniczne prostym językiem, pokazuj plan przed większą zmianą.
 
 ## Dokumenty źródłowe (czytaj przed pracą)
+
 - `docs/01-architektura.md` — architektura, moduły, przepływy, ADR
 - `docs/02-zakres-mvp.md` — co jest w MVP, a co nie (nie dodawaj funkcji spoza zakresu bez pytania)
 - `docs/04-plan-milestones.md` — kamienie milowe i zadania; po zakończeniu zadania odhacz `[x]`
 - `docs/05-scenariusz-dnia.md` — dzień pilota krok po kroku (dziś vs Fresh); źródło wymagań z warsztatów
 - `docs/07-portal-klienta.md` — portal zamówień klienta (rola `customer`, katalog, terminy)
+- `docs/08-api-i-import.md` — import zamówień/kartoteki z plików, API dla ERP, aplikacja kierowcy offline (zdarzenia, synchronizacja)
 - `docs/06-system-wizualny.md` — kolory, typografia i komponenty UI (używaj ich zamiast pisać style od zera)
 - `supabase/migrations/` — schemat bazy; zmiany tylko nowymi migracjami, nigdy edycją starych
 
 ## Stos
+
 Next.js 16 (App Router, TypeScript strict) · Tailwind + shadcn/ui · Supabase (Postgres + PostGIS, Auth, Storage, Realtime) · MapLibre GL · PWA kierowcy w `/driver` z Dexie (IndexedDB) · Vitest + Playwright · Vercel · Sentry.
 
 ## Struktura
+
 ```
 src/
   app/                 # routing Next.js: (panel)/..., driver/..., api/...
@@ -24,9 +28,11 @@ src/
     ui/                # komponenty modułu
   lib/                 # supabase client, adaptery (geocoding, routing), utils
 ```
-Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, ops, growth, portal.
+
+Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, ops, growth, portal, intake.
 
 ## Zasady nienegocjowalne
+
 1. Każda tabela biznesowa ma `tenant_id` i włączony RLS. Nowa tabela = polityki RLS w tej samej migracji + test, że tenant A nie widzi danych tenanta B.
 2. `service_role` tylko po stronie serwera. Nigdy w kodzie klienta ani w `NEXT_PUBLIC_*`.
 3. `delivery_events` i `packaging_movements` są append-only. Korekta = nowy zapis, nie UPDATE/DELETE.
@@ -36,13 +42,21 @@ Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, o
 7. Kwoty: `numeric` w bazie, w TS liczone w groszach (integer) lub przez bibliotekę decimal — nigdy float.
 8. Czas: w bazie `timestamptz`, w UI strefa Europe/Warsaw. Okna przyjęć to czas lokalny.
 
+## Aplikacja kierowcy offline (M4)
+
+- `/driver/trasa/[id]` renderuje `RouteApp` (klient). Stan = migawka z serwera (`getRouteSnapshot`) + kolejka zdarzeń w IndexedDB (`modules/execution/ui/offline-db.ts`).
+- Każda akcja kierowcy to `DriverEvent` (`modules/execution/domain/offline.ts`). Ta sama funkcja `validateEvent`/`applyEvent` działa w telefonie i na serwerze (`server/apply.ts`). Nowa akcja = nowy typ zdarzenia w domenie + obsługa w `applyDriverEvent` + test.
+- `POST /api/driver/sync` (zdarzenia + GPS), `POST /api/driver/upload` (zdjęcia/podpis po przyjęciu zdarzenia), `GET /api/driver/route/[id]` (migawka). `public/driver-sw.js` — service worker (strony `/driver` najpierw sieć, potem pamięć).
+
 ## Next.js 16 — ważne różnice (przeczytaj też `AGENTS.md`)
+
 - Zamiast `middleware.ts` jest `src/proxy.ts` (odświeża sesję Supabase, przekierowuje niezalogowanych).
 - `cookies()`, `headers()`, `params`, `searchParams` są wyłącznie asynchroniczne (`await`).
 - Cache Components są **wyłączone** (ADR-8) — strony za logowaniem renderują się dynamicznie.
 - Przed pisaniem kodu w nieznanym obszarze sprawdź dokumentację w `node_modules/next/dist/docs/`.
 
 ## Jak działa dostęp (zbudowane w M0)
+
 - `src/modules/tenancy/domain/access.ts` — role, menu, `canAccess()`. Nowy ekran = wpis w `NAV_ITEMS`.
 - Każda strona panelu zaczyna się od `const ctx = await requireAccess("/ścieżka")` — daje `tenantId`, rolę, e-mail.
 - Zapytania zawsze z `.eq("tenant_id", ctx.tenantId)` (RLS chroni i tak, ale filtr wybiera bieżącą firmę, gdy użytkownik ma kilka).
@@ -50,10 +64,12 @@ Moduły: tenancy, masterdata, orders, planning, execution, packaging, payroll, o
 - Typy bazy: `src/lib/supabase/database.types.ts` — po każdej migracji wygeneruj ponownie (`npm run db:types`).
 
 ## Komendy
+
 `npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run test:e2e`
 Zmienne środowiskowe: patrz `.env.example`.
 
 ## Konwencje
+
 - UI w języku polskim; kod, nazwy tabel i commitów po angielsku.
 - Komponenty dopasowane do dyspozytora pracującego na dużym monitorze (gęste tabele, skróty klawiszowe) i kierowcy na telefonie jedną ręką (duże przyciski, min. 48 px).
 - Po każdym zadaniu: `npm run lint && npm run typecheck && npm test` zielone, commit z odwołaniem do zadania (np. `M1.5: order import column mapping`).

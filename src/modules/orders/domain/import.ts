@@ -37,28 +37,106 @@ export type OrderFieldKey =
   | "notes_logistics";
 
 export const ORDER_FIELDS: ImportField<OrderFieldKey>[] = [
-  { key: "external_ref", label: "Numer zamówienia / WZ", required: true, synonyms: ["nr zamowienia", "numer zamowienia", "nr wz", "wz", "numer dokumentu", "nr dokumentu", "dokument", "zamowienie", "order", "order no", "external ref", "numer"] },
-  { key: "delivery_date", label: "Data dostawy", hint: "puste = dzień wybrany przy imporcie", synonyms: ["data dostawy", "termin dostawy", "data realizacji", "dostawa", "data", "delivery date"] },
-  { key: "customer_code", label: "Kod klienta", synonyms: ["kod klienta", "kod kontrahenta", "kontrahent kod", "id klienta", "nr klienta", "symbol kontrahenta", "customer code"] },
-  { key: "point_code", label: "Kod adresu dostawy", hint: "kod oddziału / miejsca dostawy w ERP", synonyms: ["kod adresu", "kod adresu dostawy", "kod oddzialu", "kod odbiorcy", "kod miejsca dostawy", "point code", "odbiorca kod"] },
-  { key: "customer_name", label: "Nazwa klienta", synonyms: ["nazwa klienta", "klient", "kontrahent", "nazwa kontrahenta", "odbiorca", "customer", "nazwa"] },
+  {
+    key: "external_ref",
+    label: "Numer zamówienia / WZ",
+    required: true,
+    synonyms: [
+      "nr zamowienia",
+      "numer zamowienia",
+      "nr wz",
+      "wz",
+      "numer dokumentu",
+      "nr dokumentu",
+      "dokument",
+      "zamowienie",
+      "order",
+      "order no",
+      "external ref",
+      "numer",
+    ],
+  },
+  {
+    key: "delivery_date",
+    label: "Data dostawy",
+    hint: "puste = dzień wybrany przy imporcie",
+    synonyms: ["data dostawy", "termin dostawy", "data realizacji", "dostawa", "data", "delivery date"],
+  },
+  {
+    key: "customer_code",
+    label: "Kod klienta",
+    synonyms: [
+      "kod klienta",
+      "kod kontrahenta",
+      "kontrahent kod",
+      "id klienta",
+      "nr klienta",
+      "symbol kontrahenta",
+      "customer code",
+    ],
+  },
+  {
+    key: "point_code",
+    label: "Kod adresu dostawy",
+    hint: "kod oddziału / miejsca dostawy w ERP",
+    synonyms: [
+      "kod adresu",
+      "kod adresu dostawy",
+      "kod oddzialu",
+      "kod odbiorcy",
+      "kod miejsca dostawy",
+      "point code",
+      "odbiorca kod",
+    ],
+  },
+  {
+    key: "customer_name",
+    label: "Nazwa klienta",
+    synonyms: ["nazwa klienta", "klient", "kontrahent", "nazwa kontrahenta", "odbiorca", "customer", "nazwa"],
+  },
   { key: "address", label: "Adres (ulica i numer)", synonyms: ["adres dostawy", "adres", "ulica", "address"] },
   { key: "postal_code", label: "Kod pocztowy", synonyms: ["kod pocztowy", "kod poczt", "postal code", "zip"] },
   { key: "city", label: "Miejscowość", synonyms: ["miejscowosc", "miasto", "city"] },
   { key: "weight_kg", label: "Masa [kg]", synonyms: ["masa", "waga", "masa kg", "waga kg", "kg", "weight"] },
   { key: "pallets", label: "Palety", synonyms: ["palety", "ilosc palet", "liczba palet", "pal", "pallets"] },
   { key: "volume_m3", label: "Objętość [m³]", synonyms: ["objetosc", "m3", "kubatura", "volume"] },
-  { key: "crates", label: "Skrzynki / opakowania", synonyms: ["skrzynki", "ilosc skrzynek", "liczba skrzynek", "opakowania", "crates"] },
-  { key: "order_value", label: "Wartość zamówienia [zł]", synonyms: ["wartosc", "wartosc netto", "wartosc brutto", "kwota", "wartosc zamowienia", "value"] },
+  {
+    key: "crates",
+    label: "Skrzynki / opakowania",
+    synonyms: ["skrzynki", "ilosc skrzynek", "liczba skrzynek", "opakowania", "crates"],
+  },
+  {
+    key: "order_value",
+    label: "Wartość zamówienia [zł]",
+    synonyms: ["wartosc", "wartosc netto", "wartosc brutto", "kwota", "wartosc zamowienia", "value"],
+  },
   { key: "cod_amount", label: "Pobranie [zł]", synonyms: ["pobranie", "za pobraniem", "do pobrania", "gotowka", "cod"] },
-  { key: "window", label: "Okno dostawy (jedna kolumna)", hint: "np. 6-8 albo 06:00–08:00", synonyms: ["okno", "okno dostawy", "godziny dostawy", "godziny"] },
+  {
+    key: "window",
+    label: "Okno dostawy (jedna kolumna)",
+    hint: "np. 6-8 albo 06:00–08:00",
+    synonyms: ["okno", "okno dostawy", "godziny dostawy", "godziny"],
+  },
   { key: "window_start", label: "Okno od", synonyms: ["okno od", "godzina od", "od godziny", "dostawa od"] },
   { key: "window_end", label: "Okno do", synonyms: ["okno do", "godzina do", "do godziny", "dostawa do"] },
-  { key: "readiness", label: "Gotowość z magazynu (WMS)", hint: "skompletowane / do realizacji", synonyms: ["gotowosc", "status wms", "skompletowane", "status magazynu", "kompletacja", "readiness"] },
+  {
+    key: "readiness",
+    label: "Gotowość z magazynu (WMS)",
+    hint: "skompletowane / do realizacji",
+    synonyms: ["gotowosc", "status wms", "skompletowane", "status magazynu", "kompletacja", "readiness"],
+  },
   { key: "priority", label: "Priorytet", synonyms: ["priorytet", "pilne", "ekspres", "priority"] },
   { key: "type", label: "Rodzaj (dostawa / odbiór)", synonyms: ["rodzaj", "typ", "typ zlecenia", "rodzaj zlecenia"] },
-  { key: "notes_sales", label: "Uwagi handlowe", synonyms: ["uwagi handlowe", "uwagi handlowca", "uwagi do zamowienia", "uwagi"] },
-  { key: "notes_logistics", label: "Uwagi logistyczne", synonyms: ["uwagi logistyczne", "uwagi dla kierowcy", "uwagi magazynu", "uwagi transport"] },
+  {
+    key: "notes_sales",
+    label: "Uwagi handlowe",
+    synonyms: ["uwagi handlowe", "uwagi handlowca", "uwagi do zamowienia", "uwagi"],
+  },
+  {
+    key: "notes_logistics",
+    label: "Uwagi logistyczne",
+    synonyms: ["uwagi logistyczne", "uwagi dla kierowcy", "uwagi magazynu", "uwagi transport"],
+  },
 ];
 
 export type OrderMapping = Partial<Record<OrderFieldKey, string>>;
@@ -243,7 +321,10 @@ export function buildPointIndex(points: PointForMatch[]): PointIndex {
 }
 
 /** Kolejność: kod adresu → kod klienta (jedyny aktywny adres albo zgodny adres) → sam adres (jednoznaczny). */
-export function matchOrderToPoint(o: Pick<NormalizedOrder, "point_code" | "customer_code" | "address" | "city">, idx: PointIndex): Match {
+export function matchOrderToPoint(
+  o: Pick<NormalizedOrder, "point_code" | "customer_code" | "address" | "city">,
+  idx: PointIndex,
+): Match {
   if (o.point_code) {
     const p = idx.byPointCode.get(codeKey(o.point_code));
     if (p) return { pointId: p.id, how: "point_code" };
@@ -257,7 +338,8 @@ export function matchOrderToPoint(o: Pick<NormalizedOrder, "point_code" | "custo
       if (same.length === 1) return { pointId: same[0].id, how: "customer_address" };
     }
     if (active.length === 1) return { pointId: active[0].id, how: "customer_code" };
-    if (active.length > 1) return { pointId: null, reason: `klient ${o.customer_code} ma ${active.length} adresy — podaj kod adresu albo adres` };
+    if (active.length > 1)
+      return { pointId: null, reason: `klient ${o.customer_code} ma ${active.length} adresy — podaj kod adresu albo adres` };
   }
   if (addr) {
     const list = (idx.byAddress.get(addr) ?? []).filter((p) => p.is_active);
@@ -309,7 +391,12 @@ export type UnmatchedRaw = {
   raw_address: string | null;
 };
 
-const tokens = (s: string | null | undefined) => new Set(fold(s ?? "").split(" ").filter((t) => t.length > 2));
+const tokens = (s: string | null | undefined) =>
+  new Set(
+    fold(s ?? "")
+      .split(" ")
+      .filter((t) => t.length > 2),
+  );
 
 /** Najbardziej prawdopodobne adresy dla niedopasowanego zamówienia (nazwa klienta, adres, kody). */
 export function suggestPoints(o: UnmatchedRaw, points: PointForMatch[], n = 6): PointForMatch[] {

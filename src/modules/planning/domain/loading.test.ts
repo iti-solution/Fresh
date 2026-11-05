@@ -16,8 +16,22 @@ const o = (x: Partial<{ pallets: number; crates: number; weightKg: number; codGr
 describe("lista załadunkowa", () => {
   it("odwraca kolejność i sumuje", () => {
     const { rows, totals } = buildLoadingList([
-      { sequence: 1, customer: "Pierwszy", place: "", address: "", window: "", orders: [o({ pallets: 0.5, crates: 3, weightKg: 10.4 })] },
-      { sequence: 2, customer: "Drugi", place: "", address: "", window: "", orders: [o({ pallets: 1, codGrosze: 12050, ready: false }), o({ crates: 2 })] },
+      {
+        sequence: 1,
+        customer: "Pierwszy",
+        place: "",
+        address: "",
+        window: "",
+        orders: [o({ pallets: 0.5, crates: 3, weightKg: 10.4 })],
+      },
+      {
+        sequence: 2,
+        customer: "Drugi",
+        place: "",
+        address: "",
+        window: "",
+        orders: [o({ pallets: 1, codGrosze: 12050, ready: false }), o({ crates: 2 })],
+      },
     ]);
     expect(rows.map((r) => [r.loadNo, r.customer])).toEqual([
       [1, "Drugi"],

@@ -2,7 +2,6 @@
 import { z } from "zod";
 import { checkbox, numberField, optionalDate, optionalText, optionalTime, requiredText } from "@/lib/forms";
 
-
 const nip = z
   .string()
   .optional()

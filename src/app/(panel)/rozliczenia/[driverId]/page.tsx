@@ -25,10 +25,17 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
   const { from, to } = monthRange(month);
   const db = await createClient();
   const [{ data: driver }, { data: s }] = await Promise.all([
-    db.from("drivers").select("id, first_name, last_name, employment_type").eq("id", driverId).eq("tenant_id", ctx.tenantId).maybeSingle(),
+    db
+      .from("drivers")
+      .select("id, first_name, last_name, employment_type")
+      .eq("id", driverId)
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle(),
     db
       .from("driver_settlements")
-      .select("id, status, total_amount, approved_at, driver_settlement_lines(id, work_date, code, label, quantity, rate, amount, note, is_manual, routes(name))")
+      .select(
+        "id, status, total_amount, approved_at, driver_settlement_lines(id, work_date, code, label, quantity, rate, amount, note, is_manual, routes(name))",
+      )
       .eq("tenant_id", ctx.tenantId)
       .eq("driver_id", driverId)
       .eq("period_start", from)
@@ -36,7 +43,9 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
       .maybeSingle(),
   ]);
   if (!driver) notFound();
-  const lines = [...(s?.driver_settlement_lines ?? [])].sort((a, b) => a.work_date.localeCompare(b.work_date) || Number(a.is_manual) - Number(b.is_manual));
+  const lines = [...(s?.driver_settlement_lines ?? [])].sort(
+    (a, b) => a.work_date.localeCompare(b.work_date) || Number(a.is_manual) - Number(b.is_manual),
+  );
   const byDay = new Map<string, typeof lines>();
   for (const l of lines) byDay.set(l.work_date, [...(byDay.get(l.work_date) ?? []), l]);
   const byCode = new Map<string, number>();
@@ -53,7 +62,12 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
       </nav>
       <PageHeader
         title={`${driver.first_name} ${driver.last_name}`}
-        description={<span className="capitalize">{monthLabel(month)}{driver.employment_type ? ` · ${driver.employment_type}` : ""}</span>}
+        description={
+          <span className="capitalize">
+            {monthLabel(month)}
+            {driver.employment_type ? ` · ${driver.employment_type}` : ""}
+          </span>
+        }
         actions={
           <>
             {editable && (
@@ -63,7 +77,9 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
             )}
             {s && ctx.role === "admin" && (
               <form action={approveSettlement.bind(null, s.id, draft)}>
-                <button className={buttonVariants({ size: "sm", variant: draft ? "primary" : "outline" })}>{draft ? "Zatwierdź rozliczenie" : "Cofnij zatwierdzenie"}</button>
+                <button className={buttonVariants({ size: "sm", variant: draft ? "primary" : "outline" })}>
+                  {draft ? "Zatwierdź rozliczenie" : "Cofnij zatwierdzenie"}
+                </button>
               </form>
             )}
           </>
@@ -71,7 +87,8 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
       />
       {s && !draft && (
         <Notice tone="info">
-          Rozliczenie zatwierdzone {s.approved_at ? new Date(s.approved_at).toLocaleDateString("pl-PL") : ""} — tylko do odczytu i eksportu.
+          Rozliczenie zatwierdzone {s.approved_at ? new Date(s.approved_at).toLocaleDateString("pl-PL") : ""} — tylko do odczytu i
+          eksportu.
         </Notice>
       )}
       {!s ? (
@@ -81,7 +98,9 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <Panel title={`Pozycje — razem ${formatPln(toGrosze(s.total_amount))}`} flush>
-            {lines.length === 0 && <p className="px-5 py-4 text-sm text-muted">Brak pozycji — sprawdź stawki i zamknięte trasy.</p>}
+            {lines.length === 0 && (
+              <p className="px-5 py-4 text-sm text-muted">Brak pozycji — sprawdź stawki i zamknięte trasy.</p>
+            )}
             {[...byDay.entries()].map(([day, ls]) => (
               <section key={day} className="border-t border-border first:border-t-0">
                 <h3 className="flex justify-between bg-surface-2 px-5 py-1.5 text-xs font-semibold capitalize text-muted">

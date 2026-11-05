@@ -51,7 +51,12 @@ export async function addClosure(pointId: string | null, revalidate: string, _pr
   const parsed = closureSchema.safeParse(formToObject(fd));
   if (!parsed.success) return toFormErrors(parsed.error);
   if (pointId) {
-    const { data } = await supabase.from("delivery_points").select("id").eq("id", pointId).eq("tenant_id", ctx.tenantId).maybeSingle();
+    const { data } = await supabase
+      .from("delivery_points")
+      .select("id")
+      .eq("id", pointId)
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle();
     if (!data) return { ok: false, message: "Nie znaleziono adresu." };
   }
   // jeden wpis na dzień: nadpisujemy (np. „pracujemy” → „zamknięte”)
@@ -75,11 +80,22 @@ export async function addClosure(pointId: string | null, revalidate: string, _pr
 export async function setHolidayWorking(date: string, working: boolean): Promise<void> {
   const { ctx, ok, supabase } = await editor();
   if (!ok || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
-  await supabase.from("delivery_point_exceptions").delete().eq("tenant_id", ctx.tenantId).eq("date", date).is("delivery_point_id", null);
+  await supabase
+    .from("delivery_point_exceptions")
+    .delete()
+    .eq("tenant_id", ctx.tenantId)
+    .eq("date", date)
+    .is("delivery_point_id", null);
   if (working) {
     await supabase
       .from("delivery_point_exceptions")
-      .insert({ tenant_id: ctx.tenantId, delivery_point_id: null, date, is_closed: false, reason: "Dzień pracujący mimo święta" });
+      .insert({
+        tenant_id: ctx.tenantId,
+        delivery_point_id: null,
+        date,
+        is_closed: false,
+        reason: "Dzień pracujący mimo święta",
+      });
   }
   revalidatePath("/ustawienia");
   revalidatePath("/planowanie");
@@ -119,7 +135,11 @@ export async function revokeApiKey(keyId: string): Promise<void> {
   const ctx = await requireTenantContext();
   if (ctx.role !== "admin") return;
   const supabase = await createClient();
-  await supabase.from("tenant_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", keyId).eq("tenant_id", ctx.tenantId);
+  await supabase
+    .from("tenant_api_keys")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", keyId)
+    .eq("tenant_id", ctx.tenantId);
   revalidatePath("/ustawienia");
 }
 

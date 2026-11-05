@@ -126,14 +126,26 @@ export function pointSections(
           defaultValue: s(p, "active_from"),
           hint: "sezon albo czas trwania budowy",
         },
-        { kind: "date", name: "active_to", label: "Czynny do", defaultValue: s(p, "active_to"), hint: "po tej dacie adres znika z planu" },
+        {
+          kind: "date",
+          name: "active_to",
+          label: "Czynny do",
+          defaultValue: s(p, "active_to"),
+          hint: "po tej dacie adres znika z planu",
+        },
       ],
     },
     {
       title: "Osoba na miejscu",
       description: "Np. kierownik budowy, magazynier, przyjmujący towar. Kierowca zadzwoni do niej jednym przyciskiem.",
       fields: [
-        { kind: "text", name: "site_manager_name", label: "Imię i nazwisko / funkcja", defaultValue: s(p, "site_manager_name"), span: 2 },
+        {
+          kind: "text",
+          name: "site_manager_name",
+          label: "Imię i nazwisko / funkcja",
+          defaultValue: s(p, "site_manager_name"),
+          span: 2,
+        },
         { kind: "tel", name: "site_manager_phone", label: "Telefon", defaultValue: s(p, "site_manager_phone") },
       ],
     },

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { apiOrderToRow, buildPointIndex, dedupeOrders, IDENTITY_MAPPING, matchOrderToPoint, normalizeOrderRow, parseReadiness, suggestPoints, type PointForMatch } from "./import";
+import {
+  apiOrderToRow,
+  buildPointIndex,
+  dedupeOrders,
+  IDENTITY_MAPPING,
+  matchOrderToPoint,
+  normalizeOrderRow,
+  parseReadiness,
+  suggestPoints,
+  type PointForMatch,
+} from "./import";
 
 const mapping = {
   external_ref: "Nr",
@@ -15,7 +25,20 @@ const mapping = {
   readiness: "Status WMS",
 };
 
-const row = (o: Record<string, string>) => ({ Nr: "WZ/1", Data: "06.11.2026", Kontrahent: "K1", Odbiorca: "", Adres: "", Miasto: "", Waga: "120,5", Skrzynki: "12", Wartość: "1 840,50", Okno: "6-8", "Status WMS": "Do realizacji", ...o });
+const row = (o: Record<string, string>) => ({
+  Nr: "WZ/1",
+  Data: "06.11.2026",
+  Kontrahent: "K1",
+  Odbiorca: "",
+  Adres: "",
+  Miasto: "",
+  Waga: "120,5",
+  Skrzynki: "12",
+  Wartość: "1 840,50",
+  Okno: "6-8",
+  "Status WMS": "Do realizacji",
+  ...o,
+});
 
 describe("normalizeOrderRow", () => {
   it("parsuje polskie formaty", () => {
@@ -37,11 +60,23 @@ describe("normalizeOrderRow", () => {
   it("brak daty w pliku = dzień domyślny; błędy po polsku", () => {
     const ok = normalizeOrderRow(row({ Data: "" }), mapping, { date: "2026-11-05" }, 2);
     expect(ok.ok && ok.order.delivery_date).toBe("2026-11-05");
-    const bad = normalizeOrderRow(row({ Nr: "", Skrzynki: "1,5", Okno: "8-6", Kontrahent: "" }), mapping, { date: "2026-11-05" }, 7);
+    const bad = normalizeOrderRow(
+      row({ Nr: "", Skrzynki: "1,5", Okno: "8-6", Kontrahent: "" }),
+      mapping,
+      { date: "2026-11-05" },
+      7,
+    );
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.line).toBe(7);
-    expect(bad.errors).toEqual(expect.arrayContaining(["brak numeru zamówienia", "skrzynki: „1,5”", "okno „8-6”", "brak kodu klienta, kodu adresu i adresu"]));
+    expect(bad.errors).toEqual(
+      expect.arrayContaining([
+        "brak numeru zamówienia",
+        "skrzynki: „1,5”",
+        "okno „8-6”",
+        "brak kodu klienta, kodu adresu i adresu",
+      ]),
+    );
   });
   it("gotowość", () => {
     expect(parseReadiness("Skompletowane")).toBe("ready");
@@ -70,11 +105,20 @@ describe("matchOrderToPoint", () => {
     P({ id: "p3", customer_code: "K2", address_line: "Budowa Lipowa 12" }),
     P({ id: "p4", customer_code: "K3", address_line: "Polna 3", city: "Skawina" }),
   ]);
-  const o = (x: Partial<{ point_code: string; customer_code: string; address: string; city: string }>) => ({ point_code: null, customer_code: null, address: null, city: null, ...x });
+  const o = (x: Partial<{ point_code: string; customer_code: string; address: string; city: string }>) => ({
+    point_code: null,
+    customer_code: null,
+    address: null,
+    city: null,
+    ...x,
+  });
   it("kod adresu, kod klienta, adres", () => {
     expect(matchOrderToPoint(o({ point_code: "k1-01" }), idx)).toEqual({ pointId: "p1", how: "point_code" });
     expect(matchOrderToPoint(o({ customer_code: "K3" }), idx)).toEqual({ pointId: "p4", how: "customer_code" });
-    expect(matchOrderToPoint(o({ customer_code: "K2", address: "Budowa Lipowa 12", city: "Kraków" }), idx)).toEqual({ pointId: "p3", how: "customer_address" });
+    expect(matchOrderToPoint(o({ customer_code: "K2", address: "Budowa Lipowa 12", city: "Kraków" }), idx)).toEqual({
+      pointId: "p3",
+      how: "customer_address",
+    });
     expect(matchOrderToPoint(o({ address: "ul. Polna 3", city: "skawina" }), idx)).toEqual({ pointId: "p4", how: "address" });
   });
   it("niejednoznaczne i nieznane", () => {
@@ -86,7 +130,12 @@ describe("matchOrderToPoint", () => {
 
 describe("API i duplikaty", () => {
   it("wiersz z JSON przez mapowanie 1:1", () => {
-    const r = normalizeOrderRow(apiOrderToRow({ external_ref: "A", customer_code: "K1", weight_kg: 10, readiness: "ready", delivery_date: "2026-11-06" }), IDENTITY_MAPPING, { date: "2026-11-05" }, 1);
+    const r = normalizeOrderRow(
+      apiOrderToRow({ external_ref: "A", customer_code: "K1", weight_kg: 10, readiness: "ready", delivery_date: "2026-11-06" }),
+      IDENTITY_MAPPING,
+      { date: "2026-11-05" },
+      1,
+    );
     expect(r.ok && r.order.weight_kg).toBe(10);
     expect(r.ok && r.order.readiness).toBe("ready");
   });
@@ -106,7 +155,10 @@ describe("suggestPoints", () => {
       P({ id: "a", customer_name: "Budimex Kraków", address_line: "Lipowa 12" }),
       P({ id: "b", customer_name: "Sklep Społem", address_line: "Długa 5" }),
     ];
-    const s = suggestPoints({ raw_customer_code: null, raw_point_code: null, raw_customer_name: "BUDIMEX S.A.", raw_address: "ul. Lipowa 12, Kraków" }, points);
+    const s = suggestPoints(
+      { raw_customer_code: null, raw_point_code: null, raw_customer_name: "BUDIMEX S.A.", raw_address: "ul. Lipowa 12, Kraków" },
+      points,
+    );
     expect(s[0].id).toBe("a");
   });
 });

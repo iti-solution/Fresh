@@ -32,7 +32,12 @@ export default async function SettingsPage() {
   const horizon = shiftDay(today, 366);
 
   const [typesRes, countsRes, excRes, keysRes, packRes] = await Promise.all([
-    supabase.from("point_types").select("id, name, is_temporary, is_active, sort").eq("tenant_id", ctx.tenantId).order("sort").order("name"),
+    supabase
+      .from("point_types")
+      .select("id, name, is_temporary, is_active, sort")
+      .eq("tenant_id", ctx.tenantId)
+      .order("sort")
+      .order("name"),
     supabase.from("delivery_points").select("point_type_id").eq("tenant_id", ctx.tenantId),
     supabase
       .from("delivery_point_exceptions")
@@ -48,7 +53,11 @@ export default async function SettingsPage() {
           .eq("tenant_id", ctx.tenantId)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    supabase.from("packaging_types").select("id, code, name, deposit_value, is_active").eq("tenant_id", ctx.tenantId).order("code"),
+    supabase
+      .from("packaging_types")
+      .select("id, code, name, deposit_value, is_active")
+      .eq("tenant_id", ctx.tenantId)
+      .order("code"),
   ]);
   for (const r of [typesRes, countsRes, excRes, keysRes, packRes]) if (r.error) throw r.error;
 
@@ -81,14 +90,18 @@ export default async function SettingsPage() {
               {(typesRes.data ?? []).map((t) => (
                 <tr key={t.id} className="border-t border-border align-top">
                   <td className="px-4 py-2.5">
-                    <span className="font-medium">{t.name}</span>{" "}
-                    {t.is_temporary && <Pill tone="warning">tymczasowy</Pill>}{" "}
+                    <span className="font-medium">{t.name}</span> {t.is_temporary && <Pill tone="warning">tymczasowy</Pill>}{" "}
                     {!t.is_active && <Pill>ukryty</Pill>}
                   </td>
                   <td className="px-4 py-2.5 tabular-nums">{count.get(t.id) ?? 0}</td>
                   <td className="px-4 py-2">
                     {editable ? (
-                      <InlineForm action={savePointType.bind(null, t.id)} submitLabel="Zapisz" variant="outline" resetOnSuccess={false}>
+                      <InlineForm
+                        action={savePointType.bind(null, t.id)}
+                        submitLabel="Zapisz"
+                        variant="outline"
+                        resetOnSuccess={false}
+                      >
                         <Input name="name" defaultValue={t.name} aria-label="Nazwa typu" className="h-8 w-44" />
                         <label className="flex h-8 items-center gap-1.5 text-xs">
                           <input type="checkbox" name="is_temporary" defaultChecked={t.is_temporary} /> tymczasowy
@@ -131,8 +144,10 @@ export default async function SettingsPage() {
               return (
                 <li key={h.date} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
                   <span>
-                    <span className="tabular-nums text-muted">{formatDayLabel(h.date)}.{h.date.slice(0, 4)}</span> · {h.name}{" "}
-                    {isWorking ? <Pill tone="success">pracujemy</Pill> : <Pill tone="danger">nie wozimy</Pill>}
+                    <span className="tabular-nums text-muted">
+                      {formatDayLabel(h.date)}.{h.date.slice(0, 4)}
+                    </span>{" "}
+                    · {h.name} {isWorking ? <Pill tone="success">pracujemy</Pill> : <Pill tone="danger">nie wozimy</Pill>}
                   </span>
                   {editable && (
                     <form action={setHolidayWorking.bind(null, h.date, !isWorking)}>
@@ -171,7 +186,9 @@ export default async function SettingsPage() {
                   <Input name="reason" placeholder="np. inwentaryzacja" className="w-56" />
                 </label>
               </InlineForm>
-              <p className="mt-2 text-xs text-muted">Zamknięcie pojedynczego adresu (remont, urlop klienta) dodasz na karcie klienta.</p>
+              <p className="mt-2 text-xs text-muted">
+                Zamknięcie pojedynczego adresu (remont, urlop klienta) dodasz na karcie klienta.
+              </p>
             </div>
           )}
         </Panel>
@@ -186,10 +203,21 @@ export default async function SettingsPage() {
             {(packRes.data ?? []).map((t) => (
               <li key={t.id} className="px-4 py-2">
                 {editable ? (
-                  <InlineForm action={savePackagingType.bind(null, t.id)} submitLabel="Zapisz" variant="outline" resetOnSuccess={false}>
+                  <InlineForm
+                    action={savePackagingType.bind(null, t.id)}
+                    submitLabel="Zapisz"
+                    variant="outline"
+                    resetOnSuccess={false}
+                  >
                     <Input name="code" defaultValue={t.code} aria-label="Kod" className="h-8 w-28 font-mono" />
                     <Input name="name" defaultValue={t.name} aria-label="Nazwa" className="h-8 w-48" />
-                    <Input name="deposit_value" defaultValue={t.deposit_value ?? ""} aria-label="Kaucja (zł)" placeholder="kaucja zł" className="h-8 w-28" />
+                    <Input
+                      name="deposit_value"
+                      defaultValue={t.deposit_value ?? ""}
+                      aria-label="Kaucja (zł)"
+                      placeholder="kaucja zł"
+                      className="h-8 w-28"
+                    />
                     <label className="flex h-8 items-center gap-1.5 text-xs">
                       <input type="checkbox" name="is_active" defaultChecked={t.is_active} /> w użyciu
                     </label>

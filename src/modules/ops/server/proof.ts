@@ -30,12 +30,24 @@ export const EVENT_LABELS: Record<string, string> = {
   problem_reported: "Zgłoszenie",
 };
 
-type Payload = { reason?: string; text?: string; comment?: string; kind?: string; gps?: { lat: number; lng: number; accuracy: number | null }; odometer_start?: number; odometer_end?: number };
+type Payload = {
+  reason?: string;
+  text?: string;
+  comment?: string;
+  kind?: string;
+  gps?: { lat: number; lng: number; accuracy: number | null };
+  odometer_start?: number;
+  odometer_end?: number;
+};
 
 /** Zgłoszenia kierowców z dnia (problemy, opóźnienia) ze zdjęciami — panel centrum operacyjnego. */
 export async function getDayReports(tenantId: string, day: string) {
   const db = await createClient();
-  const { data: routes } = await db.from("routes").select("id, name, drivers(first_name, last_name, phone)").eq("tenant_id", tenantId).eq("route_date", day);
+  const { data: routes } = await db
+    .from("routes")
+    .select("id, name, drivers(first_name, last_name, phone)")
+    .eq("tenant_id", tenantId)
+    .eq("route_date", day);
   const ids = (routes ?? []).map((r) => r.id);
   if (!ids.length) return [];
   const [{ data: events }, { data: files }] = await Promise.all([
@@ -47,7 +59,12 @@ export async function getDayReports(tenantId: string, day: string) {
       .in("type", ["problem_reported", "stop_complaint", "return_recorded"])
       .order("occurred_at", { ascending: false })
       .limit(100),
-    db.from("attachments").select("id, event_id, stop_id, kind, storage_path").eq("tenant_id", tenantId).in("route_id", ids).limit(500),
+    db
+      .from("attachments")
+      .select("id, event_id, stop_id, kind, storage_path")
+      .eq("tenant_id", tenantId)
+      .in("route_id", ids)
+      .limit(500),
   ]);
   const urls = await signed((files ?? []).filter((f) => f.kind === "photo").map((f) => f.storage_path));
   const routeById = new Map((routes ?? []).map((r) => [r.id, r]));
@@ -66,7 +83,11 @@ export async function getDayReports(tenantId: string, day: string) {
       stopId: e.stop_id,
       customer: e.route_stops?.delivery_points?.customers?.name ?? null,
       photos: (files ?? [])
-        .filter((f) => f.kind === "photo" && (f.event_id === e.id || (e.type !== "problem_reported" && f.stop_id && f.stop_id === e.stop_id)))
+        .filter(
+          (f) =>
+            f.kind === "photo" &&
+            (f.event_id === e.id || (e.type !== "problem_reported" && f.stop_id && f.stop_id === e.stop_id)),
+        )
         .map((f) => urls.get(f.storage_path))
         .filter((u): u is string => Boolean(u)),
     };
@@ -89,17 +110,35 @@ export async function getStopProof(tenantId: string, stopId: string) {
     .maybeSingle();
   if (!s) return null;
   const [{ data: events }, { data: files }, { data: pack }, { data: cash }] = await Promise.all([
-    db.from("delivery_events").select("id, type, payload, occurred_at, received_at").eq("tenant_id", tenantId).eq("stop_id", stopId).order("occurred_at"),
+    db
+      .from("delivery_events")
+      .select("id, type, payload, occurred_at, received_at")
+      .eq("tenant_id", tenantId)
+      .eq("stop_id", stopId)
+      .order("occurred_at"),
     db.from("attachments").select("id, kind, storage_path, created_at").eq("tenant_id", tenantId).eq("stop_id", stopId),
-    db.from("packaging_movements").select("qty, reason, packaging_types(name)").eq("tenant_id", tenantId).eq("stop_id", stopId).eq("party_type", "customer"),
-    db.from("cash_movements").select("amount").eq("tenant_id", tenantId).eq("stop_id", stopId).eq("party_type", "driver").eq("reason", "cod_collected"),
+    db
+      .from("packaging_movements")
+      .select("qty, reason, packaging_types(name)")
+      .eq("tenant_id", tenantId)
+      .eq("stop_id", stopId)
+      .eq("party_type", "customer"),
+    db
+      .from("cash_movements")
+      .select("amount")
+      .eq("tenant_id", tenantId)
+      .eq("stop_id", stopId)
+      .eq("party_type", "driver")
+      .eq("reason", "cod_collected"),
   ]);
   const urls = await signed((files ?? []).map((f) => f.storage_path));
   return {
     stop: s,
     events: (events ?? []).map((e) => ({ ...e, payload: (e.payload ?? {}) as Payload, label: EVENT_LABELS[e.type] ?? e.type })),
     photos: (files ?? []).filter((f) => f.kind === "photo").map((f) => ({ id: f.id, url: urls.get(f.storage_path) ?? null })),
-    signature: (files ?? []).filter((f) => f.kind === "signature").map((f) => ({ id: f.id, url: urls.get(f.storage_path) ?? null }))[0] ?? null,
+    signature:
+      (files ?? []).filter((f) => f.kind === "signature").map((f) => ({ id: f.id, url: urls.get(f.storage_path) ?? null }))[0] ??
+      null,
     packaging: pack ?? [],
     cash: cash ?? [],
   };

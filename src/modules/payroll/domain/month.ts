@@ -1,5 +1,18 @@
 // Pomocnicze dla ekranów rozliczeń (czyste funkcje).
-const MONTHS = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec", "sierpień", "wrzesień", "październik", "listopad", "grudzień"];
+const MONTHS = [
+  "styczeń",
+  "luty",
+  "marzec",
+  "kwiecień",
+  "maj",
+  "czerwiec",
+  "lipiec",
+  "sierpień",
+  "wrzesień",
+  "październik",
+  "listopad",
+  "grudzień",
+];
 
 export const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 

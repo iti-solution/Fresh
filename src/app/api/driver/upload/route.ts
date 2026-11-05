@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
   if (ev.routes?.driver_id !== c.driverId) return json(403, { error: "not_your_route" });
 
   const path = `${c.tenantId}/${ev.route_id}/${fileId}.${ext}`;
-  const { error: upErr } = await c.admin.storage.from("delivery-photos").upload(path, file, { contentType: file.type, upsert: true });
+  const { error: upErr } = await c.admin.storage
+    .from("delivery-photos")
+    .upload(path, file, { contentType: file.type, upsert: true });
   if (upErr) return json(502, { error: "storage_failed" });
   const { error } = await c.admin.from("attachments").upsert(
     {

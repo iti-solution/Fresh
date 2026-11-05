@@ -40,27 +40,67 @@ export type CustomerFieldKey =
   | "active_to";
 
 export const CUSTOMER_FIELDS: ImportField<CustomerFieldKey>[] = [
-  { key: "customer_code", label: "Kod klienta", synonyms: ["kod klienta", "kod kontrahenta", "symbol", "symbol kontrahenta", "id klienta"] },
-  { key: "customer_name", label: "Nazwa klienta", required: true, synonyms: ["nazwa klienta", "nazwa kontrahenta", "kontrahent", "klient", "nazwa", "firma"] },
+  {
+    key: "customer_code",
+    label: "Kod klienta",
+    synonyms: ["kod klienta", "kod kontrahenta", "symbol", "symbol kontrahenta", "id klienta"],
+  },
+  {
+    key: "customer_name",
+    label: "Nazwa klienta",
+    required: true,
+    synonyms: ["nazwa klienta", "nazwa kontrahenta", "kontrahent", "klient", "nazwa", "firma"],
+  },
   { key: "nip", label: "NIP", synonyms: ["nip", "vat id"] },
   { key: "category", label: "Kategoria klienta", synonyms: ["kategoria", "grupa", "segment", "branza"] },
   { key: "sales_rep_name", label: "Opiekun handlowy", synonyms: ["opiekun", "handlowiec", "przedstawiciel", "opiekun handlowy"] },
   { key: "sales_rep_phone", label: "Telefon opiekuna", synonyms: ["telefon opiekuna", "tel handlowca", "telefon handlowca"] },
-  { key: "point_code", label: "Kod adresu dostawy", synonyms: ["kod adresu", "kod adresu dostawy", "kod oddzialu", "kod odbiorcy", "kod miejsca dostawy"] },
-  { key: "point_name", label: "Nazwa adresu", hint: "puste = „Adres główny”", synonyms: ["nazwa adresu", "nazwa oddzialu", "oddzial", "miejsce dostawy", "nazwa odbiorcy"] },
-  { key: "point_type", label: "Typ adresu", hint: "np. sklep, budowa, magazyn", synonyms: ["typ adresu", "typ", "rodzaj adresu", "typ odbiorcy"] },
+  {
+    key: "point_code",
+    label: "Kod adresu dostawy",
+    synonyms: ["kod adresu", "kod adresu dostawy", "kod oddzialu", "kod odbiorcy", "kod miejsca dostawy"],
+  },
+  {
+    key: "point_name",
+    label: "Nazwa adresu",
+    hint: "puste = „Adres główny”",
+    synonyms: ["nazwa adresu", "nazwa oddzialu", "oddzial", "miejsce dostawy", "nazwa odbiorcy"],
+  },
+  {
+    key: "point_type",
+    label: "Typ adresu",
+    hint: "np. sklep, budowa, magazyn",
+    synonyms: ["typ adresu", "typ", "rodzaj adresu", "typ odbiorcy"],
+  },
   { key: "address", label: "Ulica i numer", required: true, synonyms: ["adres dostawy", "adres", "ulica", "ulica i numer"] },
   { key: "postal_code", label: "Kod pocztowy", synonyms: ["kod pocztowy", "kod poczt", "zip"] },
   { key: "city", label: "Miejscowość", required: true, synonyms: ["miejscowosc", "miasto", "poczta"] },
-  { key: "contact_phone", label: "Telefon odbiorcy", synonyms: ["telefon", "tel", "telefon odbiorcy", "telefon kontaktowy", "kontakt"] },
+  {
+    key: "contact_phone",
+    label: "Telefon odbiorcy",
+    synonyms: ["telefon", "tel", "telefon odbiorcy", "telefon kontaktowy", "kontakt"],
+  },
   { key: "weekdays", label: "Dni dostaw", hint: "np. pn-pt, pn,śr,pt, 1-6", synonyms: ["dni dostaw", "dni", "dni dostawy"] },
-  { key: "window", label: "Okno przyjęć (jedna kolumna)", hint: "np. 6-8", synonyms: ["okno", "okno przyjec", "godziny przyjec", "godziny dostaw"] },
+  {
+    key: "window",
+    label: "Okno przyjęć (jedna kolumna)",
+    hint: "np. 6-8",
+    synonyms: ["okno", "okno przyjec", "godziny przyjec", "godziny dostaw"],
+  },
   { key: "window_start", label: "Okno od", synonyms: ["okno od", "przyjecia od", "godzina od"] },
   { key: "window_end", label: "Okno do", synonyms: ["okno do", "przyjecia do", "godzina do"] },
   { key: "window2", label: "Drugie okno", hint: "np. 12-14", synonyms: ["okno 2", "drugie okno"] },
   { key: "service_minutes", label: "Czas rozładunku [min]", synonyms: ["czas rozladunku", "rozladunek", "czas obslugi"] },
-  { key: "site_manager_name", label: "Osoba na miejscu", synonyms: ["osoba na miejscu", "kierownik budowy", "osoba kontaktowa", "przyjmujacy"] },
-  { key: "site_manager_phone", label: "Telefon osoby na miejscu", synonyms: ["telefon kierownika", "telefon osoby kontaktowej", "tel kierownika"] },
+  {
+    key: "site_manager_name",
+    label: "Osoba na miejscu",
+    synonyms: ["osoba na miejscu", "kierownik budowy", "osoba kontaktowa", "przyjmujacy"],
+  },
+  {
+    key: "site_manager_phone",
+    label: "Telefon osoby na miejscu",
+    synonyms: ["telefon kierownika", "telefon osoby kontaktowej", "tel kierownika"],
+  },
   { key: "call_instructions", label: "Gdzie dzwonić", synonyms: ["gdzie dzwonic", "dzwonic", "uwagi telefon"] },
   { key: "access_instructions", label: "Jak wjechać", synonyms: ["wjazd", "jak wjechac", "dojazd"] },
   { key: "driver_instructions", label: "Uwagi dla kierowcy", synonyms: ["uwagi dla kierowcy", "uwagi", "instrukcje"] },
@@ -71,13 +111,36 @@ export const CUSTOMER_FIELDS: ImportField<CustomerFieldKey>[] = [
 export type CustomerMapping = Partial<Record<CustomerFieldKey, string>>;
 
 const DAY_WORDS: Record<string, number> = {
-  pn: 1, pon: 1, poniedzialek: 1, mon: 1,
-  wt: 2, wto: 2, wtorek: 2, tue: 2,
-  sr: 3, sro: 3, sroda: 3, wed: 3,
-  cz: 4, czw: 4, czwartek: 4, thu: 4,
-  pt: 5, pia: 5, piatek: 5, fri: 5,
-  sb: 6, so: 6, sob: 6, sobota: 6, sat: 6,
-  nd: 7, nie: 7, niedz: 7, niedziela: 7, sun: 7,
+  pn: 1,
+  pon: 1,
+  poniedzialek: 1,
+  mon: 1,
+  wt: 2,
+  wto: 2,
+  wtorek: 2,
+  tue: 2,
+  sr: 3,
+  sro: 3,
+  sroda: 3,
+  wed: 3,
+  cz: 4,
+  czw: 4,
+  czwartek: 4,
+  thu: 4,
+  pt: 5,
+  pia: 5,
+  piatek: 5,
+  fri: 5,
+  sb: 6,
+  so: 6,
+  sob: 6,
+  sobota: 6,
+  sat: 6,
+  nd: 7,
+  nie: 7,
+  niedz: 7,
+  niedziela: 7,
+  sun: 7,
 };
 
 /** „pn-pt”, „pn,śr,pt”, „1-6”, „1,3,5”, „codziennie” → [1..7]; null gdy nie da się odczytać. */
@@ -114,9 +177,25 @@ export function resolvePointType(raw: string, types: PointTypeRef[]): PointTypeR
   const exact = types.find((t) => fold(t.name) === f || fold(t.code) === f);
   if (exact) return exact;
   const ALIASES: Record<string, string> = {
-    restauracja: "food_service", bar: "food_service", kuchnia: "food_service", hotel: "food_service", gastronomia: "food_service", lokal: "food_service",
-    sklep: "shop", market: "shop", hurtownia: "warehouse", magazyn: "warehouse", budowa: "construction", "plac budowy": "construction",
-    zaklad: "plant", fabryka: "plant", produkcja: "plant", biuro: "hq", siedziba: "hq", dom: "private", prywatny: "private",
+    restauracja: "food_service",
+    bar: "food_service",
+    kuchnia: "food_service",
+    hotel: "food_service",
+    gastronomia: "food_service",
+    lokal: "food_service",
+    sklep: "shop",
+    market: "shop",
+    hurtownia: "warehouse",
+    magazyn: "warehouse",
+    budowa: "construction",
+    "plac budowy": "construction",
+    zaklad: "plant",
+    fabryka: "plant",
+    produkcja: "plant",
+    biuro: "hq",
+    siedziba: "hq",
+    dom: "private",
+    prywatny: "private",
   };
   const code = ALIASES[f];
   if (code) return types.find((t) => t.code === code) ?? null;
@@ -155,7 +234,8 @@ export type NormalizedCustomerRow = {
   warnings: string[];
 };
 
-export type CustomerRowResult = { ok: true; row: NormalizedCustomerRow } | { ok: false; line: number; ref: string; errors: string[] };
+export type CustomerRowResult =
+  { ok: true; row: NormalizedCustomerRow } | { ok: false; line: number; ref: string; errors: string[] };
 
 const t = (v: string, max: number) => (v ? v.slice(0, max) : null);
 

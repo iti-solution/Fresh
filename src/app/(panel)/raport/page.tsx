@@ -435,7 +435,10 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
               />
               <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-center sm:grid-cols-4">
                 <MiniStat label="km w okresie" value={cur.km.toLocaleString("pl-PL")} />
-                <MiniStat label="min obsługi punktu" value={cur.serviceCount ? String(Math.round(cur.serviceMinutes / cur.serviceCount)) : "—"} />
+                <MiniStat
+                  label="min obsługi punktu"
+                  value={cur.serviceCount ? String(Math.round(cur.serviceMinutes / cur.serviceCount)) : "—"}
+                />
                 <MiniStat
                   label="km na dostawę"
                   value={cur.finished ? (cur.km / cur.finished).toLocaleString("pl-PL", { maximumFractionDigits: 1 }) : "—"}
@@ -616,7 +619,14 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                   </p>
                   {overdueRows[0] && (
                     <p className="text-xs text-muted">
-                      najwięcej: <Link href={`/opakowania?widok=historia&klient=${overdueRows[0].customerId}`} className="font-medium text-foreground hover:underline">{overdueRows[0].customer}</Link> ({overdueRows[0].overdueTotal} szt.)
+                      najwięcej:{" "}
+                      <Link
+                        href={`/opakowania?widok=historia&klient=${overdueRows[0].customerId}`}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {overdueRows[0].customer}
+                      </Link>{" "}
+                      ({overdueRows[0].overdueTotal} szt.)
                     </p>
                   )}
                 </div>

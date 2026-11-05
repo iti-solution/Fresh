@@ -11,9 +11,23 @@ export type LoadOrder = {
   notes: string | null;
   lines: LoadOrderLine[];
 };
-export type LoadStop = { sequence: number; customer: string; place: string; address: string; window: string; orders: LoadOrder[] };
+export type LoadStop = {
+  sequence: number;
+  customer: string;
+  place: string;
+  address: string;
+  window: string;
+  orders: LoadOrder[];
+};
 
-export type LoadingRow = LoadStop & { loadNo: number; pallets: number; crates: number; weightKg: number; codGrosze: number; notReady: number };
+export type LoadingRow = LoadStop & {
+  loadNo: number;
+  pallets: number;
+  crates: number;
+  weightKg: number;
+  codGrosze: number;
+  notReady: number;
+};
 
 export function buildLoadingList(stops: LoadStop[]) {
   const sorted = [...stops].sort((a, b) => b.sequence - a.sequence);

@@ -13,7 +13,8 @@ import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Potwierdzenie dostawy" };
 
-const time = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }) : "—");
+const time = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleTimeString("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }) : "—";
 
 export default async function StopProofPage({ params }: PageProps<"/centrum/punkt/[stopId]">) {
   const ctx = await requireAccess("/centrum");
@@ -37,10 +38,19 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
         title={`${p?.customers?.name ?? "—"} — ${p?.name ?? ""}`}
         description={
           <>
-            {p?.address_line}, {p?.postal_code} {p?.city} · <span className="capitalize">{r ? formatDayLabel(r.route_date) : ""}</span> · {r?.name} · punkt {s.sequence}
+            {p?.address_line}, {p?.postal_code} {p?.city} ·{" "}
+            <span className="capitalize">{r ? formatDayLabel(r.route_date) : ""}</span> · {r?.name} · punkt {s.sequence}
           </>
         }
-        actions={<Pill tone={s.status === "delivered" ? "success" : ["refused", "absent", "complaint"].includes(s.status) ? "danger" : "warning"}>{STOP_STATUS_LABELS[s.status as StopStatus] ?? s.status}</Pill>}
+        actions={
+          <Pill
+            tone={
+              s.status === "delivered" ? "success" : ["refused", "absent", "complaint"].includes(s.status) ? "danger" : "warning"
+            }
+          >
+            {STOP_STATUS_LABELS[s.status as StopStatus] ?? s.status}
+          </Pill>
+        }
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
@@ -62,7 +72,9 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
                       </span>
                     )}
                     {new Date(e.received_at).getTime() - new Date(e.occurred_at).getTime() > 5 * 60_000 && (
-                      <span className="block text-xs text-subtle">wysłane z opóźnieniem (brak zasięgu) o {time(e.received_at)}</span>
+                      <span className="block text-xs text-subtle">
+                        wysłane z opóźnieniem (brak zasięgu) o {time(e.received_at)}
+                      </span>
                     )}
                   </span>
                 </li>
@@ -76,7 +88,8 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
                   <DocRef>{o.external_ref ?? "—"}</DocRef>
                   <span className="text-muted tabular-nums">
                     {o.pallets ? `${Number(o.pallets)} pal · ` : ""}
-                    {o.crates} skrz · {Math.round(Number(o.weight_kg))} kg{o.order_value ? ` · ${formatPln(toGrosze(o.order_value))}` : ""}
+                    {o.crates} skrz · {Math.round(Number(o.weight_kg))} kg
+                    {o.order_value ? ` · ${formatPln(toGrosze(o.order_value))}` : ""}
                   </span>
                 </li>
               ))}
@@ -84,7 +97,8 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
             <dl className="mt-3 grid grid-cols-[160px_1fr] gap-y-1 border-t border-border pt-3 text-sm">
               <dt className="text-muted">Pobranie / zebrano</dt>
               <dd>
-                {formatPln(orders.reduce((a, o) => a + toGrosze(o.cod_amount), 0))} / {formatPln(cash.reduce((a, c) => a + toGrosze(c.amount), 0))}
+                {formatPln(orders.reduce((a, o) => a + toGrosze(o.cod_amount), 0))} /{" "}
+                {formatPln(cash.reduce((a, c) => a + toGrosze(c.amount), 0))}
               </dd>
               {packaging.map((m, i) => (
                 <div key={i} className="contents">
@@ -96,7 +110,8 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
               ))}
               <dt className="text-muted">Kierowca</dt>
               <dd>
-                {r?.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—"} {r?.vehicles && <Plate>{r.vehicles.registration}</Plate>}
+                {r?.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—"}{" "}
+                {r?.vehicles && <Plate>{r.vehicles.registration}</Plate>}
               </dd>
               <dt className="text-muted">Na miejscu / koniec</dt>
               <dd className="tabular-nums">
@@ -118,7 +133,10 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
                       <img src={f.url} alt="Zdjęcie z dostawy" className="aspect-square w-full rounded-lg object-cover" />
                     </a>
                   ) : (
-                    <span key={f.id} className="flex aspect-square items-center justify-center rounded-lg bg-surface-2 text-xs text-muted">
+                    <span
+                      key={f.id}
+                      className="flex aspect-square items-center justify-center rounded-lg bg-surface-2 text-xs text-muted"
+                    >
                       zdjęcie (brak klucza serwera)
                     </span>
                   ),
@@ -131,7 +149,9 @@ export default async function StopProofPage({ params }: PageProps<"/centrum/punk
               // eslint-disable-next-line @next/next/no-img-element -- podpisany link z prywatnego magazynu
               <img src={signature.url} alt="Podpis odbiorcy" className="max-h-40 rounded-lg border border-border bg-white" />
             ) : (
-              <p className="text-sm text-muted">{signature ? "Podpis zapisany (podgląd wymaga klucza serwera)." : "Brak podpisu."}</p>
+              <p className="text-sm text-muted">
+                {signature ? "Podpis zapisany (podgląd wymaga klucza serwera)." : "Brak podpisu."}
+              </p>
             )}
           </Panel>
           {gps && (

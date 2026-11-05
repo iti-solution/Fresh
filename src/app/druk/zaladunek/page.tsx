@@ -47,7 +47,9 @@ export default async function LoadingListPage({ searchParams }: PageProps<"/druk
     .map((r) => {
       const stops: LoadStop[] = (r.route_stops ?? []).map((s) => {
         const p = s.delivery_points;
-        const wins = (p?.delivery_point_windows ?? []).filter((w) => w.weekday === weekday).sort((a, b) => a.opens_at.localeCompare(b.opens_at));
+        const wins = (p?.delivery_point_windows ?? [])
+          .filter((w) => w.weekday === weekday)
+          .sort((a, b) => a.opens_at.localeCompare(b.opens_at));
         return {
           sequence: s.sequence,
           customer: p?.customers?.name ?? "—",
@@ -115,7 +117,8 @@ export default async function LoadingListPage({ searchParams }: PageProps<"/druk
           <p className="mb-2">
             Kolejność <strong>odwrotna do dostaw</strong>: ładuj od pozycji 1 (pierwsza na pace = ostatnia u klienta). Razem:{" "}
             <strong>
-              {totals.stops} adresów · {totals.orders} zamówień · {num(totals.pallets)} pal. · {totals.crates} skrz. · {num(totals.weightKg)} kg
+              {totals.stops} adresów · {totals.orders} zamówień · {num(totals.pallets)} pal. · {totals.crates} skrz. ·{" "}
+              {num(totals.weightKg)} kg
             </strong>
             {totals.codGrosze > 0 && <> · pobrania {formatPln(totals.codGrosze)}</>}
             {totals.notReady > 0 && <strong> · UWAGA: {totals.notReady} zamówień jeszcze w kompletacji</strong>}

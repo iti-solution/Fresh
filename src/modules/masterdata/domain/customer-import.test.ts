@@ -42,7 +42,19 @@ describe("normalizeCustomerRow", () => {
     active_to: "Do",
     site_manager_name: "Kierownik",
   };
-  const base = { Kod: "K1", Nazwa: "Budimex", NIP: "PL 526-025-09-95", Typ: "budowa", Adres: "Lipowa 12", "Kod poczt.": "30702", Miasto: "Kraków", Dni: "pn-pt", Okno: "7-9", Do: "31.03.2027", Kierownik: "Jan Nowak" };
+  const base = {
+    Kod: "K1",
+    Nazwa: "Budimex",
+    NIP: "PL 526-025-09-95",
+    Typ: "budowa",
+    Adres: "Lipowa 12",
+    "Kod poczt.": "30702",
+    Miasto: "Kraków",
+    Dni: "pn-pt",
+    Okno: "7-9",
+    Do: "31.03.2027",
+    Kierownik: "Jan Nowak",
+  };
   it("pełny wiersz budowy", () => {
     const r = normalizeCustomerRow(base, mapping, types, 2);
     expect(r.ok).toBe(true);
@@ -70,6 +82,8 @@ describe("normalizeCustomerRow", () => {
   it("klucze grupowania", () => {
     expect(customerKey({ external_code: " k1 ", name: "x" })).toBe("code:K1");
     expect(customerKey({ external_code: null, name: "Społem  Kraków" })).toBe("name:spolem krakow");
-    expect(pointKey({ external_code: null, address_line: "ul. Lipowa 12", city: "Kraków" })).toBe(pointKey({ external_code: null, address_line: "Lipowa 12", city: "krakow" }));
+    expect(pointKey({ external_code: null, address_line: "ul. Lipowa 12", city: "Kraków" })).toBe(
+      pointKey({ external_code: null, address_line: "Lipowa 12", city: "krakow" }),
+    );
   });
 });

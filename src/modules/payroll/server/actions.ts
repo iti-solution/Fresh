@@ -27,15 +27,24 @@ export async function saveRule(_prev: FormState, fd: FormData): Promise<FormStat
     const { data } = await db.from("drivers").select("id").eq("id", v.driver_id).eq("tenant_id", ctx.tenantId).maybeSingle();
     if (!data) return { ok: false, message: "Nie znaleziono kierowcy." };
   }
-  const { data: rules } = await db.from("driver_pay_rules").select("id, driver_id, valid_from, valid_to, components").eq("tenant_id", ctx.tenantId);
+  const { data: rules } = await db
+    .from("driver_pay_rules")
+    .select("id, driver_id, valid_from, valid_to, components")
+    .eq("tenant_id", ctx.tenantId);
   const rows = (rules ?? []).map((r) => ({ ...r, components: readComponents(r.components) }));
   if (rows.some((r) => r.driver_id === v.driver_id && r.valid_from === v.valid_from))
-    return { ok: false, fieldErrors: { valid_from: ["Wersja od tego dnia już jest — wybierz inną datę"] }, message: "Popraw datę." };
+    return {
+      ok: false,
+      fieldErrors: { valid_from: ["Wersja od tego dnia już jest — wybierz inną datę"] },
+      message: "Popraw datę.",
+    };
   for (const c of closePreviousVersion(rows, v.driver_id, v.valid_from)) {
     await db.from("driver_pay_rules").update({ valid_to: c.valid_to }).eq("id", c.id).eq("tenant_id", ctx.tenantId);
   }
   // nowa wersja kończy się przed kolejną, jeśli ta już istnieje (wstawianie wstecz)
-  const later = rows.filter((r) => r.driver_id === v.driver_id && r.valid_from > v.valid_from).sort((a, b) => a.valid_from.localeCompare(b.valid_from))[0];
+  const later = rows
+    .filter((r) => r.driver_id === v.driver_id && r.valid_from > v.valid_from)
+    .sort((a, b) => a.valid_from.localeCompare(b.valid_from))[0];
   let validTo: string | null = null;
   if (later) {
     const d = new Date(`${later.valid_from}T12:00:00Z`);
@@ -51,13 +60,17 @@ export async function saveRule(_prev: FormState, fd: FormData): Promise<FormStat
   });
   if (error) return { ok: false, message: "Nie udało się zapisać reguły." };
   revalidatePath("/rozliczenia");
-  return { ok: true, message: `Zapisano stawki „${v.components.name}” od ${v.valid_from}. Przelicz otwarte miesiące, żeby je uwzględnić.` };
+  return {
+    ok: true,
+    message: `Zapisano stawki „${v.components.name}” od ${v.valid_from}. Przelicz otwarte miesiące, żeby je uwzględnić.`,
+  };
 }
 
 export async function recomputeMonth(month: string): Promise<void> {
   const { ctx, ok, db } = await editor();
   if (!ok || !MONTH_RE.test(month)) return;
-  for (const driverId of await driversWithRoutes(db, ctx.tenantId, month)) await recomputeSettlement(db, ctx.tenantId, driverId, month);
+  for (const driverId of await driversWithRoutes(db, ctx.tenantId, month))
+    await recomputeSettlement(db, ctx.tenantId, driverId, month);
   revalidatePath("/rozliczenia");
 }
 
@@ -74,10 +87,20 @@ export async function addManualLine(settlementId: string, _prev: FormState, fd: 
   if (!ok) return NO_RIGHTS;
   const note = String(fd.get("note") ?? "").trim();
   const date = String(fd.get("date") ?? "");
-  const amount = Number(String(fd.get("amount") ?? "").replace(/\s/g, "").replace(",", "."));
+  const amount = Number(
+    String(fd.get("amount") ?? "")
+      .replace(/\s/g, "")
+      .replace(",", "."),
+  );
   if (note.length < 3) return { ok: false, fieldErrors: { note: ["Opisz, za co"] }, message: "Podaj opis dodatku." };
-  if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 100000) return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0, np. 150 albo -50"] }, message: "Popraw kwotę." };
-  const { data: s } = await db.from("driver_settlements").select("id, status, period_start, period_end").eq("id", settlementId).eq("tenant_id", ctx.tenantId).maybeSingle();
+  if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 100000)
+    return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0, np. 150 albo -50"] }, message: "Popraw kwotę." };
+  const { data: s } = await db
+    .from("driver_settlements")
+    .select("id, status, period_start, period_end")
+    .eq("id", settlementId)
+    .eq("tenant_id", ctx.tenantId)
+    .maybeSingle();
   if (!s) return { ok: false, message: "Nie znaleziono rozliczenia." };
   if (s.status !== "draft") return { ok: false, message: "Rozliczenie jest zatwierdzone." };
   const day = /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= s.period_start && date <= s.period_end ? date : s.period_end;
@@ -116,7 +139,11 @@ export async function approveSettlement(settlementId: string, approve: boolean):
   const db = await createClient();
   await db
     .from("driver_settlements")
-    .update(approve ? { status: "approved", approved_by: ctx.userId, approved_at: new Date().toISOString() } : { status: "draft", approved_by: null, approved_at: null })
+    .update(
+      approve
+        ? { status: "approved", approved_by: ctx.userId, approved_at: new Date().toISOString() }
+        : { status: "draft", approved_by: null, approved_at: null },
+    )
     .eq("id", settlementId)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath("/rozliczenia");

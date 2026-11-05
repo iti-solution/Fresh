@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { applyEvent, derivedUuid, parseIncomingEvent, progress, replay, UUID_RE, validateEvent, type DriverEvent, type EventInput, type RouteSnapshot, type SnapshotStop } from "./offline";
+import {
+  applyEvent,
+  derivedUuid,
+  parseIncomingEvent,
+  progress,
+  replay,
+  UUID_RE,
+  validateEvent,
+  type DriverEvent,
+  type EventInput,
+  type RouteSnapshot,
+  type SnapshotStop,
+} from "./offline";
 
 const stop = (id: string, seq: number, o: Partial<SnapshotStop> = {}): SnapshotStop => ({
   id,
@@ -56,7 +68,12 @@ const snap: RouteSnapshot = {
 
 let n = 0;
 const ev = (e: EventInput): DriverEvent =>
-  ({ client_event_id: `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`, route_id: R, occurred_at: `2026-11-06T05:${String(10 + n).padStart(2, "0")}:00Z`, ...e }) as DriverEvent;
+  ({
+    client_event_id: `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`,
+    route_id: R,
+    occurred_at: `2026-11-06T05:${String(10 + n).padStart(2, "0")}:00Z`,
+    ...e,
+  }) as DriverEvent;
 
 describe("zdarzenia offline", () => {
   it("pełna zmiana: start, statusy, punkt, koniec", () => {
@@ -82,7 +99,13 @@ describe("zdarzenia offline", () => {
     expect(s.status).toBe("completed");
     expect(s.vehicle).toBe("KR 1");
     expect(s.odometerEnd).toBe(1120);
-    expect(s.stops[0]).toMatchObject({ status: "delivered", cashGrosze: 12000, photos: 1, signed: true, packaging: { [T]: { out: 3, back: 2 } } });
+    expect(s.stops[0]).toMatchObject({
+      status: "delivered",
+      cashGrosze: 12000,
+      photos: 1,
+      signed: true,
+      packaging: { [T]: { out: 3, back: 2 } },
+    });
     expect(s.stops[1].status).toBe("in_progress"); // jedyny „teraz realizuję”
     expect(progress(s)).toEqual({ finished: 1, total: 2, pct: 50 });
   });
@@ -91,9 +114,25 @@ describe("zdarzenia offline", () => {
     const started = applyEvent(snap, ev({ type: "route_started", odometer_start: 1000, vehicle_id: null }));
     expect(validateEvent(started, ev({ type: "route_finished", odometer_end: 900 }))).toMatch(/mniejszy/);
     expect(
-      validateEvent(started, ev({ type: "stop_saved", stop_id: S1, outcome: "complaint", reason: "", comment: "", return_text: "", packaging: [], cash_grosze: null, photos: 0, signature: false })),
+      validateEvent(
+        started,
+        ev({
+          type: "stop_saved",
+          stop_id: S1,
+          outcome: "complaint",
+          reason: "",
+          comment: "",
+          return_text: "",
+          packaging: [],
+          cash_grosze: null,
+          photos: 0,
+          signature: false,
+        }),
+      ),
     ).toMatch(/przyczynę/);
-    expect(validateEvent(started, ev({ type: "stop_quick", stop_id: "55555555-5555-4555-8555-555555555555", status: "done" }))).toMatch(/przeniesiony/);
+    expect(
+      validateEvent(started, ev({ type: "stop_quick", stop_id: "55555555-5555-4555-8555-555555555555", status: "done" })),
+    ).toMatch(/przeniesiony/);
     // niepoprawne zdarzenie nie zmienia stanu
     expect(applyEvent(started, ev({ type: "route_finished", odometer_end: 1 }))).toBe(started);
   });
@@ -101,11 +140,30 @@ describe("zdarzenia offline", () => {
 
 describe("serwer nie ufa telefonowi", () => {
   it("parsuje i odrzuca", () => {
-    const ok = parseIncomingEvent({ type: "stop_quick", client_event_id: S1, route_id: R, stop_id: S2, status: "done", occurred_at: "2026-11-06T05:00:00Z", location: { lat: 50, lng: 19.9, accuracy: 12 } });
+    const ok = parseIncomingEvent({
+      type: "stop_quick",
+      client_event_id: S1,
+      route_id: R,
+      stop_id: S2,
+      status: "done",
+      occurred_at: "2026-11-06T05:00:00Z",
+      location: { lat: 50, lng: 19.9, accuracy: 12 },
+    });
     expect(typeof ok).toBe("object");
     expect(parseIncomingEvent({ type: "stop_quick", client_event_id: "x", route_id: R })).toBe("brak client_event_id");
-    expect(parseIncomingEvent({ type: "hack", client_event_id: S1, route_id: R, occurred_at: "2026-11-06T05:00:00Z" })).toBe("nieznany typ zdarzenia");
-    const saved = parseIncomingEvent({ type: "stop_saved", client_event_id: S1, route_id: R, stop_id: S2, outcome: "delivered", occurred_at: "2026-11-06T05:00:00Z", packaging: [{ typeId: T, out: 2, back: 1 }, { typeId: "zly" }], photos: 99 });
+    expect(parseIncomingEvent({ type: "hack", client_event_id: S1, route_id: R, occurred_at: "2026-11-06T05:00:00Z" })).toBe(
+      "nieznany typ zdarzenia",
+    );
+    const saved = parseIncomingEvent({
+      type: "stop_saved",
+      client_event_id: S1,
+      route_id: R,
+      stop_id: S2,
+      outcome: "delivered",
+      occurred_at: "2026-11-06T05:00:00Z",
+      packaging: [{ typeId: T, out: 2, back: 1 }, { typeId: "zly" }],
+      photos: 99,
+    });
     expect(typeof saved === "object" && saved.type === "stop_saved" && saved.packaging).toHaveLength(1);
     expect(typeof saved === "object" && saved.type === "stop_saved" && saved.photos).toBe(20);
   });

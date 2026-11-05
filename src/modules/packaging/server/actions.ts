@@ -31,7 +31,8 @@ export async function closeRoute(routeId: string, _prev: FormState, fd: FormData
   for (const t of types ?? []) {
     const raw = String(fd.get(`recv_${t.id}`) ?? "").trim();
     const n = raw === "" ? 0 : Number(raw);
-    if (!Number.isInteger(n) || n < 0 || n > 100000) return { ok: false, fieldErrors: { [`recv_${t.id}`]: ["Liczba całkowita"] }, message: "Popraw liczby opakowań." };
+    if (!Number.isInteger(n) || n < 0 || n > 100000)
+      return { ok: false, fieldErrors: { [`recv_${t.id}`]: ["Liczba całkowita"] }, message: "Popraw liczby opakowań." };
     packaging.push({ type_id: t.id, received: n });
   }
   const cashRaw = String(fd.get("cash_received") ?? "").trim();
@@ -39,7 +40,8 @@ export async function closeRoute(routeId: string, _prev: FormState, fd: FormData
   if (cash === null) return { ok: false, fieldErrors: { cash_received: ["Kwota w zł, np. 640,50"] }, message: "Popraw kwotę." };
   const odoRaw = String(fd.get("odometer_end") ?? "").trim();
   const odo = odoRaw === "" ? null : Number(odoRaw);
-  if (odo !== null && (!Number.isInteger(odo) || odo < 0)) return { ok: false, fieldErrors: { odometer_end: ["Same cyfry"] }, message: "Popraw licznik." };
+  if (odo !== null && (!Number.isInteger(odo) || odo < 0))
+    return { ok: false, fieldErrors: { odometer_end: ["Same cyfry"] }, message: "Popraw licznik." };
   const note = String(fd.get("note") ?? "").slice(0, 500);
 
   const { data, error } = await db.rpc("close_route", {
@@ -75,7 +77,8 @@ export async function addPackagingCorrection(_prev: FormState, fd: FormData): Pr
   const note = String(fd.get("note") ?? "").trim();
   if (!["customer", "driver"].includes(partyType) || !partyId) return { ok: false, message: "Wybierz klienta albo kierowcę." };
   if (!CORRECTION_REASONS.includes(reason)) return { ok: false, message: "Wybierz powód." };
-  if (!Number.isInteger(qty) || qty === 0 || Math.abs(qty) > 100000) return { ok: false, fieldErrors: { qty: ["Liczba ≠ 0, np. -3"] }, message: "Popraw ilość." };
+  if (!Number.isInteger(qty) || qty === 0 || Math.abs(qty) > 100000)
+    return { ok: false, fieldErrors: { qty: ["Liczba ≠ 0, np. -3"] }, message: "Popraw ilość." };
   if (note.length < 3) return { ok: false, fieldErrors: { note: ["Opisz korektę"] }, message: "Podaj opis." };
   const db = await createClient();
   const table = partyType === "customer" ? "customers" : "drivers";
@@ -100,10 +103,13 @@ export async function addCashCorrection(_prev: FormState, fd: FormData): Promise
   const ctx = await requireTenantContext();
   if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
   const driverId = String(fd.get("driver_id") ?? "");
-  const raw = String(fd.get("amount") ?? "").replace(/\s/g, "").replace(",", ".");
+  const raw = String(fd.get("amount") ?? "")
+    .replace(/\s/g, "")
+    .replace(",", ".");
   const amount = Number(raw);
   const note = String(fd.get("note") ?? "").trim();
-  if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1_000_000) return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0"] }, message: "Popraw kwotę." };
+  if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1_000_000)
+    return { ok: false, fieldErrors: { amount: ["Kwota ≠ 0"] }, message: "Popraw kwotę." };
   if (note.length < 3) return { ok: false, fieldErrors: { note: ["Opisz korektę"] }, message: "Podaj opis." };
   const db = await createClient();
   const { data: d } = await db.from("drivers").select("id").eq("id", driverId).eq("tenant_id", ctx.tenantId).maybeSingle();

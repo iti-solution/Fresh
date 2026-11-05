@@ -65,7 +65,16 @@ export type DriverStop = {
   unloading: string | null;
   other: string | null;
   notes: string[];
-  orders: { id: string; ref: string | null; crates: number; pallets: number; weight_kg: number; cod: number | null; notes_sales: string | null; notes_logistics: string | null }[];
+  orders: {
+    id: string;
+    ref: string | null;
+    crates: number;
+    pallets: number;
+    weight_kg: number;
+    cod: number | null;
+    notes_sales: string | null;
+    notes_logistics: string | null;
+  }[];
   completedAt: string | null;
 };
 
@@ -103,16 +112,24 @@ export async function getDriverRoute(routeId: string): Promise<DriverRoute | nul
   const weekday = ((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
   const today = todayInWarsaw();
   const fmtTime = (iso: string | null) =>
-    iso ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)) : null;
+    iso
+      ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
+      : null;
 
   const stops: DriverStop[] = [...r.route_stops]
     .sort((a, b) => a.sequence - b.sequence)
     .map((s) => {
       const p = s.delivery_points;
-      const orders = s.route_stop_orders.map((so) => so.orders).filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
-      const wins = (p?.delivery_point_windows ?? []).filter((w) => w.weekday === weekday).sort((a, b) => a.opens_at.localeCompare(b.opens_at));
+      const orders = s.route_stop_orders
+        .map((so) => so.orders)
+        .filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
+      const wins = (p?.delivery_point_windows ?? [])
+        .filter((w) => w.weekday === weekday)
+        .sort((a, b) => a.opens_at.localeCompare(b.opens_at));
       const override = orders.find((o) => o.window_start);
-      const window = override ? `${t(override.window_start)}–${t(override.window_end)}` : wins.map((w) => `${t(w.opens_at)}–${t(w.closes_at)}`).join(", ");
+      const window = override
+        ? `${t(override.window_start)}–${t(override.window_end)}`
+        : wins.map((w) => `${t(w.opens_at)}–${t(w.closes_at)}`).join(", ");
       const windowEnd = override ? t(override.window_end) : wins.length ? t(wins[wins.length - 1].closes_at) : null;
       return {
         id: s.id,
@@ -176,7 +193,6 @@ export async function getVehiclesForDriver() {
   return (data ?? []).filter((v) => v.status === "active");
 }
 
-
 /** Migawka trasy do telefonu (M4.2): trasa + zapisane opakowania, gotówka, zdjęcia na punktach + słowniki. */
 export async function getRouteSnapshot(
   routeId: string,
@@ -191,8 +207,17 @@ export async function getRouteSnapshot(
   const [types, vehicles, pack, cash, att] = await Promise.all([
     getPackagingTypes(),
     getVehiclesForDriver(),
-    supabase.from("packaging_movements").select("stop_id, packaging_type_id, qty, reason").eq("party_type", "driver").in("stop_id", ids),
-    supabase.from("cash_movements").select("stop_id, amount").eq("party_type", "driver").eq("reason", "cod_collected").in("stop_id", ids),
+    supabase
+      .from("packaging_movements")
+      .select("stop_id, packaging_type_id, qty, reason")
+      .eq("party_type", "driver")
+      .in("stop_id", ids),
+    supabase
+      .from("cash_movements")
+      .select("stop_id, amount")
+      .eq("party_type", "driver")
+      .eq("reason", "cod_collected")
+      .in("stop_id", ids),
     supabase.from("attachments").select("stop_id, kind").in("stop_id", ids),
   ]);
   const stops: SnapshotStop[] = route.stops.map((s) => {

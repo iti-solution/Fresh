@@ -42,7 +42,9 @@ export default async function PortalLayout({ children }: { children: React.React
         </div>
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">{children}</main>
-      <footer className="mx-auto w-full max-w-2xl px-4 pb-6 text-xs text-subtle">{ctx.email} · {BRAND.full}</footer>
+      <footer className="mx-auto w-full max-w-2xl px-4 pb-6 text-xs text-subtle">
+        {ctx.email} · {BRAND.full}
+      </footer>
     </div>
   );
 }

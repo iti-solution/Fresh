@@ -20,9 +20,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <p className="text-[34px] font-semibold leading-[1.15] tracking-[-0.02em] text-white">
             Każda dostawa na czas, w oknie przyjęć klienta.
           </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-ink-muted">
-            {BRAND.tagline}
-          </p>
+          <p className="mt-4 text-[15px] leading-relaxed text-ink-muted">{BRAND.tagline}</p>
           <ol className="relative mt-10 space-y-4 border-l-2 border-white/10 pl-6">
             {STOPS.map((s) => (
               <li key={s.n} className="relative flex items-baseline gap-4 text-sm">

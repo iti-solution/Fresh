@@ -10,7 +10,10 @@ export async function GET(_req: NextRequest, { params }: RouteContext<"/api/driv
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "bad_id" }, { status: 400 });
   const c = await getDriverCtx();
   if (!c) return NextResponse.json({ error: "not_driver" }, { status: 401 });
-  const [pay, balances] = await Promise.all([getDriverPayPreview(c, id).catch(() => null), customerBalancesForRoute(c, id).catch(() => null)]);
+  const [pay, balances] = await Promise.all([
+    getDriverPayPreview(c, id).catch(() => null),
+    customerBalancesForRoute(c, id).catch(() => null),
+  ]);
   const snap = await getRouteSnapshot(id, pay, balances);
   if (!snap) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json(snap, { headers: { "Cache-Control": "no-store" } });

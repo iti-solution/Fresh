@@ -57,7 +57,10 @@ export default async function PointPage({ params }: PageProps<"/kartoteki/klienc
           ‹ {customer.name}
         </Link>
       </nav>
-      <PageHeader title={isNew ? "Nowy adres dostawy" : `Adres dostawy: ${String(point?.name ?? "")}`} description={customer.name} />
+      <PageHeader
+        title={isNew ? "Nowy adres dostawy" : `Adres dostawy: ${String(point?.name ?? "")}`}
+        description={customer.name}
+      />
       <FormRenderer
         action={savePoint.bind(null, id, isNew ? null : pointId)}
         sections={pointSections(point, windows, types ?? [])}

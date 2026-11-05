@@ -21,7 +21,12 @@ import { progress, type RouteSnapshot, type SnapshotStop } from "../domain/offli
 import { PhotoPicker, SignaturePad } from "./media";
 import { useRoute, type NewFile, type SyncState } from "./use-route";
 
-type Screen = { name: "list" } | { name: "stop"; id: string } | { name: "problem"; stopId: string | null } | { name: "finish" } | { name: "report" };
+type Screen =
+  | { name: "list" }
+  | { name: "stop"; id: string }
+  | { name: "problem"; stopId: string | null }
+  | { name: "finish" }
+  | { name: "report" };
 
 const ON: Record<QuickStatus, string> = {
   none: "bg-surface text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.12)]",
@@ -64,7 +69,12 @@ export function RouteApp({ routeId, initial }: { routeId: string; initial: Route
     );
   }
 
-  const shown: Screen = route.status === "completed" || route.status === "closed" ? (screen.name === "list" || screen.name === "finish" ? { name: "report" } : screen) : screen;
+  const shown: Screen =
+    route.status === "completed" || route.status === "closed"
+      ? screen.name === "list" || screen.name === "finish"
+        ? { name: "report" }
+        : screen
+      : screen;
   const banners = (
     <>
       <SyncBar sync={sync} onSync={syncNow} />
@@ -113,7 +123,13 @@ function SyncBar({ sync, onSync }: { sync: SyncState; onSync: () => void }) {
     <div
       className={cn(
         "flex min-h-10 items-center gap-2 px-4 py-1.5 text-xs font-medium",
-        sync.sessionExpired ? "bg-danger text-white" : offline ? "bg-warning text-white" : sync.pending ? "bg-info-soft text-info" : "bg-success-soft text-success",
+        sync.sessionExpired
+          ? "bg-danger text-white"
+          : offline
+            ? "bg-warning text-white"
+            : sync.pending
+              ? "bg-info-soft text-info"
+              : "bg-success-soft text-success",
       )}
       role="status"
     >
@@ -121,7 +137,11 @@ function SyncBar({ sync, onSync }: { sync: SyncState; onSync: () => void }) {
       <span className="flex-1">
         {sync.sessionExpired ? (
           <>
-            Sesja wygasła — <Link href="/driver/login" className="underline">zaloguj się PIN-em</Link>. Zapisy są bezpieczne w telefonie.
+            Sesja wygasła —{" "}
+            <Link href="/driver/login" className="underline">
+              zaloguj się PIN-em
+            </Link>
+            . Zapisy są bezpieczne w telefonie.
           </>
         ) : offline ? (
           `Bez zasięgu — zapisujesz w telefonie${sync.pending ? ` (${sync.pending} do wysłania)` : ""}`
@@ -181,7 +201,11 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
         >
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Pojazd
-            <select value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="h-14 rounded-xl border border-border-strong bg-surface px-3 text-lg">
+            <select
+              value={vehicle}
+              onChange={(e) => setVehicle(e.target.value)}
+              className="h-14 rounded-xl border border-border-strong bg-surface px-3 text-lg"
+            >
               {route.vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.registration}
@@ -208,7 +232,9 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
         <ol className="flex flex-col gap-2">
           {route.stops.map((s) => (
             <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-sm">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">{s.sequence}</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
+                {s.sequence}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{s.customer}</span>
                 <span className="text-muted">
@@ -224,7 +250,17 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
 }
 
 // ---------------- LISTA ----------------
-function ListScreen({ route, record, go, banners }: { route: RouteSnapshot; record: Rec; go: (s: Screen) => void; banners: ReactNode }) {
+function ListScreen({
+  route,
+  record,
+  go,
+  banners,
+}: {
+  route: RouteSnapshot;
+  record: Rec;
+  go: (s: Screen) => void;
+  banners: ReactNode;
+}) {
   const p = progress(route);
   const [err, setErr] = useState<string | null>(null);
   return (
@@ -265,7 +301,15 @@ function ListScreen({ route, record, go, banners }: { route: RouteSnapshot; reco
                 <span
                   className={cn(
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                    q === "done" ? "bg-success text-white" : q === "partial" ? "bg-warning text-white" : q === null ? "bg-danger-soft text-danger" : q === "now" ? "bg-info text-white" : "bg-ink text-white",
+                    q === "done"
+                      ? "bg-success text-white"
+                      : q === "partial"
+                        ? "bg-warning text-white"
+                        : q === null
+                          ? "bg-danger-soft text-danger"
+                          : q === "now"
+                            ? "bg-info text-white"
+                            : "bg-ink text-white",
                   )}
                 >
                   {s.sequence}
@@ -276,15 +320,27 @@ function ListScreen({ route, record, go, banners }: { route: RouteSnapshot; reco
                     {s.branch} · {s.address}
                   </span>
                   <span className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2 tabular-nums">okno {s.window}</span>
-                    {s.temporary && s.pointType && <span className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">{s.pointType}</span>}
+                    <span className="rounded-md bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2 tabular-nums">
+                      okno {s.window}
+                    </span>
+                    {s.temporary && s.pointType && (
+                      <span className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
+                        {s.pointType}
+                      </span>
+                    )}
                     {s.notes.map((n) => (
                       <span key={n} className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
                         {n}
                       </span>
                     ))}
-                    {s.orders.some((o) => o.cod) && <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">pobranie</span>}
-                    {q === null && <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">{STOP_STATUS_LABELS[s.status]}</span>}
+                    {s.orders.some((o) => o.cod) && (
+                      <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">pobranie</span>
+                    )}
+                    {q === null && (
+                      <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
+                        {STOP_STATUS_LABELS[s.status]}
+                      </span>
+                    )}
                   </span>
                 </span>
                 <span className="flex h-11 items-center px-1 text-sm font-semibold text-primary-strong">Szczegóły ›</span>
@@ -296,7 +352,10 @@ function ListScreen({ route, record, go, banners }: { route: RouteSnapshot; reco
                     type="button"
                     aria-pressed={q === k}
                     onClick={async () => setErr(await record({ type: "stop_quick", stop_id: s.id, status: k }))}
-                    className={cn("h-12 w-full rounded-lg px-1 text-xs font-bold leading-tight", q === k ? ON[k] : "text-foreground/80")}
+                    className={cn(
+                      "h-12 w-full rounded-lg px-1 text-xs font-bold leading-tight",
+                      q === k ? ON[k] : "text-foreground/80",
+                    )}
                   >
                     {QUICK_STATUSES[k].label}
                   </button>
@@ -307,10 +366,18 @@ function ListScreen({ route, record, go, banners }: { route: RouteSnapshot; reco
         })}
       </ol>
       <footer className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-border bg-surface p-3">
-        <button type="button" onClick={() => go({ name: "problem", stopId: null })} className="h-14 rounded-xl border border-border-strong bg-surface text-base font-semibold">
+        <button
+          type="button"
+          onClick={() => go({ name: "problem", stopId: null })}
+          className="h-14 rounded-xl border border-border-strong bg-surface text-base font-semibold"
+        >
           Zgłoś problem
         </button>
-        <button type="button" onClick={() => go({ name: "finish" })} className="h-14 rounded-xl bg-ink text-base font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => go({ name: "finish" })}
+          className="h-14 rounded-xl bg-ink text-base font-semibold text-white"
+        >
           Zakończ zmianę
         </button>
       </footer>
@@ -328,9 +395,23 @@ const OUTCOMES = [
   { v: "keep", l: "Bez zmiany statusu", cls: "peer-checked:bg-border" },
 ] as const;
 
-function CallButton({ phone, label, sub, tone = "neutral" }: { phone: string | null; label: string; sub: string | null; tone?: "neutral" | "primary" }) {
+function CallButton({
+  phone,
+  label,
+  sub,
+  tone = "neutral",
+}: {
+  phone: string | null;
+  label: string;
+  sub: string | null;
+  tone?: "neutral" | "primary";
+}) {
   if (!phone)
-    return <span className="flex min-h-14 items-center justify-center rounded-xl border border-dashed border-border px-2 text-center text-xs text-muted">brak: {label.toLowerCase()}</span>;
+    return (
+      <span className="flex min-h-14 items-center justify-center rounded-xl border border-dashed border-border px-2 text-center text-xs text-muted">
+        brak: {label.toLowerCase()}
+      </span>
+    );
   return (
     <a
       href={`tel:${phone}`}
@@ -347,13 +428,36 @@ function CallButton({ phone, label, sub, tone = "neutral" }: { phone: string | n
   );
 }
 
-function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSnapshot; stop: SnapshotStop; record: Rec; back: () => void; go: (s: Screen) => void; banners: ReactNode }) {
+function StopScreen({
+  route,
+  stop,
+  record,
+  back,
+  go,
+  banners,
+}: {
+  route: RouteSnapshot;
+  stop: SnapshotStop;
+  record: Rec;
+  back: () => void;
+  go: (s: Screen) => void;
+  banners: ReactNode;
+}) {
   const inProgress = route.status === "in_progress";
   const codTotal = stop.orders.reduce((a, o) => a + (o.cod ? Math.round(o.cod * 100) : 0), 0);
-  const initialOutcome = stop.status === "partial" ? "partial" : ["absent", "refused", "complaint"].includes(stop.status) ? stop.status : "delivered";
+  const initialOutcome =
+    stop.status === "partial" ? "partial" : ["absent", "refused", "complaint"].includes(stop.status) ? stop.status : "delivered";
   const [outcome, setOutcome] = useState<string>(initialOutcome);
   const [pack, setPack] = useState<Record<string, { out: string; back: string }>>(() =>
-    Object.fromEntries(route.packagingTypes.map((t) => [t.id, { out: stop.packaging[t.id]?.out ? String(stop.packaging[t.id].out) : "", back: stop.packaging[t.id]?.back ? String(stop.packaging[t.id].back) : "" }])),
+    Object.fromEntries(
+      route.packagingTypes.map((t) => [
+        t.id,
+        {
+          out: stop.packaging[t.id]?.out ? String(stop.packaging[t.id].out) : "",
+          back: stop.packaging[t.id]?.back ? String(stop.packaging[t.id].back) : "",
+        },
+      ]),
+    ),
   );
   const [cash, setCash] = useState(stop.cashGrosze ? (stop.cashGrosze / 100).toFixed(2).replace(".", ",") : "");
   const [reason, setReason] = useState("");
@@ -377,11 +481,18 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
       const n = Number(v.replace(/\s/g, "") || 0);
       return Number.isInteger(n) && n >= 0 ? n : -1;
     };
-    const packaging = route.packagingTypes.map((t) => ({ typeId: t.id, out: int(pack[t.id]?.out ?? ""), back: int(pack[t.id]?.back ?? "") }));
+    const packaging = route.packagingTypes.map((t) => ({
+      typeId: t.id,
+      out: int(pack[t.id]?.out ?? ""),
+      back: int(pack[t.id]?.back ?? ""),
+    }));
     if (packaging.some((p) => p.out < 0 || p.back < 0)) return setErr("Opakowania: wpisz liczby całkowite.");
     const cashG = cash.trim() === "" ? null : parseCash(cash);
     if (cash.trim() !== "" && cashG === null) return setErr("Kwota w zł, np. 640,50.");
-    const files: NewFile[] = [...photos.map((blob) => ({ kind: "photo" as const, blob })), ...(signature ? [{ kind: "signature" as const, blob: signature }] : [])];
+    const files: NewFile[] = [
+      ...photos.map((blob) => ({ kind: "photo" as const, blob })),
+      ...(signature ? [{ kind: "signature" as const, blob: signature }] : []),
+    ];
     setBusy(true);
     const e = await record(
       {
@@ -416,7 +527,9 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
         </p>
         <div className="mt-1 flex flex-wrap gap-1.5">
           <span className="rounded bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2">okno {stop.window}</span>
-          <span className="rounded bg-foreground/[0.08] px-2 py-0.5 text-xs font-semibold">{STOP_STATUS_LABELS[stop.status]}</span>
+          <span className="rounded bg-foreground/[0.08] px-2 py-0.5 text-xs font-semibold">
+            {STOP_STATUS_LABELS[stop.status]}
+          </span>
           {(stop.photos > 0 || stop.signed) && (
             <span className="rounded bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
               {stop.photos ? `${stop.photos} zdj.` : ""}
@@ -515,7 +628,13 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
           {(codTotal > 0 || stop.cashGrosze > 0) && (
             <label className="flex flex-col gap-1.5 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold">
               Pobrano gotówkę (zł){codTotal > 0 && ` — do pobrania ${formatPln(codTotal)}`}
-              <input value={cash} onChange={(e) => setCash(e.target.value)} inputMode="decimal" placeholder="0,00" className="h-12 rounded-lg border border-border px-3 text-lg font-bold tabular-nums" />
+              <input
+                value={cash}
+                onChange={(e) => setCash(e.target.value)}
+                inputMode="decimal"
+                placeholder="0,00"
+                className="h-12 rounded-lg border border-border px-3 text-lg font-bold tabular-nums"
+              />
             </label>
           )}
 
@@ -524,8 +643,20 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
             <div className="grid grid-cols-2 gap-2">
               {OUTCOMES.map((o) => (
                 <label key={o.v} className={cn(o.v === "keep" && "col-span-2")}>
-                  <input type="radio" name="outcome" value={o.v} checked={outcome === o.v} onChange={() => setOutcome(o.v)} className="peer sr-only" />
-                  <span className={cn("flex h-12 items-center justify-center rounded-lg border border-border text-sm font-bold peer-focus-visible:ring-2 peer-focus-visible:ring-primary", o.cls)}>
+                  <input
+                    type="radio"
+                    name="outcome"
+                    value={o.v}
+                    checked={outcome === o.v}
+                    onChange={() => setOutcome(o.v)}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={cn(
+                      "flex h-12 items-center justify-center rounded-lg border border-border text-sm font-bold peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
+                      o.cls,
+                    )}
+                  >
                     {o.l}
                   </span>
                 </label>
@@ -533,7 +664,12 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
             </div>
             <label className="mt-3 flex flex-col gap-1 text-xs font-medium">
               Przyczyna {needsReason ? "(wymagana)" : "(przy reklamacji i odmowie)"}
-              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="np. uszkodzony karton, 2 szt." className="h-12 rounded-lg border border-border px-3 text-base" />
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="np. uszkodzony karton, 2 szt."
+                className="h-12 rounded-lg border border-border px-3 text-base"
+              />
             </label>
           </fieldset>
 
@@ -547,11 +683,20 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
             <legend className="px-1 text-sm font-semibold">Zwrot towaru i komentarz</legend>
             <label className="flex flex-col gap-1 text-xs font-medium">
               Zwrot towaru (co, ile, dlaczego)
-              <input value={ret} onChange={(e) => setRet(e.target.value)} placeholder="np. 1 opakowanie — zła jakość" className="h-12 rounded-lg border border-border px-3 text-base" />
+              <input
+                value={ret}
+                onChange={(e) => setRet(e.target.value)}
+                placeholder="np. 1 opakowanie — zła jakość"
+                className="h-12 rounded-lg border border-border px-3 text-base"
+              />
             </label>
             <label className="mt-2 flex flex-col gap-1 text-xs font-medium">
               Komentarz dla dyspozytora
-              <input value={comment} onChange={(e) => setComment(e.target.value)} className="h-12 rounded-lg border border-border px-3 text-base" />
+              <input
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="h-12 rounded-lg border border-border px-3 text-base"
+              />
             </label>
           </fieldset>
 
@@ -559,7 +704,11 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
           <button disabled={busy} className={PRIMARY}>
             Zapisz punkt
           </button>
-          <button type="button" onClick={() => go({ name: "problem", stopId: stop.id })} className="h-12 text-sm font-semibold text-muted underline">
+          <button
+            type="button"
+            onClick={() => go({ name: "problem", stopId: stop.id })}
+            className="h-12 text-sm font-semibold text-muted underline"
+          >
             Zgłoś problem na tym punkcie
           </button>
         </form>
@@ -569,7 +718,19 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
 }
 
 // ---------------- ZGŁOSZENIE ----------------
-function ProblemScreen({ route, stopId, record, back, banners }: { route: RouteSnapshot; stopId: string | null; record: Rec; back: () => void; banners: ReactNode }) {
+function ProblemScreen({
+  route,
+  stopId,
+  record,
+  back,
+  banners,
+}: {
+  route: RouteSnapshot;
+  stopId: string | null;
+  record: Rec;
+  back: () => void;
+  banners: ReactNode;
+}) {
   const [kind, setKind] = useState<"problem" | "delay">("problem");
   const [stop, setStop] = useState(stopId ?? "");
   const [text, setText] = useState("");
@@ -590,7 +751,10 @@ function ProblemScreen({ route, stopId, record, back, banners }: { route: RouteS
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
-          const r = await record({ type: "problem_reported", stop_id: stop || null, kind, text, photos: photos.length }, photos.map((blob) => ({ kind: "photo", blob })));
+          const r = await record(
+            { type: "problem_reported", stop_id: stop || null, kind, text, photos: photos.length },
+            photos.map((blob) => ({ kind: "photo", blob })),
+          );
           setBusy(false);
           if (r) setErr(r);
           else back();
@@ -603,14 +767,27 @@ function ProblemScreen({ route, stopId, record, back, banners }: { route: RouteS
               ["delay", "Opóźnienie"],
             ] as const
           ).map(([v, l]) => (
-            <button key={v} type="button" aria-pressed={kind === v} onClick={() => setKind(v)} className={cn("h-12 rounded-lg border text-sm font-bold", kind === v ? "border-ink bg-ink text-white" : "border-border bg-surface")}>
+            <button
+              key={v}
+              type="button"
+              aria-pressed={kind === v}
+              onClick={() => setKind(v)}
+              className={cn(
+                "h-12 rounded-lg border text-sm font-bold",
+                kind === v ? "border-ink bg-ink text-white" : "border-border bg-surface",
+              )}
+            >
               {l}
             </button>
           ))}
         </div>
         <label className="flex flex-col gap-1 text-sm font-medium">
           Punkt (opcjonalnie)
-          <select value={stop} onChange={(e) => setStop(e.target.value)} className="h-12 rounded-lg border border-border bg-surface px-3 text-base">
+          <select
+            value={stop}
+            onChange={(e) => setStop(e.target.value)}
+            className="h-12 rounded-lg border border-border bg-surface px-3 text-base"
+          >
             <option value="">— cała trasa —</option>
             {route.stops.map((s) => (
               <option key={s.id} value={s.id}>
@@ -640,7 +817,17 @@ function ProblemScreen({ route, stopId, record, back, banners }: { route: RouteS
 }
 
 // ---------------- KONIEC ----------------
-function FinishScreen({ route, record, back, banners }: { route: RouteSnapshot; record: Rec; back: () => void; banners: ReactNode }) {
+function FinishScreen({
+  route,
+  record,
+  back,
+  banners,
+}: {
+  route: RouteSnapshot;
+  record: Rec;
+  back: () => void;
+  banners: ReactNode;
+}) {
   const [odo, setOdo] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -675,7 +862,14 @@ function FinishScreen({ route, record, back, banners }: { route: RouteSnapshot; 
         >
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Stan licznika na koniec (km)
-            <input value={odo} onChange={(e) => setOdo(e.target.value)} inputMode="numeric" autoComplete="off" placeholder={route.odometerStart ? String(route.odometerStart) : ""} className="h-14 rounded-xl border-2 border-primary px-4 text-2xl font-bold tabular-nums" />
+            <input
+              value={odo}
+              onChange={(e) => setOdo(e.target.value)}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={route.odometerStart ? String(route.odometerStart) : ""}
+              className="h-14 rounded-xl border-2 border-primary px-4 text-2xl font-bold tabular-nums"
+            />
           </label>
           <p className="text-xs text-muted">Start: {route.odometerStart?.toLocaleString("pl-PL")} km</p>
           <ErrorText text={err} />
@@ -745,7 +939,11 @@ function ReportScreen({ route, banners }: { route: RouteSnapshot; banners: React
         <section className="grid grid-cols-3 gap-2">
           <Tile label="Punkty" value={`${r.finished} / ${r.total}`} sub={`${r.partial} częśc. · ${r.exceptions} wyjątki`} />
           <Tile label="W oknie" value={r.withWindow ? `${r.onTime} / ${r.withWindow}` : "—"} sub="dostawy na czas" />
-          <Tile label="Przebieg" value={r.km !== null ? `${r.km} km` : "—"} sub={route.odometerEnd ? `licznik ${route.odometerEnd.toLocaleString("pl-PL")}` : "trasa w toku"} />
+          <Tile
+            label="Przebieg"
+            value={r.km !== null ? `${r.km} km` : "—"}
+            sub={route.odometerEnd ? `licznik ${route.odometerEnd.toLocaleString("pl-PL")}` : "trasa w toku"}
+          />
         </section>
 
         <section className="flex flex-col gap-1.5 rounded-2xl border border-border bg-surface px-4 py-3 text-sm">
@@ -765,7 +963,10 @@ function ReportScreen({ route, banners }: { route: RouteSnapshot; banners: React
           {r.packaging.every((p) => !p.out && !p.back) && <p className="text-muted">Brak zapisanych opakowań.</p>}
         </section>
 
-        <Link href="/driver" className="flex h-14 items-center justify-center rounded-xl border border-border bg-surface font-semibold">
+        <Link
+          href="/driver"
+          className="flex h-14 items-center justify-center rounded-xl border border-border bg-surface font-semibold"
+        >
           Moje trasy
         </Link>
       </div>

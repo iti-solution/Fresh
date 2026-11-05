@@ -23,7 +23,9 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
   const db = await createClient();
   const { data: r } = await db
     .from("routes")
-    .select("id, name, route_date, status, odometer_start, odometer_end, close_report, closed_at, drivers(first_name, last_name), vehicles(registration), route_stops(id, status)")
+    .select(
+      "id, name, route_date, status, odometer_start, odometer_end, close_report, closed_at, drivers(first_name, last_name), vehicles(registration), route_stops(id, status)",
+    )
     .eq("id", routeId)
     .eq("tenant_id", ctx.tenantId)
     .maybeSingle();
@@ -53,7 +55,11 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
   };
   const checks = closeChecklist(input);
   const closed = r.status === "closed";
-  const report = (r.close_report ?? {}) as { cash_received?: number; packaging?: { type_id: string; received: number }[]; note?: string | null };
+  const report = (r.close_report ?? {}) as {
+    cash_received?: number;
+    packaging?: { type_id: string; received: number }[];
+    note?: string | null;
+  };
   const editable = canEdit(ctx.role) && (r.status === "completed" || r.status === "in_progress");
 
   return (
@@ -67,18 +73,25 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
         title={`Zamknięcie trasy: ${r.name}`}
         description={
           <>
-            <span className="capitalize">{formatDayLabel(r.route_date)}</span> · {r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "bez kierowcy"}{" "}
+            <span className="capitalize">{formatDayLabel(r.route_date)}</span> ·{" "}
+            {r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "bez kierowcy"}{" "}
             {r.vehicles && <Plate>{r.vehicles.registration}</Plate>}
           </>
         }
       />
-      {sp.zamknieto && <Notice>Trasa zamknięta. Ruchy opakowań i gotówki zapisane, wynagrodzenie dnia doliczone do rozliczenia miesiąca.</Notice>}
+      {sp.zamknieto && (
+        <Notice>Trasa zamknięta. Ruchy opakowań i gotówki zapisane, wynagrodzenie dnia doliczone do rozliczenia miesiąca.</Notice>
+      )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <Panel title="Checklista" flush>
           <ul className="divide-y divide-border">
             {checks.map((c) => (
               <li key={c.key} className="flex items-start gap-3 px-5 py-3 text-sm">
-                {c.ok ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />}
+                {c.ok ? (
+                  <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" />
+                ) : (
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+                )}
                 <span>
                   <span className="font-medium">{c.label}</span>
                   <span className={cn("block", c.ok ? "text-muted" : "text-warning")}>{c.detail}</span>
@@ -97,7 +110,10 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
               <dd>
                 {formatPln(toGrosze(report.cash_received ?? 0))}{" "}
                 {toGrosze(report.cash_received ?? 0) !== input.cashCollectedGrosze && (
-                  <span className="text-danger">(pobrano {formatPln(input.cashCollectedGrosze)} — różnica {formatPln(toGrosze(report.cash_received ?? 0) - input.cashCollectedGrosze)})</span>
+                  <span className="text-danger">
+                    (pobrano {formatPln(input.cashCollectedGrosze)} — różnica{" "}
+                    {formatPln(toGrosze(report.cash_received ?? 0) - input.cashCollectedGrosze)})
+                  </span>
                 )}
               </dd>
               {input.packaging.map((p) => {
@@ -106,7 +122,8 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
                   <div key={p.typeId} className="contents">
                     <dt className="text-muted">{p.name}</dt>
                     <dd>
-                      zdano {got} z {p.collected} zebranych {got !== p.collected && <span className="text-danger">(różnica {got - p.collected})</span>}
+                      zdano {got} z {p.collected} zebranych{" "}
+                      {got !== p.collected && <span className="text-danger">(różnica {got - p.collected})</span>}
                     </dd>
                   </div>
                 );
@@ -128,14 +145,24 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
                 ? [
                     {
                       title: "Licznik",
-                      description: "Kierowca nie zakończył zmiany w aplikacji. Wpisz stan licznika — niepotwierdzone punkty zostaną oznaczone jako pominięte.",
-                      fields: [{ kind: "number" as const, name: "odometer_end", label: "Stan licznika na koniec", suffix: "km", hint: `start: ${r.odometer_start ?? "—"} km` }],
+                      description:
+                        "Kierowca nie zakończył zmiany w aplikacji. Wpisz stan licznika — niepotwierdzone punkty zostaną oznaczone jako pominięte.",
+                      fields: [
+                        {
+                          kind: "number" as const,
+                          name: "odometer_end",
+                          label: "Stan licznika na koniec",
+                          suffix: "km",
+                          hint: `start: ${r.odometer_start ?? "—"} km`,
+                        },
+                      ],
                     },
                   ]
                 : []),
               {
                 title: "Opakowania zdane do magazynu",
-                description: "Policz, ile kierowca oddał. Domyślnie wpisane jest to, co zebrał od klientów — różnica trafi do raportu.",
+                description:
+                  "Policz, ile kierowca oddał. Domyślnie wpisane jest to, co zebrał od klientów — różnica trafi do raportu.",
                 fields: input.packaging.map((p) => ({
                   kind: "number" as const,
                   name: `recv_${p.typeId}`,
@@ -163,7 +190,9 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
         ) : (
           <Panel>
             <p className="text-sm text-muted">
-              {r.status === "planned" || r.status === "draft" || r.status === "dispatched" ? "Trasa jeszcze się nie zaczęła." : "Masz dostęp tylko do podglądu."}
+              {r.status === "planned" || r.status === "draft" || r.status === "dispatched"
+                ? "Trasa jeszcze się nie zaczęła."
+                : "Masz dostęp tylko do podglądu."}
             </p>
           </Panel>
         )}

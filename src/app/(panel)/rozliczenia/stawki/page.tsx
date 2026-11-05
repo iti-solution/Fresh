@@ -32,7 +32,11 @@ export default async function RatesPage() {
   const ctx = await requireAccess("/rozliczenia");
   const db = await createClient();
   const [{ data: rules }, { data: drivers }] = await Promise.all([
-    db.from("driver_pay_rules").select("id, driver_id, valid_from, valid_to, components").eq("tenant_id", ctx.tenantId).order("valid_from", { ascending: false }),
+    db
+      .from("driver_pay_rules")
+      .select("id, driver_id, valid_from, valid_to, components")
+      .eq("tenant_id", ctx.tenantId)
+      .order("valid_from", { ascending: false }),
     db.from("drivers").select("id, first_name, last_name, is_active").eq("tenant_id", ctx.tenantId).order("last_name"),
   ]);
   const name = new Map((drivers ?? []).map((d) => [d.id, `${d.first_name} ${d.last_name}`]));
@@ -53,10 +57,14 @@ export default async function RatesPage() {
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Panel title="Obowiązujące i historyczne" flush>
-          {(rules ?? []).length === 0 && <p className="px-5 py-4 text-sm text-muted">Brak stawek. Dodaj regułę domyślną po prawej.</p>}
+          {(rules ?? []).length === 0 && (
+            <p className="px-5 py-4 text-sm text-muted">Brak stawek. Dodaj regułę domyślną po prawej.</p>
+          )}
           {[...groups.entries()].map(([driverId, list]) => (
             <section key={driverId} className="border-t border-border first:border-t-0">
-              <h3 className="bg-surface-2 px-5 py-1.5 text-xs font-semibold text-muted">{driverId ? name.get(driverId) ?? "kierowca" : "Domyślna (wszyscy kierowcy)"}</h3>
+              <h3 className="bg-surface-2 px-5 py-1.5 text-xs font-semibold text-muted">
+                {driverId ? (name.get(driverId) ?? "kierowca") : "Domyślna (wszyscy kierowcy)"}
+              </h3>
               <ul className="divide-y divide-border text-sm">
                 {list.map((r) => {
                   const c = readComponents(r.components);
@@ -103,10 +111,18 @@ export default async function RatesPage() {
                     name: "driver_id",
                     label: "Dla kogo",
                     emptyLabel: "Domyślna — wszyscy kierowcy",
-                    options: (drivers ?? []).filter((d) => d.is_active).map((d) => ({ value: d.id, label: `${d.first_name} ${d.last_name}` })),
+                    options: (drivers ?? [])
+                      .filter((d) => d.is_active)
+                      .map((d) => ({ value: d.id, label: `${d.first_name} ${d.last_name}` })),
                     span: 2,
                   },
-                  { kind: "date", name: "valid_from", label: "Obowiązuje od", defaultValue: `${today.slice(0, 7)}-01`, required: true },
+                  {
+                    kind: "date",
+                    name: "valid_from",
+                    label: "Obowiązuje od",
+                    defaultValue: `${today.slice(0, 7)}-01`,
+                    required: true,
+                  },
                 ],
               },
               {
@@ -122,7 +138,8 @@ export default async function RatesPage() {
               },
               {
                 title: "Dowóz i dodatki",
-                description: "Obrót trasy = wartość wszystkich zamówień na trasie. Wartość dostaw = tylko dostarczone. Kierowca nie widzi obrotu, tylko swoją kwotę.",
+                description:
+                  "Obrót trasy = wartość wszystkich zamówień na trasie. Wartość dostaw = tylko dostarczone. Kierowca nie widzi obrotu, tylko swoją kwotę.",
                 fields: [
                   { kind: "number", name: "per_stop", label: "Za zrealizowany punkt", suffix: "zł", step: "0.01" },
                   { kind: "number", name: "per_pallet", label: "Za paletę", suffix: "zł", step: "0.01" },

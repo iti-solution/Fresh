@@ -40,7 +40,9 @@ async function insertEvent(
     driver_id: c.driverId,
     type,
     // współrzędne także w treści zdarzenia — biuro czyta je bez funkcji PostGIS
-    payload: (location ? { ...payload, gps: { lat: location.lat, lng: location.lng, accuracy: location.accuracy } } : payload) as never,
+    payload: (location
+      ? { ...payload, gps: { lat: location.lat, lng: location.lng, accuracy: location.accuracy } }
+      : payload) as never,
     occurred_at: occurredAt,
     location: ewkt(location) as never,
   });
@@ -49,9 +51,19 @@ async function insertEvent(
 }
 
 async function setStopStatus(c: DriverCtx, routeId: string, stopId: string, status: StopStatus, at: string) {
-  const { data: stop } = await c.admin.from("route_stops").select("arrived_at").eq("id", stopId).eq("route_id", routeId).maybeSingle();
+  const { data: stop } = await c.admin
+    .from("route_stops")
+    .select("arrived_at")
+    .eq("id", stopId)
+    .eq("route_id", routeId)
+    .maybeSingle();
   if (status === "in_progress") {
-    await c.admin.from("route_stops").update({ status: "pending" }).eq("route_id", routeId).eq("status", "in_progress").neq("id", stopId);
+    await c.admin
+      .from("route_stops")
+      .update({ status: "pending" })
+      .eq("route_id", routeId)
+      .eq("status", "in_progress")
+      .neq("id", stopId);
   }
   await c.admin
     .from("route_stops")
@@ -99,7 +111,16 @@ async function applyStopMoney(c: DriverCtx, e: Extract<DriverEvent, { type: "sto
       const g = randomUUID();
       const toCustomer = reason === "issue" ? delta : -delta;
       const note = issued || returned ? "korekta kierowcy" : null;
-      const common = { tenant_id: c.tenantId, movement_group: g, packaging_type_id: typeId, reason, stop_id: e.stop_id, note, created_by: c.userId, source_event_id: eventRowId };
+      const common = {
+        tenant_id: c.tenantId,
+        movement_group: g,
+        packaging_type_id: typeId,
+        reason,
+        stop_id: e.stop_id,
+        note,
+        created_by: c.userId,
+        source_event_id: eventRowId,
+      };
       rows.push(
         { ...common, party_type: "customer" as const, party_id: customerId, qty: toCustomer },
         { ...common, party_type: "driver" as const, party_id: c.driverId, qty: -toCustomer },
@@ -120,7 +141,15 @@ async function applyStopMoney(c: DriverCtx, e: Extract<DriverEvent, { type: "sto
     if (delta !== 0) {
       const g = randomUUID();
       const amount = Number((delta / 100).toFixed(2));
-      const common = { tenant_id: c.tenantId, movement_group: g, reason: "cod_collected", route_id: e.route_id, stop_id: e.stop_id, created_by: c.userId, source_event_id: eventRowId };
+      const common = {
+        tenant_id: c.tenantId,
+        movement_group: g,
+        reason: "cod_collected",
+        route_id: e.route_id,
+        stop_id: e.stop_id,
+        created_by: c.userId,
+        source_event_id: eventRowId,
+      };
       await c.admin.from("cash_movements").insert([
         { ...common, party_type: "driver" as const, party_id: c.driverId, amount },
         { ...common, party_type: "customer" as const, party_id: customerId, amount: -amount },
@@ -134,7 +163,12 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
   const reject = (reason: string): ApplyResult => ({ id, status: "rejected", reason });
 
   // już przyjęte? (ponowne wysłanie po zerwanym połączeniu)
-  const { data: seen } = await c.admin.from("delivery_events").select("id").eq("tenant_id", c.tenantId).eq("client_event_id", id).maybeSingle();
+  const { data: seen } = await c.admin
+    .from("delivery_events")
+    .select("id")
+    .eq("tenant_id", c.tenantId)
+    .eq("client_event_id", id)
+    .maybeSingle();
   if (seen) return { id, status: "duplicate" };
 
   const { data: route } = await c.admin
@@ -145,17 +179,33 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
     .eq("driver_id", c.driverId)
     .maybeSingle();
   if (!route) return reject("To nie jest Twoja trasa (dyspozytor mógł ją przydzielić innemu kierowcy).");
-  const problem = validateEvent({ status: route.status, odometerStart: route.odometer_start, stops: route.route_stops as never }, e);
+  const problem = validateEvent(
+    { status: route.status, odometerStart: route.odometer_start, stops: route.route_stops as never },
+    e,
+  );
   if (problem) return reject(problem);
 
   const at = e.occurred_at;
   switch (e.type) {
     case "route_started": {
-      const r = await insertEvent(c, id, e.route_id, null, "route_started", { odometer_start: e.odometer_start, vehicle_id: e.vehicle_id }, at, e.location);
+      const r = await insertEvent(
+        c,
+        id,
+        e.route_id,
+        null,
+        "route_started",
+        { odometer_start: e.odometer_start, vehicle_id: e.vehicle_id },
+        at,
+        e.location,
+      );
       if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
       await c.admin
         .from("routes")
-        .update({ status: "in_progress", odometer_start: e.odometer_start, ...(e.vehicle_id ? { vehicle_id: e.vehicle_id } : {}) })
+        .update({
+          status: "in_progress",
+          odometer_start: e.odometer_start,
+          ...(e.vehicle_id ? { vehicle_id: e.vehicle_id } : {}),
+        })
         .eq("id", e.route_id);
       return { id, status: "ok" };
     }
@@ -174,16 +224,49 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
       if (e.comment.trim()) payload.comment = e.comment.trim();
       const r = await insertEvent(c, id, e.route_id, e.stop_id, type, payload, at, e.location);
       if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
-      const { data: row } = await c.admin.from("delivery_events").select("id").eq("tenant_id", c.tenantId).eq("client_event_id", id).maybeSingle();
+      const { data: row } = await c.admin
+        .from("delivery_events")
+        .select("id")
+        .eq("tenant_id", c.tenantId)
+        .eq("client_event_id", id)
+        .maybeSingle();
       await applyStopMoney(c, e, row?.id ?? null);
       if (e.return_text.trim())
-        await insertEvent(c, derivedUuid(id, "return"), e.route_id, e.stop_id, "return_recorded", { text: e.return_text.trim() }, at, e.location);
-      if (e.comment.trim()) await insertEvent(c, derivedUuid(id, "comment"), e.route_id, e.stop_id, "comment", { text: e.comment.trim() }, at, e.location);
+        await insertEvent(
+          c,
+          derivedUuid(id, "return"),
+          e.route_id,
+          e.stop_id,
+          "return_recorded",
+          { text: e.return_text.trim() },
+          at,
+          e.location,
+        );
+      if (e.comment.trim())
+        await insertEvent(
+          c,
+          derivedUuid(id, "comment"),
+          e.route_id,
+          e.stop_id,
+          "comment",
+          { text: e.comment.trim() },
+          at,
+          e.location,
+        );
       if (next) await setStopStatus(c, e.route_id, e.stop_id, next, at);
       return { id, status: "ok" };
     }
     case "problem_reported": {
-      const r = await insertEvent(c, id, e.route_id, e.stop_id, "problem_reported", { kind: e.kind, text: e.text.trim(), photos: e.photos }, at, e.location);
+      const r = await insertEvent(
+        c,
+        id,
+        e.route_id,
+        e.stop_id,
+        "problem_reported",
+        { kind: e.kind, text: e.text.trim(), photos: e.photos },
+        at,
+        e.location,
+      );
       return r === "ok" ? { id, status: "ok" } : r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
     }
     case "route_finished": {
@@ -191,14 +274,24 @@ export async function applyDriverEvent(c: DriverCtx, e: DriverEvent): Promise<Ap
       if (r !== "ok") return r === "duplicate" ? { id, status: "duplicate" } : reject("błąd zapisu");
       await c.admin
         .from("routes")
-        .update({ status: "completed", odometer_end: e.odometer_end, actual_km: e.odometer_end - (route.odometer_start ?? e.odometer_end) })
+        .update({
+          status: "completed",
+          odometer_end: e.odometer_end,
+          actual_km: e.odometer_end - (route.odometer_start ?? e.odometer_end),
+        })
         .eq("id", e.route_id);
       return { id, status: "ok" };
     }
   }
 }
 
-export type IncomingPosition = { route_id: string | null; lat: number; lng: number; accuracy: number | null; recorded_at: string };
+export type IncomingPosition = {
+  route_id: string | null;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  recorded_at: string;
+};
 
 /** Pozycje GPS z otwartej trasy (co kilka minut) — wysyłane paczkami, duplikaty pomijane. */
 export async function savePositions(c: DriverCtx, list: IncomingPosition[]): Promise<number> {
@@ -206,7 +299,12 @@ export async function savePositions(c: DriverCtx, list: IncomingPosition[]): Pro
   const routeIds = [...new Set(list.map((p) => p.route_id).filter((x): x is string => Boolean(x)))];
   const own = new Set<string>();
   if (routeIds.length) {
-    const { data } = await c.admin.from("routes").select("id").eq("tenant_id", c.tenantId).eq("driver_id", c.driverId).in("id", routeIds);
+    const { data } = await c.admin
+      .from("routes")
+      .select("id")
+      .eq("tenant_id", c.tenantId)
+      .eq("driver_id", c.driverId)
+      .in("id", routeIds);
     for (const r of data ?? []) own.add(r.id);
   }
   const rows = list.map((p) => ({
@@ -217,6 +315,8 @@ export async function savePositions(c: DriverCtx, list: IncomingPosition[]): Pro
     accuracy_m: p.accuracy,
     recorded_at: p.recorded_at,
   }));
-  const { error } = await c.admin.from("driver_positions").upsert(rows, { onConflict: "driver_id,recorded_at", ignoreDuplicates: true });
+  const { error } = await c.admin
+    .from("driver_positions")
+    .upsert(rows, { onConflict: "driver_id,recorded_at", ignoreDuplicates: true });
   return error ? 0 : rows.length;
 }

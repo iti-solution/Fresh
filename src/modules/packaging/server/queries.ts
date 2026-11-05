@@ -53,7 +53,14 @@ export async function getCustomerPackaging(tenantId: string, today: string, days
     }
     if (Object.values(out).every((x) => x.balance === 0)) continue;
     const c = name.get(customerId);
-    rows.push({ customerId, customer: c?.name ?? "—", code: c?.external_code ?? null, byType: out, depositGrosze: dep, overdueTotal });
+    rows.push({
+      customerId,
+      customer: c?.name ?? "—",
+      code: c?.external_code ?? null,
+      byType: out,
+      depositGrosze: dep,
+      overdueTotal,
+    });
   }
   rows.sort((a, b) => b.overdueTotal - a.overdueTotal || b.depositGrosze - a.depositGrosze);
   return { types: types.data ?? [], rows };
@@ -63,7 +70,11 @@ export async function getCustomerPackaging(tenantId: string, today: string, days
 export async function getDriverBalances(tenantId: string) {
   const db = await createClient();
   const [pb, cb, drv, types] = await Promise.all([
-    db.from("packaging_balances").select("party_id, packaging_type_id, balance").eq("tenant_id", tenantId).eq("party_type", "driver"),
+    db
+      .from("packaging_balances")
+      .select("party_id, packaging_type_id, balance")
+      .eq("tenant_id", tenantId)
+      .eq("party_type", "driver"),
     db.from("cash_balances").select("party_id, balance").eq("tenant_id", tenantId).eq("party_type", "driver"),
     db.from("drivers").select("id, first_name, last_name").eq("tenant_id", tenantId).order("last_name"),
     db.from("packaging_types").select("id, name").eq("tenant_id", tenantId).order("code"),

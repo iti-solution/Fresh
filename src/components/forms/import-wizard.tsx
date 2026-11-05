@@ -16,7 +16,13 @@ export type WizardResult = {
   issues?: WizardIssue[];
 };
 
-export type WizardPayload = { fileName: string; defaultDate: string; mapping: Record<string, string>; rows: RawRow[]; firstLine: number };
+export type WizardPayload = {
+  fileName: string;
+  defaultDate: string;
+  mapping: Record<string, string>;
+  rows: RawRow[];
+  firstLine: number;
+};
 
 const SUMMARY_LABELS: Record<string, string> = {
   total: "wierszy w pliku",
@@ -154,7 +160,10 @@ export function ImportWizard({
               Dopasuj {s.unmatched} ręcznie
             </Link>
           )}
-          <Link href={doneHref} className={buttonVariants({ variant: unmatchedHref && (s.unmatched ?? 0) > 0 ? "outline" : "primary" })}>
+          <Link
+            href={doneHref}
+            className={buttonVariants({ variant: unmatchedHref && (s.unmatched ?? 0) > 0 ? "outline" : "primary" })}
+          >
             {doneLabel}
           </Link>
           <Button
@@ -195,8 +204,8 @@ export function ImportWizard({
       {file && (
         <>
           <p className="text-sm text-muted">
-            <strong className="text-foreground">{file.name}</strong> · {file.rows.length} wierszy · {file.headers.length} kolumn. Sprawdź,
-            która kolumna z pliku odpowiada któremu polu. Przypisanie zapamiętamy na następny raz.
+            <strong className="text-foreground">{file.name}</strong> · {file.rows.length} wierszy · {file.headers.length} kolumn.
+            Sprawdź, która kolumna z pliku odpowiada któremu polu. Przypisanie zapamiętamy na następny raz.
           </p>
           <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
             {fields.map((f) => (
@@ -245,7 +254,9 @@ export function ImportWizard({
                   ))}
                 </tbody>
               </table>
-              <p className="border-t border-border px-3 py-1.5 text-xs text-muted">Podgląd pierwszych {preview.length} wierszy.</p>
+              <p className="border-t border-border px-3 py-1.5 text-xs text-muted">
+                Podgląd pierwszych {preview.length} wierszy.
+              </p>
             </div>
           )}
 

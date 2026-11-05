@@ -42,7 +42,9 @@ export async function loadRouteFacts(
     let turnover = 0;
     let delivered = 0;
     for (const s of r.route_stops ?? []) {
-      const orders = (s.route_stop_orders ?? []).map((x) => x.orders).filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
+      const orders = (s.route_stop_orders ?? [])
+        .map((x) => x.orders)
+        .filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
       const done = DONE.includes(s.status);
       for (const o of orders) {
         turnover += toGrosze(o.order_value);
@@ -66,7 +68,12 @@ export async function loadRouteFacts(
         if (hhmm.format(new Date(s.completed_at)) <= winEnd.slice(0, 5)) onTime += 1;
       }
     }
-    const km = r.actual_km !== null ? Number(r.actual_km) : r.odometer_end !== null && r.odometer_start !== null ? r.odometer_end - r.odometer_start : null;
+    const km =
+      r.actual_km !== null
+        ? Number(r.actual_km)
+        : r.odometer_end !== null && r.odometer_start !== null
+          ? r.odometer_end - r.odometer_start
+          : null;
     return {
       routeId: r.id,
       driverId: r.driver_id!,
@@ -86,7 +93,16 @@ export async function loadRouteFacts(
 }
 
 export async function loadRules(db: Db, tenantId: string): Promise<RuleRow[]> {
-  const { data, error } = await db.from("driver_pay_rules").select("id, driver_id, valid_from, valid_to, components").eq("tenant_id", tenantId);
+  const { data, error } = await db
+    .from("driver_pay_rules")
+    .select("id, driver_id, valid_from, valid_to, components")
+    .eq("tenant_id", tenantId);
   if (error) throw error;
-  return (data ?? []).map((r) => ({ id: r.id, driver_id: r.driver_id, valid_from: r.valid_from, valid_to: r.valid_to, components: readComponents(r.components) }));
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    driver_id: r.driver_id,
+    valid_from: r.valid_from,
+    valid_to: r.valid_to,
+    components: readComponents(r.components),
+  }));
 }

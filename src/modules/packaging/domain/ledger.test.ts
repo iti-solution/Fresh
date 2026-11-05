@@ -14,7 +14,15 @@ describe("zalegające opakowania (FIFO)", () => {
     expect(r).toEqual({ overdue: 4, oldest: "2026-09-01", balance: 9 });
   });
   it("wszystko zwrócone", () => {
-    expect(overdueAtCustomer([{ qty: 3, created_at: "2026-01-01T00:00:00Z", reason: "issue" }, { qty: -3, created_at: "2026-01-02T00:00:00Z", reason: "return" }], "2026-11-05")).toEqual({ overdue: 0, oldest: null, balance: 0 });
+    expect(
+      overdueAtCustomer(
+        [
+          { qty: 3, created_at: "2026-01-01T00:00:00Z", reason: "issue" },
+          { qty: -3, created_at: "2026-01-02T00:00:00Z", reason: "return" },
+        ],
+        "2026-11-05",
+      ),
+    ).toEqual({ overdue: 0, oldest: null, balance: 0 });
   });
 });
 
@@ -31,7 +39,11 @@ describe("zamknięcie trasy", () => {
     const c = closeChecklist(input);
     expect(c.every((x) => x.ok)).toBe(true);
     expect(c.find((x) => x.key === "km")?.detail).toContain("145 km");
-    expect(closeChecklist({ ...input, status: "in_progress", openStops: 2 }).filter((x) => !x.ok).map((x) => x.key)).toEqual(["finished", "stops"]);
+    expect(
+      closeChecklist({ ...input, status: "in_progress", openStops: 2 })
+        .filter((x) => !x.ok)
+        .map((x) => x.key),
+    ).toEqual(["finished", "stops"]);
   });
   it("różnice opakowań i gotówki", () => {
     expect(closeDifferences(input, [{ typeId: "e", qty: 5 }], 60000)).toEqual({

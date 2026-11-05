@@ -21,8 +21,18 @@ export async function createOrder(_prev: FormState, fd: FormData): Promise<FormS
   const supabase = await createClient();
 
   // Oddział musi należeć do tej firmy (RLS i tak to wymusza — tu dajemy czytelny błąd)
-  const { data: point } = await supabase.from("delivery_points").select("id").eq("tenant_id", ctx.tenantId).eq("id", v.delivery_point_id).maybeSingle();
-  if (!point) return { ok: false, fieldErrors: { delivery_point_id: ["Nie znaleziono adresu dostawy"] }, message: "Popraw zaznaczone pola." };
+  const { data: point } = await supabase
+    .from("delivery_points")
+    .select("id")
+    .eq("tenant_id", ctx.tenantId)
+    .eq("id", v.delivery_point_id)
+    .maybeSingle();
+  if (!point)
+    return {
+      ok: false,
+      fieldErrors: { delivery_point_id: ["Nie znaleziono adresu dostawy"] },
+      message: "Popraw zaznaczone pola.",
+    };
 
   const { error } = await supabase.from("orders").insert({
     tenant_id: ctx.tenantId,
@@ -41,7 +51,12 @@ export async function createOrder(_prev: FormState, fd: FormData): Promise<FormS
     type: "delivery",
     status: "new",
   });
-  if (error?.code === "23505") return { ok: false, fieldErrors: { external_ref: ["Zamówienie o tym numerze na ten dzień już istnieje"] }, message: "Popraw zaznaczone pola." };
+  if (error?.code === "23505")
+    return {
+      ok: false,
+      fieldErrors: { external_ref: ["Zamówienie o tym numerze na ten dzień już istnieje"] },
+      message: "Popraw zaznaczone pola.",
+    };
   if (error) return { ok: false, message: "Nie udało się zapisać zamówienia." };
   revalidatePath("/zlecenia");
   revalidatePath("/pulpit");
@@ -61,7 +76,12 @@ export async function cancelOrder(orderId: string): Promise<void> {
   const ctx = await requireTenantContext();
   if (!canEdit(ctx.role)) return;
   const supabase = await createClient();
-  await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId).eq("tenant_id", ctx.tenantId).neq("status", "delivered");
+  await supabase
+    .from("orders")
+    .update({ status: "cancelled" })
+    .eq("id", orderId)
+    .eq("tenant_id", ctx.tenantId)
+    .neq("status", "delivered");
   revalidatePath("/zlecenia");
   revalidatePath("/pulpit");
 }
@@ -85,7 +105,10 @@ export async function importOrdersFromFile(payload: FileImportPayload): Promise<
   if (!DATE_RE.test(payload.defaultDate)) return { ok: false, message: "Wybierz dzień dostawy." };
   if (!payload.mapping.external_ref) return { ok: false, message: "Wskaż kolumnę z numerem zamówienia." };
   if (!payload.mapping.customer_code && !payload.mapping.point_code && !payload.mapping.address)
-    return { ok: false, message: "Wskaż kolumnę z kodem klienta, kodem adresu albo adresem — inaczej nie da się dopasować zamówień." };
+    return {
+      ok: false,
+      message: "Wskaż kolumnę z kodem klienta, kodem adresu albo adresem — inaczej nie da się dopasować zamówień.",
+    };
   if (!Array.isArray(payload.rows) || payload.rows.length === 0) return { ok: false, message: "Plik nie ma wierszy z danymi." };
   if (payload.rows.length > MAX_ROWS) return { ok: false, message: `Maksymalnie ${MAX_ROWS} wierszy w jednym pliku.` };
   const supabase = await createClient();
@@ -122,8 +145,18 @@ export async function assignOrderPoint(orderId: string, _prev: FormState, fd: Fo
   if (!pointId) return { ok: false, message: "Wybierz adres dostawy." };
   const supabase = await createClient();
   const [{ data: order }, { data: point }] = await Promise.all([
-    supabase.from("orders").select("id, raw_point_code, raw_customer_code, status").eq("id", orderId).eq("tenant_id", ctx.tenantId).maybeSingle(),
-    supabase.from("delivery_points").select("id, external_code, customer_id, customers(external_code)").eq("id", pointId).eq("tenant_id", ctx.tenantId).maybeSingle(),
+    supabase
+      .from("orders")
+      .select("id, raw_point_code, raw_customer_code, status")
+      .eq("id", orderId)
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle(),
+    supabase
+      .from("delivery_points")
+      .select("id, external_code, customer_id, customers(external_code)")
+      .eq("id", pointId)
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle(),
   ]);
   if (!order || !point) return { ok: false, message: "Nie znaleziono zamówienia albo adresu." };
   const { error } = await supabase
@@ -135,7 +168,11 @@ export async function assignOrderPoint(orderId: string, _prev: FormState, fd: Fo
   let remembered = "";
   if (remember) {
     if (order.raw_point_code && !point.external_code) {
-      const { error: e } = await supabase.from("delivery_points").update({ external_code: order.raw_point_code }).eq("id", pointId).eq("tenant_id", ctx.tenantId);
+      const { error: e } = await supabase
+        .from("delivery_points")
+        .update({ external_code: order.raw_point_code })
+        .eq("id", pointId)
+        .eq("tenant_id", ctx.tenantId);
       if (!e) remembered = ` Zapamiętano kod adresu ${order.raw_point_code}.`;
     } else if (order.raw_customer_code && !point.customers?.external_code) {
       const { error: e } = await supabase
@@ -160,5 +197,7 @@ export async function importOrdersWizard(p: FileImportPayload): Promise<{
   issues?: { line: number; ref: string; problem: string }[];
 }> {
   const r = await importOrdersFromFile(p);
-  return r.ok && r.result ? { ok: true, summary: r.result.summary, issues: r.result.issues.slice(0, 300) } : { ok: false, message: r.message };
+  return r.ok && r.result
+    ? { ok: true, summary: r.result.summary, issues: r.result.issues.slice(0, 300) }
+    : { ok: false, message: r.message };
 }

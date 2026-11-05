@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { addressKey, cellToString, fold, guessMapping, parseDate, parseDecimal, parseTime, parseTimeRange, rowsToObjects } from "./tabular";
+import {
+  addressKey,
+  cellToString,
+  fold,
+  guessMapping,
+  parseDate,
+  parseDecimal,
+  parseTime,
+  parseTimeRange,
+  rowsToObjects,
+} from "./tabular";
 
 describe("tabular", () => {
   it("fold i adres", () => {

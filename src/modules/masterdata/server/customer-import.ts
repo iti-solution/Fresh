@@ -14,7 +14,13 @@ import {
 } from "../domain/customer-import";
 
 type Issue = { line: number; ref: string; problem: string };
-export type CustomerImportPayload = { fileName: string; defaultDate: string; mapping: CustomerMapping; rows: RawRow[]; firstLine: number };
+export type CustomerImportPayload = {
+  fileName: string;
+  defaultDate: string;
+  mapping: CustomerMapping;
+  rows: RawRow[];
+  firstLine: number;
+};
 
 const MAX_ROWS = 5000;
 
@@ -58,7 +64,8 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
     const r = normalizeCustomerRow(raw, p.mapping, types ?? [], (p.firstLine ?? 2) + i);
     if (r.ok) {
       rows.push(r.row);
-      for (const w of r.row.warnings) issues.push({ line: r.row.line, ref: r.row.customer.external_code ?? r.row.customer.name, problem: w });
+      for (const w of r.row.warnings)
+        issues.push({ line: r.row.line, ref: r.row.customer.external_code ?? r.row.customer.name, problem: w });
     } else {
       invalid += 1;
       issues.push({ line: r.line, ref: r.ref, problem: r.errors.join("; ") });
@@ -68,7 +75,11 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
   // istniejąca kartoteka
   const [{ data: customers, error: cErr }, { data: points, error: pErr }] = await Promise.all([
     db.from("customers").select("id, external_code, name").eq("tenant_id", tenantId).limit(20000),
-    db.from("delivery_points").select("id, customer_id, external_code, address_line, city, location_locked").eq("tenant_id", tenantId).limit(50000),
+    db
+      .from("delivery_points")
+      .select("id, customer_id, external_code, address_line, city, location_locked")
+      .eq("tenant_id", tenantId)
+      .limit(50000),
   ]);
   if (cErr || pErr) return { ok: false, message: "Nie udało się wczytać kartoteki." };
   const custByKey = new Map<string, string>();
@@ -84,7 +95,14 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
     pointByCustAddr.set(`${pt.customer_id}|${pointKey({ ...pt, external_code: null })}`, v);
   }
 
-  const summary = { total: p.rows.length, customers_created: 0, customers_updated: 0, points_created: 0, points_updated: 0, errors: 0 };
+  const summary = {
+    total: p.rows.length,
+    customers_created: 0,
+    customers_updated: 0,
+    points_created: 0,
+    points_updated: 0,
+    errors: 0,
+  };
   const touchedCustomers = new Set<string>();
 
   for (const r of rows) {
@@ -99,7 +117,11 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
         const { error } = await db.from("customers").update(custPatch).eq("id", customerId).eq("tenant_id", tenantId);
         if (error) {
           summary.errors += 1;
-          issues.push({ line: r.line, ref, problem: error.code === "23505" ? "kod klienta zajęty przez innego klienta" : "błąd zapisu klienta" });
+          issues.push({
+            line: r.line,
+            ref,
+            problem: error.code === "23505" ? "kod klienta zajęty przez innego klienta" : "błąd zapisu klienta",
+          });
           continue;
         }
         summary.customers_updated += 1;
@@ -125,7 +147,8 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
     // ---- adres dostawy
     const pt = r.point;
     const existing =
-      (pt.external_code ? pointByCode.get(pointKey(pt)) : undefined) ?? pointByCustAddr.get(`${customerId}|${pointKey({ ...pt, external_code: null })}`);
+      (pt.external_code ? pointByCode.get(pointKey(pt)) : undefined) ??
+      pointByCustAddr.get(`${customerId}|${pointKey({ ...pt, external_code: null })}`);
     const base = {
       name: pt.name,
       point_type_id: pt.point_type_id,
@@ -148,10 +171,15 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
       const { error } = await db.from("delivery_points").update(patch).eq("id", existing.id).eq("tenant_id", tenantId);
       if (error) {
         summary.errors += 1;
-        issues.push({ line: r.line, ref, problem: error.code === "23505" ? "kod adresu zajęty przez inny adres" : "błąd zapisu adresu" });
+        issues.push({
+          line: r.line,
+          ref,
+          problem: error.code === "23505" ? "kod adresu zajęty przez inny adres" : "błąd zapisu adresu",
+        });
         continue;
       }
-      if (existing.locked) issues.push({ line: r.line, ref, problem: "adres ma zablokowaną lokalizację — ulicy i miasta nie zmieniono" });
+      if (existing.locked)
+        issues.push({ line: r.line, ref, problem: "adres ma zablokowaną lokalizację — ulicy i miasta nie zmieniono" });
       pointId = existing.id;
       summary.points_updated += 1;
     } else {
@@ -170,7 +198,11 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
         .single();
       if (error || !data) {
         summary.errors += 1;
-        issues.push({ line: r.line, ref, problem: error?.code === "23505" ? "kod adresu zajęty przez inny adres" : "błąd zapisu adresu" });
+        issues.push({
+          line: r.line,
+          ref,
+          problem: error?.code === "23505" ? "kod adresu zajęty przez inny adres" : "błąd zapisu adresu",
+        });
         continue;
       }
       pointId = data.id;
@@ -185,7 +217,13 @@ export async function importCustomersWizard(p: CustomerImportPayload): Promise<{
       const days = pt.delivery_weekdays ?? [1, 2, 3, 4, 5, 6];
       await db.from("delivery_point_windows").delete().eq("tenant_id", tenantId).eq("delivery_point_id", pointId);
       const wins = days.flatMap((weekday) =>
-        pt.windows!.map(([opens_at, closes_at]) => ({ tenant_id: tenantId, delivery_point_id: pointId, weekday, opens_at, closes_at })),
+        pt.windows!.map(([opens_at, closes_at]) => ({
+          tenant_id: tenantId,
+          delivery_point_id: pointId,
+          weekday,
+          opens_at,
+          closes_at,
+        })),
       );
       if (wins.length) await db.from("delivery_point_windows").insert(wins);
     }

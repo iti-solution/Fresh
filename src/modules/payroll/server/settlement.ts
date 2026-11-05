@@ -6,7 +6,12 @@ import { loadRouteFacts, loadRules } from "./facts";
 
 type Db = SupabaseClient<Database>;
 
-export type RecomputeResult = { driverId: string; status: "updated" | "approved_skipped"; totalGrosze: number; missingRuleDays: string[] };
+export type RecomputeResult = {
+  driverId: string;
+  status: "updated" | "approved_skipped";
+  totalGrosze: number;
+  missingRuleDays: string[];
+};
 
 /**
  * Przelicza rozliczenie miesiąca kierowcy (M5.4) z tras zakończonych i zamkniętych.
@@ -22,7 +27,8 @@ export async function recomputeSettlement(db: Db, tenantId: string, driverId: st
     .eq("period_start", from)
     .eq("period_end", to)
     .maybeSingle();
-  if (existing && existing.status !== "draft") return { driverId, status: "approved_skipped", totalGrosze: 0, missingRuleDays: [] };
+  if (existing && existing.status !== "draft")
+    return { driverId, status: "approved_skipped", totalGrosze: 0, missingRuleDays: [] };
 
   let settlementId = existing?.id;
   if (!settlementId) {
@@ -67,7 +73,10 @@ export async function recomputeSettlement(db: Db, tenantId: string, driverId: st
 export async function refreshTotal(db: Db, settlementId: string): Promise<number> {
   const { data } = await db.from("driver_settlement_lines").select("amount").eq("settlement_id", settlementId);
   const total = Math.round((data ?? []).reduce((a, l) => a + Number(l.amount) * 100, 0));
-  await db.from("driver_settlements").update({ total_amount: total / 100 }).eq("id", settlementId);
+  await db
+    .from("driver_settlements")
+    .update({ total_amount: total / 100 })
+    .eq("id", settlementId);
   return total;
 }
 
