@@ -15,7 +15,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 // /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
 // /portal/login — logowanie klienta hurtowni e-mailem i hasłem nadanym w panelu
-const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login", "/portal/login"];
+// /api/v1/ — integracje ERP/WMS: uwierzytelnienie kluczem API firmy (nie sesją)
+const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login", "/portal/login", "/api/v1/"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));

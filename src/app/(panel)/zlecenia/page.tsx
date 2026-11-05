@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ClipboardList, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Plus, Upload } from "lucide-react";
 import { EmptyState, Notice, PageHeader, Panel, Segmented } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DocRef, Pill } from "@/components/ui/status";
 import { DATE_RE, formatPln, toGrosze } from "@/lib/forms";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import {
   formatDayLabel,
@@ -37,7 +38,18 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
   const filter = typeof sp.filtr === "string" ? sp.filtr : "";
   const editable = canEdit(ctx.role);
 
-  const all = await getDayOrders(ctx.tenantId, day);
+  const supabase = await createClient();
+  const [all, { count: unmatchedCount }] = await Promise.all([
+    getDayOrders(ctx.tenantId, day),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", ctx.tenantId)
+      .is("delivery_point_id", null)
+      .neq("status", "cancelled")
+      .gte("delivery_date", shiftDay(today, -14)),
+  ]);
+  const unmatched = unmatchedCount ?? 0;
   const active = all.filter((o) => o.status !== "cancelled");
   const summary = summarizeOrders(active);
   const counts = {
@@ -73,9 +85,14 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
         description="Zamówienia do dostarczenia w wybranym dniu, pogrupowane według tras stałych. Status magazynu zmienisz jednym kliknięciem."
         actions={
           editable ? (
-            <Link href={`/zlecenia/nowe?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
-              <Plus /> Nowe zamówienie
-            </Link>
+            <>
+              <Link href="/zlecenia/import" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                <Upload /> Import z pliku
+              </Link>
+              <Link href={`/zlecenia/nowe?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
+                <Plus /> Nowe zamówienie
+              </Link>
+            </>
           ) : undefined
         }
       />
@@ -106,6 +123,14 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
       </div>
 
       {sp.dodano && <Notice>Dodano zamówienie.</Notice>}
+      {unmatched > 0 && (
+        <Notice tone="warning">
+          {unmatched} zamówień z importu czeka na przypięcie do adresu dostawy.{" "}
+          <Link href="/zlecenia/dopasuj" className="font-medium underline">
+            Dopasuj teraz
+          </Link>
+        </Notice>
+      )}
 
       <div className="mb-5 grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)] sm:grid-cols-4 xl:grid-cols-7">
         <Tile label="Zamówienia" value={String(summary.count)} />

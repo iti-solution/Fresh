@@ -6,7 +6,11 @@ import { formToObject, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
+import { DATE_RE } from "@/lib/forms";
+import type { RawRow } from "@/lib/tabular";
+import type { OrderMapping } from "../domain/import";
 import { orderSchema, READINESS, type Readiness } from "../domain/orders";
+import { runOrderImport, type ImportResult } from "./import";
 
 export async function createOrder(_prev: FormState, fd: FormData): Promise<FormState> {
   const ctx = await requireTenantContext();
@@ -60,4 +64,101 @@ export async function cancelOrder(orderId: string): Promise<void> {
   await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId).eq("tenant_id", ctx.tenantId).neq("status", "delivered");
   revalidatePath("/zlecenia");
   revalidatePath("/pulpit");
+}
+
+// ---------- IMPORT Z PLIKU (M1.5) ----------
+export type FileImportPayload = {
+  fileName: string;
+  defaultDate: string;
+  mapping: OrderMapping;
+  rows: RawRow[];
+  firstLine: number;
+};
+
+export type FileImportResult = { ok: boolean; message?: string; result?: ImportResult };
+
+const MAX_ROWS = 5000;
+
+export async function importOrdersFromFile(payload: FileImportPayload): Promise<FileImportResult> {
+  const ctx = await requireTenantContext();
+  if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień do importu zamówień." };
+  if (!DATE_RE.test(payload.defaultDate)) return { ok: false, message: "Wybierz dzień dostawy." };
+  if (!payload.mapping.external_ref) return { ok: false, message: "Wskaż kolumnę z numerem zamówienia." };
+  if (!payload.mapping.customer_code && !payload.mapping.point_code && !payload.mapping.address)
+    return { ok: false, message: "Wskaż kolumnę z kodem klienta, kodem adresu albo adresem — inaczej nie da się dopasować zamówień." };
+  if (!Array.isArray(payload.rows) || payload.rows.length === 0) return { ok: false, message: "Plik nie ma wierszy z danymi." };
+  if (payload.rows.length > MAX_ROWS) return { ok: false, message: `Maksymalnie ${MAX_ROWS} wierszy w jednym pliku.` };
+  const supabase = await createClient();
+  await supabase.from("import_mappings").upsert({
+    tenant_id: ctx.tenantId,
+    kind: "orders",
+    mapping: payload.mapping as never,
+    updated_by: ctx.userId,
+    updated_at: new Date().toISOString(),
+  });
+  const result = await runOrderImport(supabase, {
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
+    rows: payload.rows,
+    mapping: payload.mapping,
+    defaultDate: payload.defaultDate,
+    source: "file",
+    fileName: payload.fileName.slice(0, 200),
+    firstLine: payload.firstLine,
+  });
+  revalidatePath("/zlecenia");
+  revalidatePath("/pulpit");
+  revalidatePath("/planowanie");
+  return { ok: true, result };
+}
+
+// ---------- RĘCZNE DOPASOWANIE ----------
+/** Przypina zamówienie do adresu; opcjonalnie zapamiętuje kod z ERP na adresie/kliencie, żeby kolejny import trafił sam. */
+export async function assignOrderPoint(orderId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await requireTenantContext();
+  if (!canEdit(ctx.role)) return { ok: false, message: "Nie masz uprawnień." };
+  const pointId = String(fd.get("point_id") ?? "");
+  const remember = fd.get("remember") === "on";
+  if (!pointId) return { ok: false, message: "Wybierz adres dostawy." };
+  const supabase = await createClient();
+  const [{ data: order }, { data: point }] = await Promise.all([
+    supabase.from("orders").select("id, raw_point_code, raw_customer_code, status").eq("id", orderId).eq("tenant_id", ctx.tenantId).maybeSingle(),
+    supabase.from("delivery_points").select("id, external_code, customer_id, customers(external_code)").eq("id", pointId).eq("tenant_id", ctx.tenantId).maybeSingle(),
+  ]);
+  if (!order || !point) return { ok: false, message: "Nie znaleziono zamówienia albo adresu." };
+  const { error } = await supabase
+    .from("orders")
+    .update({ delivery_point_id: pointId, status: order.status === "unmatched" ? "new" : order.status })
+    .eq("id", orderId)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) return { ok: false, message: "Nie udało się zapisać." };
+  let remembered = "";
+  if (remember) {
+    if (order.raw_point_code && !point.external_code) {
+      const { error: e } = await supabase.from("delivery_points").update({ external_code: order.raw_point_code }).eq("id", pointId).eq("tenant_id", ctx.tenantId);
+      if (!e) remembered = ` Zapamiętano kod adresu ${order.raw_point_code}.`;
+    } else if (order.raw_customer_code && !point.customers?.external_code) {
+      const { error: e } = await supabase
+        .from("customers")
+        .update({ external_code: order.raw_customer_code })
+        .eq("id", point.customer_id)
+        .eq("tenant_id", ctx.tenantId);
+      if (!e) remembered = ` Zapamiętano kod klienta ${order.raw_customer_code}.`;
+    }
+  }
+  revalidatePath("/zlecenia");
+  revalidatePath("/zlecenia/dopasuj");
+  revalidatePath("/planowanie");
+  return { ok: true, message: `Dopasowano.${remembered}` };
+}
+
+/** Kreator importu (wspólny komponent) — ten sam import, wynik w formacie kreatora. */
+export async function importOrdersWizard(p: FileImportPayload): Promise<{
+  ok: boolean;
+  message?: string;
+  summary?: Record<string, number>;
+  issues?: { line: number; ref: string; problem: string }[];
+}> {
+  const r = await importOrdersFromFile(p);
+  return r.ok && r.result ? { ok: true, summary: r.result.summary, issues: r.result.issues.slice(0, 300) } : { ok: false, message: r.message };
 }
