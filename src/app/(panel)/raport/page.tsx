@@ -23,6 +23,7 @@ import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } fro
 import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
 import { formatDayLabel, nextWorkingDay, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { requireAccess } from "@/modules/tenancy/server/context";
+import { getCustomerPackaging } from "@/modules/packaging/server/queries";
 
 export const metadata: Metadata = { title: "Raport zarządu" };
 
@@ -52,13 +53,17 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
   const planKey = sp.plan === "jutro" ? "jutro" : "dzis";
   const planDate = planKey === "jutro" ? nextWorkingDay(today) : today;
   const planNow = nowForDay(planDate, today, nowInWarsaw());
-  const [all, current, cash, pack, planRoutes] = await Promise.all([
+  const [all, current, cash, pack, planRoutes, overdueCtx] = await Promise.all([
     getReportRoutes(ctx.tenantId, rangeStart, end),
     getReportRoutes(ctx.tenantId, start, end, { withNotes: true }),
     getDriverCash(ctx.tenantId),
     getPackagingBalances(ctx.tenantId),
     getReportRoutes(ctx.tenantId, planDate, planDate),
+    getCustomerPackaging(ctx.tenantId, today),
   ]);
+  // zalegające > 30 dni (FIFO z księgi): suma i największy dłużnik
+  const overdueRows = overdueCtx.rows.filter((r) => r.overdueTotal > 0);
+  const overdueQty = overdueRows.reduce((a, r) => a + r.overdueTotal, 0);
 
   const byDay = new Map<string, ReportRoute[]>();
   for (const r of all) byDay.set(r.date, [...(byDay.get(r.date) ?? []), r]);
@@ -428,8 +433,12 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                       : `${formatDayLabel(t.day)}: ${pct(t.k.onTimePct)} (${t.k.onTime} z ${t.k.withWindow})`,
                 }))}
               />
-              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4 text-center">
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-center sm:grid-cols-4">
                 <MiniStat label="km w okresie" value={cur.km.toLocaleString("pl-PL")} />
+                <MiniStat
+                  label="min obsługi punktu"
+                  value={cur.serviceCount ? String(Math.round(cur.serviceMinutes / cur.serviceCount)) : "—"}
+                />
                 <MiniStat
                   label="km na dostawę"
                   value={cur.finished ? (cur.km / cur.finished).toLocaleString("pl-PL", { maximumFractionDigits: 1 }) : "—"}
@@ -601,6 +610,25 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                       </li>
                     ))}
                   </ul>
+                </div>
+                <div className={cn("rounded-lg px-3 py-2", overdueQty ? "bg-warning-soft" : "bg-surface-2")}>
+                  <p className="text-xs text-muted">Zalega u klientów ponad 30 dni</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {overdueQty.toLocaleString("pl-PL")} szt.{" "}
+                    <span className="text-xs font-normal text-muted">u {overdueRows.length} klientów</span>
+                  </p>
+                  {overdueRows[0] && (
+                    <p className="text-xs text-muted">
+                      najwięcej:{" "}
+                      <Link
+                        href={`/opakowania?widok=historia&klient=${overdueRows[0].customerId}`}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {overdueRows[0].customer}
+                      </Link>{" "}
+                      ({overdueRows[0].overdueTotal} szt.)
+                    </p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
                   <div>

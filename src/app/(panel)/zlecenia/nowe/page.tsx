@@ -5,7 +5,7 @@ import { FormRenderer } from "@/components/forms/form-renderer";
 import { PageHeader } from "@/components/panel/module-placeholder";
 import { DATE_RE } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { BRANCH_LABELS } from "@/modules/masterdata/domain/format";
+import { pointTypeLabel } from "@/modules/masterdata/domain/format";
 import { nextWorkingDay, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { createOrder } from "@/modules/orders/server/actions";
 import { canEdit } from "@/modules/tenancy/domain/access";
@@ -21,14 +21,14 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
   const supabase = await createClient();
   const { data: points } = await supabase
     .from("delivery_points")
-    .select("id, name, branch_type, city, customers(name, external_code)")
+    .select("id, name, city, point_types(name), customers(name, external_code)")
     .eq("tenant_id", ctx.tenantId)
     .eq("is_active", true);
 
   const options = (points ?? [])
     .map((p) => ({
       value: p.id,
-      label: `${p.customers?.external_code ? p.customers.external_code + " · " : ""}${p.customers?.name ?? ""} — ${p.name} (${BRANCH_LABELS[p.branch_type] ?? p.branch_type}), ${p.city}`,
+      label: `${p.customers?.external_code ? p.customers.external_code + " · " : ""}${p.customers?.name ?? ""} — ${p.name} (${pointTypeLabel(p.point_types)}), ${p.city}`,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "pl"));
 
@@ -54,9 +54,9 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
               {
                 kind: "select",
                 name: "delivery_point_id",
-                label: "Klient i oddział",
+                label: "Klient i adres dostawy",
                 options,
-                emptyLabel: "— wybierz oddział —",
+                emptyLabel: "— wybierz adres dostawy —",
                 span: 3,
               },
               { kind: "date", name: "delivery_date", label: "Data dostawy", defaultValue: day },
@@ -77,7 +77,7 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
                 nameTo: "window_end",
                 label: "Inne okno niż zwykle (opcjonalnie)",
                 span: 2,
-                hint: "puste = okno oddziału",
+                hint: "puste = okno adresu",
               },
             ],
           },

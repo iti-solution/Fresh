@@ -10,7 +10,7 @@ import { pointSections } from "@/modules/masterdata/ui/field-defs";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
-export const metadata: Metadata = { title: "Oddział" };
+export const metadata: Metadata = { title: "Adres dostawy" };
 
 // Obsługuje zarówno /oddzialy/nowy, jak i /oddzialy/<id>
 export default async function PointPage({ params }: PageProps<"/kartoteki/klienci/[id]/oddzialy/[pointId]">) {
@@ -27,6 +27,13 @@ export default async function PointPage({ params }: PageProps<"/kartoteki/klienc
     .eq("id", id)
     .maybeSingle();
   if (!customer) notFound();
+
+  const { data: types } = await supabase
+    .from("point_types")
+    .select("id, name, is_temporary, is_active")
+    .eq("tenant_id", ctx.tenantId)
+    .order("sort")
+    .order("name");
 
   let point: Record<string, unknown> | null = null;
   let windows = { window1_from: "", window1_to: "", window2_from: "", window2_to: "" };
@@ -50,11 +57,14 @@ export default async function PointPage({ params }: PageProps<"/kartoteki/klienc
           ‹ {customer.name}
         </Link>
       </nav>
-      <PageHeader title={isNew ? "Nowy oddział" : `Oddział: ${String(point?.name ?? "")}`} description={customer.name} />
+      <PageHeader
+        title={isNew ? "Nowy adres dostawy" : `Adres dostawy: ${String(point?.name ?? "")}`}
+        description={customer.name}
+      />
       <FormRenderer
         action={savePoint.bind(null, id, isNew ? null : pointId)}
-        sections={pointSections(point, windows)}
-        submitLabel={isNew ? "Dodaj oddział" : "Zapisz oddział"}
+        sections={pointSections(point, windows, types ?? [])}
+        submitLabel={isNew ? "Dodaj adres dostawy" : "Zapisz adres dostawy"}
         cancelHref={`/kartoteki/klienci/${id}`}
       />
     </>

@@ -215,3 +215,14 @@ describe("packagingSummary", () => {
     expect(s.drivers).toEqual([{ partyId: "d1", byType: { SKRZ: -3 } }]);
   });
 });
+
+describe("mini-KPI (M6.2)", () => {
+  it("czas obsługi, km/punkt, punkty/trasę", async () => {
+    const { serviceMinutes, miniKpis, dayKpis } = await import("./reports");
+    expect(serviceMinutes("06:10", "06:22")).toBe(12);
+    expect(serviceMinutes("06:10", null)).toBeNull();
+    expect(serviceMinutes("09:00", "06:00")).toBeNull();
+    const k = { ...dayKpis([]), routes: 2, finished: 20, km: 150, serviceMinutes: 200, serviceCount: 20 };
+    expect(miniKpis(k)).toMatchObject({ kmPerStop: 7.5, stopsPerRoute: 10, serviceMinutesAvg: 10 });
+  });
+});

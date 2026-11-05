@@ -1,7 +1,5 @@
 // Konfiguracja formularzy kartotek (bez logiki — tylko pola i wartości domyślne).
 import type { FieldOption, SectionDef } from "@/components/forms/form-renderer";
-import { BRANCH_TYPES } from "../domain/schemas";
-import { BRANCH_LABELS } from "../domain/format";
 
 type Row = Record<string, unknown> | null | undefined;
 const s = (row: Row, key: string) => (row?.[key] as string | null | undefined) ?? "";
@@ -20,7 +18,7 @@ export function customerSections(c?: Row): SectionDef[] {
           name: "category",
           label: "Kategoria",
           defaultValue: s(c, "category"),
-          placeholder: "restauracja, hotel, stołówka…",
+          placeholder: "np. sklep, firma budowlana, gastronomia",
         },
         { kind: "checkbox", name: "is_active", label: "Aktywny", defaultChecked: c ? Boolean(c.is_active) : true },
       ],
@@ -37,32 +35,40 @@ export function customerSections(c?: Row): SectionDef[] {
   ];
 }
 
-const branchOptions: FieldOption[] = BRANCH_TYPES.map((b) => ({ value: b, label: BRANCH_LABELS[b] }));
+export type PointTypeOption = { id: string; name: string; is_temporary: boolean; is_active: boolean };
 
 export function pointSections(
   p: Row,
   windows: { window1_from: string; window1_to: string; window2_from: string; window2_to: string },
+  types: PointTypeOption[],
 ): SectionDef[] {
+  const current = s(p, "point_type_id");
+  // nieaktywny typ zostaje na liście tylko, gdy ten adres już go ma
+  const typeOptions: FieldOption[] = types
+    .filter((t) => t.is_active || t.id === current)
+    .map((t) => ({ value: t.id, label: t.is_temporary ? `${t.name} (adres tymczasowy)` : t.name }));
+  const fallback = types.find((t) => t.is_active && /inny/i.test(t.name))?.id ?? typeOptions[0]?.value ?? "";
   return [
     {
-      title: "Oddział",
+      title: "Adres dostawy",
       description:
-        "Każde miejsce dostawy klienta (restauracja, kuchnia, bar, magazyn) to osobny oddział z własnym adresem i godzinami.",
+        "Każde miejsce, do którego wozisz towar temu klientowi (siedziba, sklep, magazyn, budowa…), to osobny adres z własnymi godzinami i uwagami.",
       fields: [
         {
           kind: "text",
           name: "name",
-          label: "Nazwa oddziału",
-          defaultValue: s(p, "name") || "Lokal główny",
+          label: "Nazwa adresu",
+          defaultValue: s(p, "name") || "Adres główny",
           span: 1,
           required: true,
         },
         {
           kind: "select",
-          name: "branch_type",
-          label: "Typ",
-          defaultValue: s(p, "branch_type") || "restaurant",
-          options: branchOptions,
+          name: "point_type_id",
+          label: "Typ adresu",
+          defaultValue: current || fallback,
+          options: typeOptions,
+          hint: "listę typów zmienisz w Ustawieniach",
         },
         { kind: "text", name: "external_code", label: "Kod w ERP", defaultValue: s(p, "external_code") },
         {
@@ -116,11 +122,31 @@ export function pointSections(
         {
           kind: "date",
           name: "active_from",
-          label: "Sezon od (opcjonalnie)",
+          label: "Czynny od (opcjonalnie)",
           defaultValue: s(p, "active_from"),
-          hint: "dla klientów sezonowych",
+          hint: "sezon albo czas trwania budowy",
         },
-        { kind: "date", name: "active_to", label: "Sezon do", defaultValue: s(p, "active_to") },
+        {
+          kind: "date",
+          name: "active_to",
+          label: "Czynny do",
+          defaultValue: s(p, "active_to"),
+          hint: "po tej dacie adres znika z planu",
+        },
+      ],
+    },
+    {
+      title: "Osoba na miejscu",
+      description: "Np. kierownik budowy, magazynier, przyjmujący towar. Kierowca zadzwoni do niej jednym przyciskiem.",
+      fields: [
+        {
+          kind: "text",
+          name: "site_manager_name",
+          label: "Imię i nazwisko / funkcja",
+          defaultValue: s(p, "site_manager_name"),
+          span: 2,
+        },
+        { kind: "tel", name: "site_manager_phone", label: "Telefon", defaultValue: s(p, "site_manager_phone") },
       ],
     },
     {
@@ -267,7 +293,7 @@ export function templateSections(t: Row, vehicles: FieldOption[], drivers: Field
     {
       title: "Trasa stała",
       description:
-        "Z szablonu powstaje trasa w planie dnia. Zamówienia oddziałów przypisanych do szablonu trafiają na nią automatycznie.",
+        "Z szablonu powstaje trasa w planie dnia. Zamówienia z adresów przypisanych do szablonu trafiają na nią automatycznie.",
       fields: [
         {
           kind: "text",

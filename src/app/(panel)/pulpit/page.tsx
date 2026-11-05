@@ -145,7 +145,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/pulpit
               </Link>
             }
           >
-            Zacznij od klientów i ich oddziałów albo załóż firmę demo na stronie{" "}
+            Zacznij od klientów i ich adresów dostaw albo załóż firmę demo na stronie{" "}
             <Link href="/wybierz-firme" className="text-primary-strong hover:underline">
               wyboru firmy
             </Link>

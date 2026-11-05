@@ -44,3 +44,22 @@ test("logowanie do portalu wymaga e-maila i hasła", async ({ page }) => {
   await page.getByRole("button", { name: "Zaloguj się" }).click();
   await expect(page.getByText("Podaj e-mail i hasło.")).toBeVisible();
 });
+
+test("API zamówień wymaga klucza firmy", async ({ request }) => {
+  const res = await request.post("/api/v1/orders", { data: { orders: [] } });
+  expect(res.status()).toBe(401);
+  expect((await res.json()).error).toBe("missing_api_key");
+});
+
+test("API kierowcy bez sesji zwraca 401 zamiast przekierowania", async ({ request }) => {
+  const res = await request.post("/api/driver/sync", { data: { events: [] }, maxRedirects: 0 });
+  expect(res.status()).toBe(401);
+});
+
+test("aplikacja kierowcy ma manifest i service worker", async ({ request }) => {
+  const m = await request.get("/driver.webmanifest");
+  expect(m.ok()).toBe(true);
+  expect((await m.json()).start_url).toBe("/driver");
+  const sw = await request.get("/driver-sw.js");
+  expect(sw.ok()).toBe(true);
+});

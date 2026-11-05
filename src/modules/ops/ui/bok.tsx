@@ -64,7 +64,7 @@ export function RouteHeader({
       </div>
       <RouteStrip stops={[...route.stops].sort((a, b) => a.sequence - b.sequence)} now={now} highlightId={highlightId} />
       <p className="flex items-center gap-2 text-[13px]">
-        <MapPin className="size-4 shrink-0 text-primary" />
+        <MapPin className="size-4 shrink-0 text-primary-strong" />
         <span>{whereIsDriver(route, now, eta)}</span>
       </p>
     </div>

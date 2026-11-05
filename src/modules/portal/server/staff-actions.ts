@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { generatePassword, normalizedUnitWeight, portalAccessSchema, productSchema, SAMPLE_PRODUCTS } from "../domain/portal";
+import { BRAND } from "@/lib/brand";
 
 // =========================================================
 // KATALOG PRODUKTÓW (panel hurtowni)
@@ -106,7 +107,7 @@ export async function createPortalAccess(customerId: string, _prev: PortalAccess
     const exists = error?.code === "email_exists" || /already/i.test(error?.message ?? "");
     return {
       ok: false,
-      fieldErrors: exists ? { email: ["Ten e-mail ma już konto w Fresh TMS — użyj innego adresu klienta."] } : undefined,
+      fieldErrors: exists ? { email: [`Ten e-mail ma już konto w ${BRAND.full} — użyj innego adresu klienta.`] } : undefined,
       message: exists ? "Popraw adres e-mail." : "Nie udało się założyć konta. Spróbuj ponownie.",
     };
   }

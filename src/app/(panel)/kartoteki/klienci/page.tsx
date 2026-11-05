@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/panel/module-placeholder";
@@ -10,7 +10,7 @@ import { todayInWarsaw } from "@/modules/orders/domain/orders";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
-export const metadata: Metadata = { title: "Klienci i oddziały" };
+export const metadata: Metadata = { title: "Klienci i adresy dostaw" };
 
 export default async function CustomersPage({ searchParams }: PageProps<"/kartoteki/klienci">) {
   const ctx = await requireAccess("/kartoteki/klienci");
@@ -48,10 +48,15 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
   return (
     <>
       <PageHeader
-        title="Klienci i oddziały"
-        description={`${rows.length} klientów · każdy może mieć kilka oddziałów (kuchnia, bar, magazyn).`}
+        title="Klienci i adresy dostaw"
+        description={`${rows.length} klientów · każdy może mieć kilka adresów dostaw (sklep, magazyn, budowa…).`}
         actions={
           <>
+            {canEdit(ctx.role) && (
+              <Link href="/kartoteki/klienci/import" className={buttonVariants({ variant: "outline" })}>
+                <Upload /> Import z Excela
+              </Link>
+            )}
             {canEdit(ctx.role) && (
               <Link href="/kartoteki/klienci/nowy" className={buttonVariants()}>
                 <Plus /> Nowy klient
@@ -93,7 +98,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/kartot
               <tr>
                 <th className="px-3 py-2 font-medium">Kod</th>
                 <th className="px-3 py-2 font-medium">Klient</th>
-                <th className="px-3 py-2 font-medium">Oddziały</th>
+                <th className="px-3 py-2 font-medium">Adresy</th>
                 <th className="px-3 py-2 font-medium">Opiekun</th>
                 <th className="px-3 py-2 font-medium">Uwagi</th>
                 <th className="px-3 py-2 font-medium">Status</th>

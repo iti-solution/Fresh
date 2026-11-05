@@ -11,7 +11,7 @@ export function CreateTenantForm() {
     <form action={action} className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="name">Nazwa firmy</Label>
-        <Input id="name" name="name" required minLength={2} placeholder="np. Hurtownia Owoców Kowalski" />
+        <Input id="name" name="name" required minLength={2} placeholder="np. Hurtownia Kowalski" />
       </div>
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
       <Button type="submit" disabled={pending}>

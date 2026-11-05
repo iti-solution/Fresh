@@ -158,6 +158,7 @@ export type Alert = {
   detail: string;
   routeId: string;
   stopId?: string;
+  href?: string;
 };
 
 /** Alerty centrum operacyjnego, od najpilniejszych. */
@@ -210,6 +211,7 @@ export function dispatcherAlerts(routes: ReportRoute[], now: string | null): Ale
         title: `${r.name}: wróciła — do zamknięcia`,
         detail: `Przyjmij gotówkę i opakowania${who ? ` · ${who}` : ""}`,
         routeId: r.id,
+        href: `/rozliczenia/zamkniecie/${r.id}`,
       });
     }
   }
@@ -236,6 +238,9 @@ export type DayKpis = {
   deliveredValueGrosze: number;
   km: number;
   costGrosze: number;
+  /** Czas obsługi punktu (na miejscu → zakończenie): suma minut i liczba punktów z oboma czasami. */
+  serviceMinutes: number;
+  serviceCount: number;
 };
 
 const DELIVERED: StopStatus[] = ["delivered", "partial", "complaint"];
@@ -266,6 +271,8 @@ export function dayKpis(routes: ReportRoute[]): DayKpis {
     deliveredValueGrosze: 0,
     km: 0,
     costGrosze: 0,
+    serviceMinutes: 0,
+    serviceCount: 0,
   };
   for (const r of routes) {
     k.km += r.km ?? 0;
@@ -281,6 +288,11 @@ export function dayKpis(routes: ReportRoute[]): DayKpis {
       if (s.status === "refused") k.refused += 1;
       if (s.status === "absent") k.absent += 1;
       if (DELIVERED.includes(s.status)) k.deliveredValueGrosze += s.valueGrosze;
+      const svc = serviceMinutes(s.arrivedAt, s.completedAt);
+      if (svc !== null) {
+        k.serviceMinutes += svc;
+        k.serviceCount += 1;
+      }
       const tl = stopTimeliness(s, null);
       if (tl === "on_time" || tl === "late") {
         k.withWindow += 1;
@@ -291,6 +303,23 @@ export function dayKpis(routes: ReportRoute[]): DayKpis {
   k.exceptions = k.complaints + k.refused + k.absent;
   k.onTimePct = k.withWindow ? Math.round((k.onTime / k.withWindow) * 1000) / 10 : null;
   return k;
+}
+
+/** Czas obsługi punktu w minutach; null gdy brak czasów albo niespójne (ujemne, powyżej 4 h). */
+export function serviceMinutes(from: string | null, to: string | null): number | null {
+  if (!from || !to) return null;
+  const d = minutesBetween(from, to);
+  return d >= 0 && d <= 240 ? d : null;
+}
+
+/** Mini-KPI (M6.2): km na punkt, punkty na trasę, średni czas obsługi punktu. */
+export function miniKpis(k: DayKpis) {
+  return {
+    kmPerStop: k.finished && k.km ? Math.round((k.km / k.finished) * 10) / 10 : null,
+    stopsPerRoute: k.routes ? Math.round((k.finished / k.routes) * 10) / 10 : null,
+    serviceMinutesAvg: k.serviceCount ? Math.round(k.serviceMinutes / k.serviceCount) : null,
+    onTimePct: k.onTimePct,
+  };
 }
 
 /** Zmiana procentowa (zaokrąglona do 0,1). null gdy brak bazy porównania. */

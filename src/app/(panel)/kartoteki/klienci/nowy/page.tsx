@@ -14,11 +14,11 @@ export default async function NewCustomerPage() {
   if (!canEdit(ctx.role)) redirect("/kartoteki/klienci");
   return (
     <>
-      <PageHeader title="Nowy klient" description="Po zapisaniu dodasz oddziały (adresy dostaw) z godzinami przyjęć." />
+      <PageHeader title="Nowy klient" description="Po zapisaniu dodasz adresy dostaw z godzinami przyjęć." />
       <FormRenderer
         action={saveCustomer.bind(null, null)}
         sections={customerSections()}
-        submitLabel="Zapisz i dodaj oddział"
+        submitLabel="Zapisz i dodaj adres dostawy"
         cancelHref="/kartoteki/klienci"
       />
     </>

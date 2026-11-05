@@ -8,6 +8,7 @@ import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { navForRole, ROLE_LABELS } from "@/modules/tenancy/domain/access";
 import { signOut } from "@/modules/tenancy/server/actions";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
+import { BRAND } from "@/lib/brand";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireTenantContext();
@@ -21,7 +22,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col bg-ink text-ink-foreground md:flex">
         <div className="flex h-14 shrink-0 items-center border-b border-white/[0.07] px-5">
-          <Link href="/" aria-label="Fresh TMS — strona startowa">
+          <Link href="/" aria-label={`${BRAND.full} — strona startowa`}>
             <Wordmark inverted />
           </Link>
         </div>

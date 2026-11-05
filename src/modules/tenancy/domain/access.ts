@@ -15,7 +15,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 // /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
 // /portal/login — logowanie klienta hurtowni e-mailem i hasłem nadanym w panelu
-const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login", "/portal/login"];
+// /api/v1/ — integracje ERP/WMS: uwierzytelnienie kluczem API firmy (nie sesją)
+const PUBLIC_PREFIXES = ["/login", "/auth/", "/driver/login", "/portal/login", "/api/v1/"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));
@@ -48,16 +49,24 @@ export const NAV_ITEMS: NavItem[] = [
     built: true,
     roles: ["admin", "dispatcher", "management", "viewer"],
   },
-  { href: "/kartoteki/klienci", label: "Klienci i oddziały", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
+  {
+    href: "/kartoteki/klienci",
+    label: "Klienci i adresy dostaw",
+    group: "Kartoteki",
+    milestone: "M1",
+    built: true,
+    roles: STAFF,
+  },
   { href: "/kartoteki/pojazdy", label: "Pojazdy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/kierowcy", label: "Kierowcy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/przewoznicy", label: "Przewoźnicy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/produkty", label: "Katalog produktów", group: "Kartoteki", milestone: "P1", built: true, roles: STAFF },
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
-  { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
-  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
+  { href: "/opakowania", label: "Opakowania i gotówka", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
+  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
-  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", roles: ["admin"] },
+  { href: "/start", label: "Pierwsze kroki", group: "System", milestone: "M6", built: true, roles: ["admin", "dispatcher"] },
+  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
 
 export function navForRole(role: Role): NavItem[] {

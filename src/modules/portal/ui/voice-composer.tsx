@@ -240,7 +240,7 @@ export function VoiceComposer({ points }: { points: BuilderPoint[] }) {
             aria-label={recording ? "Zatrzymaj nagrywanie" : "Nagraj zamówienie"}
             className={cn(
               "flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-white shadow-md transition-colors",
-              recording ? "live-dot bg-danger" : "bg-primary hover:bg-[#ec5800]",
+              recording ? "live-dot bg-danger" : "bg-primary hover:bg-primary-hover",
             )}
           >
             {recording ? <Square className="size-6 fill-white" /> : <Mic className="size-7" />}

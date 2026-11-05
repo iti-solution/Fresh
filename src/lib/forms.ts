@@ -136,3 +136,14 @@ export function formatPlnCompact(grosze: number): string {
   if (abs >= 10_000) return `${(zl / 1000).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} tys. zł`;
   return `${Math.round(zl).toLocaleString("pl-PL")} zł`;
 }
+
+/** Kwota w zł z pola tekstowego → grosze bez arytmetyki zmiennoprzecinkowej („1 240,5” → 124050). Null gdy niepoprawna. */
+export function parseGrosze(raw: unknown, allowNegative = false): number | null {
+  const s = String(raw ?? "")
+    .replace(/\s| /g, "")
+    .replace(",", ".");
+  const m = /^(-)?(\d{1,9})(?:\.(\d{1,2}))?$/.exec(s);
+  if (!m || (m[1] && !allowNegative)) return null;
+  const g = Number(m[2]) * 100 + Number((m[3] ?? "").padEnd(2, "0"));
+  return m[1] ? -g : g;
+}

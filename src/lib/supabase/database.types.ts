@@ -10,33 +10,52 @@ export type Database = {
     Tables: {
       attachments: {
         Row: {
+          client_file_id: string | null;
+          content_type: string | null;
           created_at: string;
           event_id: string | null;
           id: string;
           kind: string;
+          route_id: string | null;
+          size_bytes: number | null;
           stop_id: string | null;
           storage_path: string;
           tenant_id: string;
         };
         Insert: {
+          client_file_id?: string | null;
+          content_type?: string | null;
           created_at?: string;
           event_id?: string | null;
           id?: string;
           kind: string;
+          route_id?: string | null;
+          size_bytes?: number | null;
           stop_id?: string | null;
           storage_path: string;
           tenant_id: string;
         };
         Update: {
+          client_file_id?: string | null;
+          content_type?: string | null;
           created_at?: string;
           event_id?: string | null;
           id?: string;
           kind?: string;
+          route_id?: string | null;
+          size_bytes?: number | null;
           stop_id?: string | null;
           storage_path?: string;
           tenant_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "attachments_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "attachments_event_id_fkey";
             columns: ["event_id"];
@@ -595,8 +614,11 @@ export type Database = {
           location: unknown;
           location_locked: boolean;
           name: string;
+          point_type_id: string | null;
           postal_code: string | null;
           service_minutes: number;
+          site_manager_name: string | null;
+          site_manager_phone: string | null;
           tenant_id: string;
           unloading_zone: string | null;
         };
@@ -621,8 +643,11 @@ export type Database = {
           location?: unknown;
           location_locked?: boolean;
           name: string;
+          point_type_id?: string | null;
           postal_code?: string | null;
           service_minutes?: number;
+          site_manager_name?: string | null;
+          site_manager_phone?: string | null;
           tenant_id: string;
           unloading_zone?: string | null;
         };
@@ -647,12 +672,22 @@ export type Database = {
           location?: unknown;
           location_locked?: boolean;
           name?: string;
+          point_type_id?: string | null;
           postal_code?: string | null;
           service_minutes?: number;
+          site_manager_name?: string | null;
+          site_manager_phone?: string | null;
           tenant_id?: string;
           unloading_zone?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "delivery_points_point_type_id_fkey";
+            columns: ["point_type_id"];
+            isOneToOne: false;
+            referencedRelation: "point_types";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "delivery_points_customer_id_fkey";
             columns: ["customer_id"];
@@ -807,8 +842,12 @@ export type Database = {
       driver_settlement_lines: {
         Row: {
           amount: number;
+          code: string | null;
           component: string;
+          created_by: string | null;
           id: string;
+          is_manual: boolean;
+          label: string | null;
           note: string | null;
           quantity: number;
           rate: number;
@@ -820,8 +859,12 @@ export type Database = {
         };
         Insert: {
           amount: number;
+          code?: string | null;
           component: string;
+          created_by?: string | null;
           id?: string;
+          is_manual?: boolean;
+          label?: string | null;
           note?: string | null;
           quantity: number;
           rate: number;
@@ -833,8 +876,12 @@ export type Database = {
         };
         Update: {
           amount?: number;
+          code?: string | null;
           component?: string;
+          created_by?: string | null;
           id?: string;
+          is_manual?: boolean;
+          label?: string | null;
           note?: string | null;
           quantity?: number;
           rate?: number;
@@ -877,10 +924,13 @@ export type Database = {
       };
       driver_settlements: {
         Row: {
+          approved_at: string | null;
           approved_by: string | null;
           created_at: string;
           driver_id: string;
+          exported_at: string | null;
           id: string;
+          note: string | null;
           period_end: string;
           period_start: string;
           status: Database["public"]["Enums"]["settlement_status"];
@@ -888,10 +938,13 @@ export type Database = {
           total_amount: number;
         };
         Insert: {
+          approved_at?: string | null;
           approved_by?: string | null;
           created_at?: string;
           driver_id: string;
+          exported_at?: string | null;
           id?: string;
+          note?: string | null;
           period_end: string;
           period_start: string;
           status?: Database["public"]["Enums"]["settlement_status"];
@@ -899,10 +952,13 @@ export type Database = {
           total_amount?: number;
         };
         Update: {
+          approved_at?: string | null;
           approved_by?: string | null;
           created_at?: string;
           driver_id?: string;
+          exported_at?: string | null;
           id?: string;
+          note?: string | null;
           period_end?: string;
           period_start?: string;
           status?: Database["public"]["Enums"]["settlement_status"];
@@ -982,6 +1038,38 @@ export type Database = {
           },
           {
             foreignKeyName: "drivers_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      import_mappings: {
+        Row: {
+          kind: string;
+          mapping: Json;
+          tenant_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          kind: string;
+          mapping: Json;
+          tenant_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          kind?: string;
+          mapping?: Json;
+          tenant_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "import_mappings_tenant_id_fkey";
             columns: ["tenant_id"];
             isOneToOne: false;
             referencedRelation: "tenants";
@@ -1234,11 +1322,16 @@ export type Database = {
           column_mapping: Json | null;
           created_at: string;
           created_by: string | null;
+          file_name: string | null;
           file_path: string | null;
           id: string;
+          kind: string;
+          report: Json | null;
           rows_ok: number | null;
+          rows_skipped: number | null;
           rows_total: number | null;
           rows_unmatched: number | null;
+          rows_updated: number | null;
           source: string;
           tenant_id: string;
         };
@@ -1246,11 +1339,16 @@ export type Database = {
           column_mapping?: Json | null;
           created_at?: string;
           created_by?: string | null;
+          file_name?: string | null;
           file_path?: string | null;
           id?: string;
+          kind?: string;
+          report?: Json | null;
           rows_ok?: number | null;
+          rows_skipped?: number | null;
           rows_total?: number | null;
           rows_unmatched?: number | null;
+          rows_updated?: number | null;
           source?: string;
           tenant_id: string;
         };
@@ -1258,11 +1356,16 @@ export type Database = {
           column_mapping?: Json | null;
           created_at?: string;
           created_by?: string | null;
+          file_name?: string | null;
           file_path?: string | null;
           id?: string;
+          kind?: string;
+          report?: Json | null;
           rows_ok?: number | null;
+          rows_skipped?: number | null;
           rows_total?: number | null;
           rows_unmatched?: number | null;
+          rows_updated?: number | null;
           source?: string;
           tenant_id?: string;
         };
@@ -1364,6 +1467,9 @@ export type Database = {
           placed_by: string | null;
           priority: number;
           raw_address: string | null;
+          raw_customer_code: string | null;
+          raw_customer_name: string | null;
+          raw_point_code: string | null;
           readiness: Database["public"]["Enums"]["order_readiness"];
           source: string;
           status: Database["public"]["Enums"]["order_status"];
@@ -1394,6 +1500,9 @@ export type Database = {
           placed_by?: string | null;
           priority?: number;
           raw_address?: string | null;
+          raw_customer_code?: string | null;
+          raw_customer_name?: string | null;
+          raw_point_code?: string | null;
           readiness?: Database["public"]["Enums"]["order_readiness"];
           source?: string;
           status?: Database["public"]["Enums"]["order_status"];
@@ -1424,6 +1533,9 @@ export type Database = {
           placed_by?: string | null;
           priority?: number;
           raw_address?: string | null;
+          raw_customer_code?: string | null;
+          raw_customer_name?: string | null;
+          raw_point_code?: string | null;
           readiness?: Database["public"]["Enums"]["order_readiness"];
           source?: string;
           status?: Database["public"]["Enums"]["order_status"];
@@ -1477,6 +1589,7 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"];
           qty: number;
           reason: string;
+          route_id: string | null;
           source_event_id: string | null;
           stop_id: string | null;
           tenant_id: string;
@@ -1492,6 +1605,7 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"];
           qty: number;
           reason: string;
+          route_id?: string | null;
           source_event_id?: string | null;
           stop_id?: string | null;
           tenant_id: string;
@@ -1507,11 +1621,19 @@ export type Database = {
           party_type?: Database["public"]["Enums"]["party_type"];
           qty?: number;
           reason?: string;
+          route_id?: string | null;
           source_event_id?: string | null;
           stop_id?: string | null;
           tenant_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "packaging_movements_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "packaging_movements_packaging_type_id_fkey";
             columns: ["packaging_type_id"];
@@ -1570,6 +1692,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "packaging_types_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      point_types: {
+        Row: {
+          code: string;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          is_temporary: boolean;
+          name: string;
+          sort: number;
+          tenant_id: string;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          is_temporary?: boolean;
+          name: string;
+          sort?: number;
+          tenant_id: string;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          is_temporary?: boolean;
+          name?: string;
+          sort?: number;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "point_types_tenant_id_fkey";
             columns: ["tenant_id"];
             isOneToOne: false;
             referencedRelation: "tenants";
@@ -1988,6 +2151,7 @@ export type Database = {
         Row: {
           actual_km: number | null;
           carrier_id: string | null;
+          close_report: Json | null;
           closed_at: string | null;
           closed_by: string | null;
           course_no: number;
@@ -2013,6 +2177,7 @@ export type Database = {
         Insert: {
           actual_km?: number | null;
           carrier_id?: string | null;
+          close_report?: Json | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
@@ -2038,6 +2203,7 @@ export type Database = {
         Update: {
           actual_km?: number | null;
           carrier_id?: string | null;
+          close_report?: Json | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
@@ -2128,6 +2294,50 @@ export type Database = {
           srtext?: string | null;
         };
         Relationships: [];
+      };
+      tenant_api_keys: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at: string | null;
+          name: string;
+          revoked_at: string | null;
+          tenant_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at?: string | null;
+          name: string;
+          revoked_at?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          key_hash?: string;
+          key_prefix?: string;
+          last_used_at?: string | null;
+          name?: string;
+          revoked_at?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tenant_api_keys_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       tenants: {
         Row: {
@@ -2457,6 +2667,8 @@ export type Database = {
         Args: { p_order: string; p_route: string };
         Returns: undefined;
       };
+      close_route: { Args: { p_route: string; p_cash_received: number; p_packaging: Json; p_odometer_end?: number; p_note?: string; p_report?: Json }; Returns: Json };
+      copy_day_routes: { Args: { p_tenant: string; p_from: string; p_to: string; p_route?: string }; Returns: Json };
       create_day_routes: {
         Args: { p_date: string; p_tenant: string };
         Returns: Json;

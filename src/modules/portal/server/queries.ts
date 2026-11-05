@@ -2,6 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { availableDeliveryDates, warsawNow } from "../domain/portal";
 import type { PortalContext } from "./context";
+import { closedDatesFor } from "@/modules/masterdata/domain/holidays";
+import { shiftDay } from "@/modules/orders/domain/orders";
 
 export type PortalPoint = {
   id: string;
@@ -27,17 +29,15 @@ export async function getPortalPoints(ctx: PortalContext): Promise<PortalPoint[]
       .order("name"),
     supabase
       .from("delivery_point_exceptions")
-      .select("delivery_point_id, date, is_closed")
+      .select("delivery_point_id, date, is_closed, reason")
       .eq("tenant_id", ctx.tenantId)
-      .eq("is_closed", true)
       .gte("date", now.date),
   ]);
   if (error) throw error;
 
   return (points ?? []).map((p) => {
-    const closedDates = (exceptions ?? [])
-      .filter((e) => e.delivery_point_id === null || e.delivery_point_id === p.id)
-      .map((e) => e.date);
+    // święta ustawowe + zamknięcia firmy i adresu (M1.3) na najbliższe 60 dni
+    const closedDates = closedDatesFor(p.id, now.date, shiftDay(now.date, 60), exceptions ?? []);
     const dates = availableDeliveryDates(now, ctx.settings, {
       weekdays: p.delivery_weekdays ?? [],
       activeFrom: p.active_from,

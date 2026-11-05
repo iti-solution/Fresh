@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthShell } from "@/components/panel/auth-shell";
 import { LoginForm } from "./login-form";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Logowanie" };
 
@@ -13,7 +14,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <AuthShell>
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Zaloguj się do Fresh TMS</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em]">Zaloguj się do {BRAND.full}</h1>
           <p className="text-sm text-muted">Bez hasła. Wyślemy Ci jednorazowy link na e-mail.</p>
         </div>
         {failed && (

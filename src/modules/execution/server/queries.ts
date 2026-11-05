@@ -2,7 +2,9 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { isNoteActive } from "@/modules/masterdata/domain/schemas";
 import { todayInWarsaw } from "@/modules/orders/domain/orders";
+import { toGrosze } from "@/lib/forms";
 import type { StopStatus } from "../domain/execution";
+import type { PayPreview, RouteSnapshot, SnapshotStop } from "../domain/offline";
 
 const t = (s?: string | null) => (s ? s.slice(0, 5) : "");
 
@@ -49,6 +51,10 @@ export type DriverStop = {
   salesRep: string | null;
   salesRepPhone: string | null;
   branch: string;
+  pointType: string | null;
+  temporary: boolean;
+  siteManager: string | null;
+  siteManagerPhone: string | null;
   address: string;
   phone: string | null;
   window: string;
@@ -59,7 +65,16 @@ export type DriverStop = {
   unloading: string | null;
   other: string | null;
   notes: string[];
-  orders: { id: string; ref: string | null; crates: number; pallets: number; weight_kg: number; cod: number | null; notes_sales: string | null; notes_logistics: string | null }[];
+  orders: {
+    id: string;
+    ref: string | null;
+    crates: number;
+    pallets: number;
+    weight_kg: number;
+    cod: number | null;
+    notes_sales: string | null;
+    notes_logistics: string | null;
+  }[];
   completedAt: string | null;
 };
 
@@ -83,6 +98,7 @@ export async function getDriverRoute(routeId: string): Promise<DriverRoute | nul
       `id, name, route_date, status, vehicle_id, odometer_start, odometer_end, vehicles(registration),
        route_stops(id, sequence, status, completed_at,
          delivery_points(name, address_line, postal_code, city, contact_phone, call_instructions, access_instructions, floor, unloading_zone, driver_instructions,
+           site_manager_name, site_manager_phone, point_types(name, is_temporary),
            customers(name, external_code, sales_rep_name, sales_rep_phone),
            delivery_point_windows(weekday, opens_at, closes_at),
            delivery_point_notes(text, valid_from, valid_to)),
@@ -96,16 +112,24 @@ export async function getDriverRoute(routeId: string): Promise<DriverRoute | nul
   const weekday = ((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
   const today = todayInWarsaw();
   const fmtTime = (iso: string | null) =>
-    iso ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)) : null;
+    iso
+      ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
+      : null;
 
   const stops: DriverStop[] = [...r.route_stops]
     .sort((a, b) => a.sequence - b.sequence)
     .map((s) => {
       const p = s.delivery_points;
-      const orders = s.route_stop_orders.map((so) => so.orders).filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
-      const wins = (p?.delivery_point_windows ?? []).filter((w) => w.weekday === weekday).sort((a, b) => a.opens_at.localeCompare(b.opens_at));
+      const orders = s.route_stop_orders
+        .map((so) => so.orders)
+        .filter((o): o is NonNullable<typeof o> => Boolean(o) && o!.status !== "cancelled");
+      const wins = (p?.delivery_point_windows ?? [])
+        .filter((w) => w.weekday === weekday)
+        .sort((a, b) => a.opens_at.localeCompare(b.opens_at));
       const override = orders.find((o) => o.window_start);
-      const window = override ? `${t(override.window_start)}–${t(override.window_end)}` : wins.map((w) => `${t(w.opens_at)}–${t(w.closes_at)}`).join(", ");
+      const window = override
+        ? `${t(override.window_start)}–${t(override.window_end)}`
+        : wins.map((w) => `${t(w.opens_at)}–${t(w.closes_at)}`).join(", ");
       const windowEnd = override ? t(override.window_end) : wins.length ? t(wins[wins.length - 1].closes_at) : null;
       return {
         id: s.id,
@@ -116,6 +140,10 @@ export async function getDriverRoute(routeId: string): Promise<DriverRoute | nul
         salesRep: p?.customers?.sales_rep_name ?? null,
         salesRepPhone: p?.customers?.sales_rep_phone ?? null,
         branch: p?.name ?? "—",
+        pointType: p?.point_types?.name ?? null,
+        temporary: Boolean(p?.point_types?.is_temporary),
+        siteManager: p?.site_manager_name ?? null,
+        siteManagerPhone: p?.site_manager_phone ?? null,
         address: p ? `${p.address_line}, ${p.postal_code ?? ""} ${p.city}`.replace(/\s+/g, " ") : "",
         phone: p?.contact_phone ?? null,
         window: window || "—",
@@ -163,4 +191,73 @@ export async function getVehiclesForDriver() {
   const supabase = await createClient();
   const { data } = await supabase.from("vehicles").select("id, registration, status").order("registration");
   return (data ?? []).filter((v) => v.status === "active");
+}
+
+/** Migawka trasy do telefonu (M4.2): trasa + zapisane opakowania, gotówka, zdjęcia na punktach + słowniki. */
+export async function getRouteSnapshot(
+  routeId: string,
+  pay: PayPreview | null = null,
+  balances: Map<string, Record<string, number>> | null = null,
+): Promise<RouteSnapshot | null> {
+  const route = await getDriverRoute(routeId);
+  if (!route) return null;
+  const supabase = await createClient();
+  const stopIds = route.stops.map((s) => s.id);
+  const ids = stopIds.length ? stopIds : ["00000000-0000-0000-0000-000000000000"];
+  const [types, vehicles, pack, cash, att] = await Promise.all([
+    getPackagingTypes(),
+    getVehiclesForDriver(),
+    supabase
+      .from("packaging_movements")
+      .select("stop_id, packaging_type_id, qty, reason")
+      .eq("party_type", "driver")
+      .in("stop_id", ids),
+    supabase
+      .from("cash_movements")
+      .select("stop_id, amount")
+      .eq("party_type", "driver")
+      .eq("reason", "cod_collected")
+      .in("stop_id", ids),
+    supabase.from("attachments").select("stop_id, kind").in("stop_id", ids),
+  ]);
+  const stops: SnapshotStop[] = route.stops.map((s) => {
+    const mv = (pack.data ?? []).filter((m) => m.stop_id === s.id);
+    const packaging = Object.fromEntries(
+      types.map((t) => {
+        const rows = mv.filter((m) => m.packaging_type_id === t.id);
+        // księga kierowcy: wydanie klientowi = minus u kierowcy, zwrot = plus
+        return [
+          t.id,
+          {
+            out: -rows.filter((m) => m.reason === "issue").reduce((a, m) => a + m.qty, 0),
+            back: rows.filter((m) => m.reason === "return").reduce((a, m) => a + m.qty, 0),
+          },
+        ];
+      }),
+    );
+    const files = (att.data ?? []).filter((a) => a.stop_id === s.id);
+    return {
+      ...s,
+      packaging,
+      cashGrosze: (cash.data ?? []).filter((c) => c.stop_id === s.id).reduce((a, c) => a + toGrosze(c.amount), 0),
+      photos: files.filter((f) => f.kind === "photo").length,
+      signed: files.some((f) => f.kind === "signature"),
+      customerBalance: balances?.get(s.id),
+    };
+  });
+  return {
+    id: route.id,
+    name: route.name,
+    date: route.date,
+    status: route.status,
+    vehicleId: route.vehicleId,
+    vehicle: route.vehicle,
+    odometerStart: route.odometerStart,
+    odometerEnd: route.odometerEnd,
+    stops,
+    packagingTypes: types,
+    vehicles: vehicles.map((v) => ({ id: v.id, registration: v.registration })),
+    pay,
+    fetchedAt: new Date().toISOString(),
+  };
 }

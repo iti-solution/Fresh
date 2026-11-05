@@ -214,7 +214,7 @@ export function DraftReview({
       <section className="flex min-w-0 flex-col gap-4 rounded-[var(--radius-panel)] border border-border bg-surface p-5 shadow-[var(--shadow-panel)]">
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-sm font-medium">Klient i oddział</span>
+            <span className="text-sm font-medium">Klient i adres dostawy</span>
             <select
               name="delivery_point_id"
               value={pointId}

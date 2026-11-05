@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Pill } from "@/components/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeSearch } from "@/modules/ops/domain/reports";
-import { BRANCH_LABELS, formatTime, vehicleOptionLabel } from "@/modules/masterdata/domain/format";
+import { formatTime, pointTypeLabel, vehicleOptionLabel } from "@/modules/masterdata/domain/format";
 import {
   addTemplatePoints,
   moveTemplatePoint,
@@ -54,7 +54,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
       : supabase
           .from("delivery_points")
           .select(
-            "id, name, city, address_line, branch_type, is_active, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(template_id, sequence, route_templates(name))",
+            "id, name, city, address_line, point_types(name), is_active, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(template_id, sequence, route_templates(name))",
           )
           .eq("tenant_id", ctx.tenantId),
   ]);
@@ -70,7 +70,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
       customer: p.customers?.name ?? "—",
       code: p.customers?.external_code ?? null,
       branch: p.name,
-      branchType: BRANCH_LABELS[p.branch_type] ?? p.branch_type,
+      branchType: pointTypeLabel(p.point_types),
       city: p.city,
       address: p.address_line,
       active: p.is_active,
@@ -111,11 +111,11 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
         title={isNew ? "Nowy szablon trasy" : (t?.name as string)}
         description={
           isNew
-            ? "Najpierw nazwa, dni i godzina wyjazdu. Po zapisaniu dodasz oddziały klientów, które obsługuje ta trasa."
-            : "Ustawienia trasy stałej i oddziały klientów, które obsługuje."
+            ? "Najpierw nazwa, dni i godzina wyjazdu. Po zapisaniu dodasz adresy dostaw klientów, które obsługuje ta trasa."
+            : "Ustawienia trasy stałej i adresy dostaw klientów, które obsługuje."
         }
       />
-      {sp.nowy === "1" && <Notice>Szablon zapisany. Dodaj teraz oddziały klientów, które obsługuje ta trasa.</Notice>}
+      {sp.nowy === "1" && <Notice>Szablon zapisany. Dodaj teraz adresy dostaw klientów, które obsługuje ta trasa.</Notice>}
 
       <FormRenderer
         action={saveTemplate.bind(null, isNew ? null : id)}
@@ -128,7 +128,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
         <div className="mt-8 grid items-start gap-6 xl:grid-cols-2">
           <Panel
             title={`Punkty trasy (${assigned.length})`}
-            description="Kolejność, w jakiej punkty trafią na trasę przy tworzeniu dnia. Zamówienia tych oddziałów przypiszą się do trasy automatycznie."
+            description="Kolejność, w jakiej punkty trafią na trasę przy tworzeniu dnia. Zamówienia z tych adresów przypiszą się do trasy automatycznie."
             actions={
               assigned.length > 1 ? (
                 <form action={sortTemplateByWindow.bind(null, id)}>
@@ -145,7 +145,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
           >
             {assigned.length === 0 ? (
               <EmptyState icon={<MapPin />} title="Trasa nie ma jeszcze punktów">
-                Wybierz oddziały klientów z listy obok i kliknij „Dodaj zaznaczone”.
+                Wybierz adresy dostaw klientów z listy obok i kliknij „Dodaj zaznaczone”.
               </EmptyState>
             ) : (
               <ol className="divide-y divide-border">
@@ -203,7 +203,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
 
           <Panel
             title="Dodaj punkty"
-            description="Oddziały klientów, których nie ma jeszcze na tej trasie. Najpierw te bez żadnej trasy stałej."
+            description="Adresy dostaw klientów, których nie ma jeszcze na tej trasie. Najpierw te bez żadnej trasy stałej."
             flush
           >
             <form action={self} className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3">
@@ -212,8 +212,8 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
                 <input
                   name="q"
                   defaultValue={q}
-                  placeholder="Klient, kod, oddział, adres"
-                  aria-label="Szukaj oddziału"
+                  placeholder="Klient, kod, nazwa adresu, ulica"
+                  aria-label="Szukaj adresu dostawy"
                   className="h-9 w-full rounded-lg border border-border-strong bg-surface pr-3 pl-9 text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15"
                 />
               </div>
@@ -234,7 +234,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
             </form>
             {candidates.length === 0 ? (
               <p className="px-5 py-8 text-center text-sm text-muted">
-                {q || city ? "Nic nie pasuje do filtra." : "Wszystkie aktywne oddziały są już na tej trasie."}
+                {q || city ? "Nic nie pasuje do filtra." : "Wszystkie aktywne adresy dostaw są już na tej trasie."}
               </p>
             ) : (
               <form action={addTemplatePoints.bind(null, id)}>
@@ -276,7 +276,7 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
                   )}
                 </div>
                 <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-surface px-5 py-3">
-                  <span className="text-xs text-muted">Zaznacz oddziały i dodaj je na koniec trasy.</span>
+                  <span className="text-xs text-muted">Zaznacz adresy dostaw i dodaj je na koniec trasy.</span>
                   <button className={buttonVariants({ size: "sm" })}>
                     <Plus /> Dodaj zaznaczone
                   </button>

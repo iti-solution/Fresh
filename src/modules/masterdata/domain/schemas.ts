@@ -2,9 +2,6 @@
 import { z } from "zod";
 import { checkbox, numberField, optionalDate, optionalText, optionalTime, requiredText } from "@/lib/forms";
 
-export const BRANCH_TYPES = ["restaurant", "kitchen", "bar", "warehouse", "hotel", "other"] as const;
-export type BranchType = (typeof BRANCH_TYPES)[number];
-
 const nip = z
   .string()
   .optional()
@@ -46,8 +43,8 @@ const weekdays = z
 
 export const pointSchema = z
   .object({
-    name: requiredText("nazwa oddziału"),
-    branch_type: z.enum(BRANCH_TYPES).default("other"),
+    name: requiredText("nazwa adresu"),
+    point_type_id: z.string().uuid({ message: "Wybierz typ adresu" }),
     external_code: optionalText(40),
     address_line: requiredText("adres (ulica i numer)", 3),
     postal_code: z
@@ -70,6 +67,8 @@ export const pointSchema = z
     window2_from: optionalTime,
     window2_to: optionalTime,
     service_minutes: numberField({ min: 1, max: 180, int: true, fallback: 10 }),
+    site_manager_name: optionalText(100),
+    site_manager_phone: phone,
     call_instructions: optionalText(300),
     access_instructions: optionalText(300),
     floor: optionalText(60),
@@ -94,7 +93,7 @@ export const pointSchema = z
       ctx.addIssue({ code: "custom", path: ["window2_from"], message: "Drugie okno musi zaczynać się po pierwszym" });
     }
     if (v.active_from && v.active_to && v.active_to < v.active_from) {
-      ctx.addIssue({ code: "custom", path: ["active_to"], message: "Koniec sezonu przed początkiem" });
+      ctx.addIssue({ code: "custom", path: ["active_to"], message: "Data „czynny do” przed „czynny od”" });
     }
   });
 export type PointInput = z.infer<typeof pointSchema>;

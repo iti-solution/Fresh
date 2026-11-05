@@ -264,7 +264,7 @@ export function summarizeCart(lines: CartLineInput[], catalog: Map<string, Catal
 
 /** Komunikaty błędów zwracanych przez funkcje portal_* w bazie. */
 export const PORTAL_ERRORS: Record<string, string> = {
-  PORTAL_NO_ACCESS: "Nie masz dostępu do tego oddziału. Zaloguj się ponownie albo skontaktuj się z hurtownią.",
+  PORTAL_NO_ACCESS: "Nie masz dostępu do tego adresu dostawy. Zaloguj się ponownie albo skontaktuj się z hurtownią.",
   PORTAL_POINT_INACTIVE: "Ten adres dostawy jest nieaktywny. Skontaktuj się z hurtownią.",
   PORTAL_DATE_NOT_ALLOWED: "Na ten dzień nie można już zamówić dostawy. Wybierz inny termin.",
   PORTAL_EMPTY: "Koszyk jest pusty.",

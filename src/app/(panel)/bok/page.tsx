@@ -119,7 +119,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
         description="Gdzie jest dostawa klienta, gdzie jest teraz kierowca, ile punktów ma przed sobą i kiedy dojedzie."
         actions={
           <>
-            {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} />}
+            {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} tenantId={ctx.tenantId} />}
             <div className="flex items-center gap-1">
               <Link
                 href={href({ dzien: shiftDay(day, -1) })}
@@ -180,8 +180,8 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
           </h2>
           {hits.length + orderHits.length === 0 && (
             <p className="text-sm text-muted">
-              Sprawdź pisownię albo zmień dzień strzałkami u góry. Szukamy po kliencie, oddziale, mieście, numerze zamówienia,
-              telefonie, kierowcy, aucie i nazwie trasy.
+              Sprawdź pisownię albo zmień dzień strzałkami u góry. Szukamy po kliencie, adresie dostawy, mieście, numerze
+              zamówienia, telefonie, kierowcy, aucie i nazwie trasy.
             </p>
           )}
           {hits.map(({ route, matched, wholeRoute }) => {

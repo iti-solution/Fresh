@@ -1,4 +1,4 @@
-# Fresh — zakres MVP
+# Driver (dawniej Fresh) — zakres MVP
 
 ## 1. Teza MVP
 
@@ -54,6 +54,11 @@ Pełny scenariusz: `05-scenariusz-dnia.md`. Pilot: ERP WF-Mag → WMS → TMS, k
 | D19 | **Podsumowanie dnia dla zarządu** | Ten sam raport co w panelu BOK, także na telefonie: sprzedaż dostarczona (wartość zamówień) vs ten sam dzień tydzień temu, trend 6 dni, zamówienia, średnie zamówienie, dostawy w oknie, reklamacje/zwroty/dowózki z wartością, najwięksi klienci dnia, **opakowania** (per typ: wydano / wróciło dziś, saldo u klientów ze zmianą dnia, wartość kaucji u klientów, zalegające > 30 dni i największy dłużnik, różnice u kierowców), „do uwagi”. Nowa rola **Zarząd** (tylko odczyt). Uwaga: „sprzedaż” = wartość zamówień przekazanych do Fresh, nie faktury z ERP. | M6 |
 
 | D20 | **Bez map i pinezek na tym etapie** (decyzja 2026-10-25) | Geokodowanie, mapa i korekta pinezki odłożone. Priorytet: ekrany dające efekt użytkownikowi (kartoteki, zamówienia, pulpit). **Konsekwencja:** „Ułóż kolejność” (VRP) i przewidywany czas przyjazdu wymagają współrzędnych — wrócimy do geokodowania przed M3 (planowanie) albo M2 (Audyt tras). | M1 |
+
+| D21 | **Produkt dla każdej hurtowni z własnym transportem** (decyzja 2026-11-05) | Nie tylko spożywcza: odbiorcy to sklepy, lokale, zakłady, **budowy**, adresy prywatne. „Oddział” → **adres dostawy**; typy adresów edytowalne przez firmę (domyślnie: siedziba, sklep, lokal gastronomiczny, magazyn, zakład, budowa, adres prywatny, inny). Budowa = adres tymczasowy: czynna od–do + osoba na miejscu (kierownik budowy) z telefonem w aplikacji kierowcy. | M1 |
+| D22 | **Nazwa i wygląd** (2026-11-05) | Nazwa robocza **Driver** (zmiana w jednym pliku `src/lib/brand.ts`); kolorystyka odcięta od ExpertWMS: butelkowa zieleń + limonka, IBM Plex Sans. Ostateczna nazwa — do decyzji. | — |
+| D23 | **Mapy nadal odłożone** (potwierdzone 2026-11-05) | M1.2 geokodowanie, M3.5 VRP i M2 audyt tras czekają; „Sortuj wg okien” zostaje. GPS z telefonu zapisujemy (pozycje + punkt potwierdzenia), w biurze link „otwórz w mapach”. | M1–M3 |
+| D24 | **Stawki kierowców** (2026-11-05) | Silnik obsługuje dniówkę, km ponad próg, za punkt, za paletę, za kurs dodatkowy, % obrotu trasy, % wartości dostaw, premię za terminowość dnia; wersje stawek w czasie. **Konkretne stawki pilota — do wpisania w `/rozliczenia/stawki`.** | M5 |
 
 ### Zmiany w modelu danych (migracje `0003` + `0004`, zrobione w M1.0)
 - `customers`: `sales_rep_name`, `sales_rep_phone`
