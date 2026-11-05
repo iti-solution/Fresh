@@ -32,6 +32,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!userId && !isPublicPath(pathname)) {
+    // API (np. synchronizacja aplikacji kierowcy): bez przekierowania na stronę logowania — telefon dostaje 401
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "unauthenticated" }, { status: 401, headers: { "Cache-Control": "no-store" } });
+    }
     const url = request.nextUrl.clone();
     // Kierowca na terminalu → ekran PIN; przypisanie terminala robi dyspozytor (logowanie e-mailem).
     if (pathname.startsWith("/driver") && !pathname.startsWith("/driver/terminal")) {

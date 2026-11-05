@@ -10,6 +10,7 @@ import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { ROUTE_STATUS_LABELS } from "@/modules/planning/domain/load";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { BRAND } from "@/lib/brand";
+import { PrefetchRoutes } from "@/modules/execution/ui/prefetch-routes";
 
 export const metadata: Metadata = { title: "Moje trasy" };
 
@@ -55,6 +56,7 @@ export default async function DriverHome() {
           <button className="h-12 px-3 text-sm text-muted">Wyloguj</button>
         </form>
       </header>
+      <PrefetchRoutes ids={routes.filter((r) => r.status !== "completed" && r.date >= today).map((r) => r.id)} />
       {routes.length === 0 && (
         <Card className="text-sm">
           Nie masz jeszcze tras gotowych do załadunku. Gdy dyspozytor przekaże trasę do załadunku, pojawi się tutaj.

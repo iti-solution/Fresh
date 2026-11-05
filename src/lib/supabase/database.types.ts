@@ -10,33 +10,52 @@ export type Database = {
     Tables: {
       attachments: {
         Row: {
+          client_file_id: string | null;
+          content_type: string | null;
           created_at: string;
           event_id: string | null;
           id: string;
           kind: string;
+          route_id: string | null;
+          size_bytes: number | null;
           stop_id: string | null;
           storage_path: string;
           tenant_id: string;
         };
         Insert: {
+          client_file_id?: string | null;
+          content_type?: string | null;
           created_at?: string;
           event_id?: string | null;
           id?: string;
           kind: string;
+          route_id?: string | null;
+          size_bytes?: number | null;
           stop_id?: string | null;
           storage_path: string;
           tenant_id: string;
         };
         Update: {
+          client_file_id?: string | null;
+          content_type?: string | null;
           created_at?: string;
           event_id?: string | null;
           id?: string;
           kind?: string;
+          route_id?: string | null;
+          size_bytes?: number | null;
           stop_id?: string | null;
           storage_path?: string;
           tenant_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "attachments_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "attachments_event_id_fkey";
             columns: ["event_id"];
