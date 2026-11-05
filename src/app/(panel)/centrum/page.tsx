@@ -230,7 +230,10 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                         ) : p.state === "done" || p.state === "closed" ? (
                           <p className="text-muted">
                             Ostatni punkt {p.lastCompletedAt ?? "—"}
-                            {r.km !== null && <span> · {r.km} km</span>}
+                            {r.km !== null && <span> · {r.km} km</span>}{" "}
+                            <Link href={`/rozliczenia/zamkniecie/${r.id}`} className="font-medium text-primary-strong hover:underline">
+                              {p.state === "closed" ? "zamknięcie ›" : "zamknij trasę ›"}
+                            </Link>
                           </p>
                         ) : (
                           <p className="text-muted">
@@ -331,7 +334,15 @@ function AlertRow({ alert: a }: { alert: Alert }) {
     <li className="flex gap-3 px-5 py-3">
       <Icon className={cn("mt-0.5 size-4 shrink-0", TONE_TEXT[ALERT_TONE[a.severity]])} />
       <div className="min-w-0">
-        <p className="text-[13.5px] font-medium leading-snug">{a.title}</p>
+        <p className="text-[13.5px] font-medium leading-snug">
+          {a.href ? (
+            <Link href={a.href} className="hover:text-primary-strong hover:underline">
+              {a.title} ›
+            </Link>
+          ) : (
+            a.title
+          )}
+        </p>
         <p className="mt-0.5 text-xs text-muted">{a.detail}</p>
       </div>
       <Dot tone={ALERT_TONE[a.severity]} className="mt-1.5 ml-auto" />

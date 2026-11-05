@@ -55,8 +55,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/kartoteki/przewoznicy", label: "Przewoźnicy", group: "Kartoteki", milestone: "M1", built: true, roles: STAFF },
   { href: "/kartoteki/produkty", label: "Katalog produktów", group: "Kartoteki", milestone: "P1", built: true, roles: STAFF },
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
-  { href: "/opakowania", label: "Opakowania", group: "Rozliczenia", milestone: "M5", roles: STAFF },
-  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", roles: STAFF },
+  { href: "/opakowania", label: "Opakowania i gotówka", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
+  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
   { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];

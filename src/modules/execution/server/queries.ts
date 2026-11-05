@@ -178,7 +178,11 @@ export async function getVehiclesForDriver() {
 
 
 /** Migawka trasy do telefonu (M4.2): trasa + zapisane opakowania, gotówka, zdjęcia na punktach + słowniki. */
-export async function getRouteSnapshot(routeId: string, pay: PayPreview | null = null): Promise<RouteSnapshot | null> {
+export async function getRouteSnapshot(
+  routeId: string,
+  pay: PayPreview | null = null,
+  balances: Map<string, Record<string, number>> | null = null,
+): Promise<RouteSnapshot | null> {
   const route = await getDriverRoute(routeId);
   if (!route) return null;
   const supabase = await createClient();
@@ -213,6 +217,7 @@ export async function getRouteSnapshot(routeId: string, pay: PayPreview | null =
       cashGrosze: (cash.data ?? []).filter((c) => c.stop_id === s.id).reduce((a, c) => a + toGrosze(c.amount), 0),
       photos: files.filter((f) => f.kind === "photo").length,
       signed: files.some((f) => f.kind === "signature"),
+      customerBalance: balances?.get(s.id),
     };
   });
   return {

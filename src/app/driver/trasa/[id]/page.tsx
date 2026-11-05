@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { UUID_RE } from "@/modules/execution/domain/offline";
-import { getDriverCtx } from "@/modules/execution/server/driver-context";
+import { customerBalancesForRoute, getDriverCtx } from "@/modules/execution/server/driver-context";
 import { getRouteSnapshot } from "@/modules/execution/server/queries";
 import { RouteApp } from "@/modules/execution/ui/route-app";
 import { getDriverPayPreview } from "@/modules/payroll/server/preview";
@@ -16,8 +16,10 @@ export default async function DriverRoutePage({ params }: PageProps<"/driver/tra
   const { id } = await params;
   if (!UUID_RE.test(id)) redirect("/driver");
   const c = await getDriverCtx();
-  const pay = c ? await getDriverPayPreview(c, id).catch(() => null) : null;
-  const snapshot = await getRouteSnapshot(id, pay);
+  const [pay, balances] = c
+    ? await Promise.all([getDriverPayPreview(c, id).catch(() => null), customerBalancesForRoute(c, id).catch(() => null)])
+    : [null, null];
+  const snapshot = await getRouteSnapshot(id, pay, balances);
   if (!snapshot) redirect("/driver");
   return <RouteApp routeId={id} initial={snapshot} />;
 }

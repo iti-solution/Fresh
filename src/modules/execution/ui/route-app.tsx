@@ -489,7 +489,12 @@ function StopScreen({ route, stop, record, back, go, banners }: { route: RouteSn
                 <span className="text-center text-xs text-muted">zwrot</span>
                 {route.packagingTypes.map((t) => (
                   <div key={t.id} className="contents">
-                    <span>{t.name}</span>
+                    <span>
+                      {t.name}
+                      {stop.customerBalance?.[t.id] ? (
+                        <span className="block text-xs text-warning">u klienta: {stop.customerBalance[t.id]}</span>
+                      ) : null}
+                    </span>
                     {(["out", "back"] as const).map((k) => (
                       <input
                         key={k}

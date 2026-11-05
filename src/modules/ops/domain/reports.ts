@@ -158,6 +158,7 @@ export type Alert = {
   detail: string;
   routeId: string;
   stopId?: string;
+  href?: string;
 };
 
 /** Alerty centrum operacyjnego, od najpilniejszych. */
@@ -210,6 +211,7 @@ export function dispatcherAlerts(routes: ReportRoute[], now: string | null): Ale
         title: `${r.name}: wróciła — do zamknięcia`,
         detail: `Przyjmij gotówkę i opakowania${who ? ` · ${who}` : ""}`,
         routeId: r.id,
+        href: `/rozliczenia/zamkniecie/${r.id}`,
       });
     }
   }

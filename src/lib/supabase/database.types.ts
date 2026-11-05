@@ -842,8 +842,12 @@ export type Database = {
       driver_settlement_lines: {
         Row: {
           amount: number;
+          code: string | null;
           component: string;
+          created_by: string | null;
           id: string;
+          is_manual: boolean;
+          label: string | null;
           note: string | null;
           quantity: number;
           rate: number;
@@ -855,8 +859,12 @@ export type Database = {
         };
         Insert: {
           amount: number;
+          code?: string | null;
           component: string;
+          created_by?: string | null;
           id?: string;
+          is_manual?: boolean;
+          label?: string | null;
           note?: string | null;
           quantity: number;
           rate: number;
@@ -868,8 +876,12 @@ export type Database = {
         };
         Update: {
           amount?: number;
+          code?: string | null;
           component?: string;
+          created_by?: string | null;
           id?: string;
+          is_manual?: boolean;
+          label?: string | null;
           note?: string | null;
           quantity?: number;
           rate?: number;
@@ -912,10 +924,13 @@ export type Database = {
       };
       driver_settlements: {
         Row: {
+          approved_at: string | null;
           approved_by: string | null;
           created_at: string;
           driver_id: string;
+          exported_at: string | null;
           id: string;
+          note: string | null;
           period_end: string;
           period_start: string;
           status: Database["public"]["Enums"]["settlement_status"];
@@ -923,10 +938,13 @@ export type Database = {
           total_amount: number;
         };
         Insert: {
+          approved_at?: string | null;
           approved_by?: string | null;
           created_at?: string;
           driver_id: string;
+          exported_at?: string | null;
           id?: string;
+          note?: string | null;
           period_end: string;
           period_start: string;
           status?: Database["public"]["Enums"]["settlement_status"];
@@ -934,10 +952,13 @@ export type Database = {
           total_amount?: number;
         };
         Update: {
+          approved_at?: string | null;
           approved_by?: string | null;
           created_at?: string;
           driver_id?: string;
+          exported_at?: string | null;
           id?: string;
+          note?: string | null;
           period_end?: string;
           period_start?: string;
           status?: Database["public"]["Enums"]["settlement_status"];
@@ -1568,6 +1589,7 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"];
           qty: number;
           reason: string;
+          route_id: string | null;
           source_event_id: string | null;
           stop_id: string | null;
           tenant_id: string;
@@ -1583,6 +1605,7 @@ export type Database = {
           party_type: Database["public"]["Enums"]["party_type"];
           qty: number;
           reason: string;
+          route_id?: string | null;
           source_event_id?: string | null;
           stop_id?: string | null;
           tenant_id: string;
@@ -1598,11 +1621,19 @@ export type Database = {
           party_type?: Database["public"]["Enums"]["party_type"];
           qty?: number;
           reason?: string;
+          route_id?: string | null;
           source_event_id?: string | null;
           stop_id?: string | null;
           tenant_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "packaging_movements_route_id_fkey";
+            columns: ["route_id"];
+            isOneToOne: false;
+            referencedRelation: "routes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "packaging_movements_packaging_type_id_fkey";
             columns: ["packaging_type_id"];
@@ -2120,6 +2151,7 @@ export type Database = {
         Row: {
           actual_km: number | null;
           carrier_id: string | null;
+          close_report: Json | null;
           closed_at: string | null;
           closed_by: string | null;
           course_no: number;
@@ -2145,6 +2177,7 @@ export type Database = {
         Insert: {
           actual_km?: number | null;
           carrier_id?: string | null;
+          close_report?: Json | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
@@ -2170,6 +2203,7 @@ export type Database = {
         Update: {
           actual_km?: number | null;
           carrier_id?: string | null;
+          close_report?: Json | null;
           closed_at?: string | null;
           closed_by?: string | null;
           course_no?: number;
@@ -2633,6 +2667,7 @@ export type Database = {
         Args: { p_order: string; p_route: string };
         Returns: undefined;
       };
+      close_route: { Args: { p_route: string; p_cash_received: number; p_packaging: Json; p_odometer_end?: number; p_note?: string; p_report?: Json }; Returns: Json };
       copy_day_routes: { Args: { p_tenant: string; p_from: string; p_to: string; p_route?: string }; Returns: Json };
       create_day_routes: {
         Args: { p_date: string; p_tenant: string };

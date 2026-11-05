@@ -52,6 +52,8 @@ export type SnapshotStop = {
   cashGrosze: number;
   photos: number;
   signed: boolean;
+  /** Saldo opakowań u klienta przed tą wizytą (podpowiedź, ile odebrać): typ → ilość. */
+  customerBalance?: Record<string, number>;
 };
 
 export type PayLine = { label: string; amountGrosze: number };
