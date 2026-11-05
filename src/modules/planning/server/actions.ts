@@ -210,3 +210,21 @@ export async function copyLastAssignments(day: string): Promise<void> {
   }
   done();
 }
+
+/** M3.7 — kopia planu z innego dnia (trasy, auta, kierowcy, kolejność adresów) na dzień `to`. */
+export async function copyDay(to: string, fd: FormData): Promise<void> {
+  const p = await planner();
+  const from = str(fd, "from");
+  if (!p || !DATE_RE.test(to) || !DATE_RE.test(from) || from === to) return;
+  await p.supabase.rpc("copy_day_routes", { p_tenant: p.ctx.tenantId, p_from: from, p_to: to });
+  done();
+}
+
+/** M3.7 — kopia jednej trasy na wybrany dzień (np. ten sam kurs w sobotę). */
+export async function copyRoute(routeId: string, from: string, fd: FormData): Promise<void> {
+  const p = await planner();
+  const to = str(fd, "to");
+  if (!p || !DATE_RE.test(to) || !DATE_RE.test(from) || from === to) return;
+  await p.supabase.rpc("copy_day_routes", { p_tenant: p.ctx.tenantId, p_from: from, p_to: to, p_route: routeId });
+  done();
+}

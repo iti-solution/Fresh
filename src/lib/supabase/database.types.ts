@@ -2614,6 +2614,7 @@ export type Database = {
         Args: { p_order: string; p_route: string };
         Returns: undefined;
       };
+      copy_day_routes: { Args: { p_tenant: string; p_from: string; p_to: string; p_route?: string }; Returns: Json };
       create_day_routes: {
         Args: { p_date: string; p_tenant: string };
         Returns: Json;

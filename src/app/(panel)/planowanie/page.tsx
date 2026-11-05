@@ -10,7 +10,9 @@ import {
   CircleCheck,
   History,
   Clock,
+  Copy,
   PackageCheck,
+  Printer,
   Route,
   TriangleAlert,
   X,
@@ -28,7 +30,9 @@ import {
   createDay,
   createExtraRoute,
   deleteEmptyRoute,
+  copyDay,
   copyLastAssignments,
+  copyRoute,
   markAllReady,
   markReady,
   moveStop,
@@ -122,6 +126,13 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
                   </button>
                 </form>
               )}
+              <Link
+                href={`/druk/zaladunek?dzien=${day}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+                title="Listy załadunkowe wszystkich tras dnia — do druku albo zapisu jako PDF"
+              >
+                <Printer /> Listy załadunkowe
+              </Link>
               <form action={markAllReady.bind(null, day)}>
                 <button
                   disabled={canReadyNow === 0}
@@ -194,10 +205,27 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
             icon={<Route />}
             title={`Na ${formatDayLabel(day)} nie ma jeszcze planu`}
             action={
-              editable && plan.templatesForDay > 0 ? (
-                <form action={createDay.bind(null, day)}>
-                  <button className={buttonVariants()}>Utwórz dzień z tras stałych</button>
-                </form>
+              editable ? (
+                <div className="flex flex-col items-center gap-3">
+                  {plan.templatesForDay > 0 && (
+                    <form action={createDay.bind(null, day)}>
+                      <button className={buttonVariants()}>Utwórz dzień z tras stałych</button>
+                    </form>
+                  )}
+                  <form action={copyDay.bind(null, day)} className="flex flex-wrap items-center justify-center gap-2 text-sm">
+                    <span className="text-muted">albo skopiuj plan z dnia</span>
+                    <input
+                      type="date"
+                      name="from"
+                      defaultValue={shiftDay(day, -7)}
+                      aria-label="Dzień, z którego kopiujesz plan"
+                      className="h-8 rounded-lg border border-border-strong bg-surface px-2 text-sm"
+                    />
+                    <button className={buttonVariants({ variant: "outline", size: "sm" })}>
+                      <Copy /> Kopiuj trasy
+                    </button>
+                  </form>
+                </div>
               ) : undefined
             }
           >
@@ -498,6 +526,35 @@ function RouteCard({
       <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border bg-surface-2 px-4 py-2.5 text-xs text-muted">
         <span className="tabular-nums">{r.stops.length} punktów</span>
         <span className="flex-1" />
+        {r.stops.length > 0 && (
+          <Link
+            href={`/druk/zaladunek?dzien=${day}&trasa=${r.id}`}
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+            title="Lista załadunkowa tej trasy (kolejność odwrotna do dostaw)"
+          >
+            <Printer /> Lista
+          </Link>
+        )}
+        {editable && (
+          <details className="relative">
+            <summary className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "cursor-pointer list-none")} title="Skopiuj trasę na inny dzień">
+              <Copy /> Kopiuj
+            </summary>
+            <form
+              action={copyRoute.bind(null, r.id, day)}
+              className="absolute right-0 bottom-9 z-10 flex items-center gap-2 rounded-lg border border-border bg-surface p-2 shadow-[var(--shadow-pop)]"
+            >
+              <input
+                type="date"
+                name="to"
+                defaultValue={shiftDay(day, 7)}
+                aria-label="Na dzień"
+                className="h-8 rounded-md border border-border-strong px-2 text-sm text-foreground"
+              />
+              <button className={buttonVariants({ size: "sm" })}>Kopiuj</button>
+            </form>
+          </details>
+        )}
         {canChange && r.stops.length > 1 && (
           <form action={sortByWindow.bind(null, r.id)}>
             <button
