@@ -13,6 +13,7 @@ import {
   addClosure,
   removeClosure,
   revokeApiKey,
+  savePackagingType,
   savePointType,
   setHolidayWorking,
 } from "@/modules/tenancy/server/settings-actions";
@@ -30,7 +31,7 @@ export default async function SettingsPage() {
   const today = todayInWarsaw();
   const horizon = shiftDay(today, 366);
 
-  const [typesRes, countsRes, excRes, keysRes] = await Promise.all([
+  const [typesRes, countsRes, excRes, keysRes, packRes] = await Promise.all([
     supabase.from("point_types").select("id, name, is_temporary, is_active, sort").eq("tenant_id", ctx.tenantId).order("sort").order("name"),
     supabase.from("delivery_points").select("point_type_id").eq("tenant_id", ctx.tenantId),
     supabase
@@ -47,8 +48,9 @@ export default async function SettingsPage() {
           .eq("tenant_id", ctx.tenantId)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
+    supabase.from("packaging_types").select("id, code, name, deposit_value, is_active").eq("tenant_id", ctx.tenantId).order("code"),
   ]);
-  for (const r of [typesRes, countsRes, excRes, keysRes]) if (r.error) throw r.error;
+  for (const r of [typesRes, countsRes, excRes, keysRes, packRes]) if (r.error) throw r.error;
 
   const count = new Map<string, number>();
   for (const p of countsRes.data ?? []) if (p.point_type_id) count.set(p.point_type_id, (count.get(p.point_type_id) ?? 0) + 1);
@@ -170,6 +172,43 @@ export default async function SettingsPage() {
                 </label>
               </InlineForm>
               <p className="mt-2 text-xs text-muted">Zamknięcie pojedynczego adresu (remont, urlop klienta) dodasz na karcie klienta.</p>
+            </div>
+          )}
+        </Panel>
+
+        <Panel
+          title="Opakowania zwrotne"
+          description="Palety, skrzynki, kegi… Kierowca wpisuje wydane i odebrane na punkcie, a saldo i kaucja liczą się same."
+          flush
+        >
+          <ul className="divide-y divide-border text-sm">
+            {(packRes.data ?? []).length === 0 && <li className="px-4 py-3 text-muted">Brak typów opakowań.</li>}
+            {(packRes.data ?? []).map((t) => (
+              <li key={t.id} className="px-4 py-2">
+                {editable ? (
+                  <InlineForm action={savePackagingType.bind(null, t.id)} submitLabel="Zapisz" variant="outline" resetOnSuccess={false}>
+                    <Input name="code" defaultValue={t.code} aria-label="Kod" className="h-8 w-28 font-mono" />
+                    <Input name="name" defaultValue={t.name} aria-label="Nazwa" className="h-8 w-48" />
+                    <Input name="deposit_value" defaultValue={t.deposit_value ?? ""} aria-label="Kaucja (zł)" placeholder="kaucja zł" className="h-8 w-28" />
+                    <label className="flex h-8 items-center gap-1.5 text-xs">
+                      <input type="checkbox" name="is_active" defaultChecked={t.is_active} /> w użyciu
+                    </label>
+                  </InlineForm>
+                ) : (
+                  <span>
+                    <code className="font-mono">{t.code}</code> {t.name} {t.deposit_value ? `· kaucja ${t.deposit_value} zł` : ""}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {editable && (
+            <div className="border-t border-border p-4">
+              <InlineForm action={savePackagingType.bind(null, null)} submitLabel="Dodaj opakowanie">
+                <Input name="code" placeholder="kod, np. EUR" aria-label="Kod" className="w-28 font-mono" />
+                <Input name="name" placeholder="nazwa, np. Paleta EUR" aria-label="Nazwa" className="w-48" />
+                <Input name="deposit_value" placeholder="kaucja zł" aria-label="Kaucja (zł)" className="w-28" />
+              </InlineForm>
             </div>
           )}
         </Panel>

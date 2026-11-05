@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { formToObject, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { closureSchema, pointTypeSchema } from "@/modules/masterdata/domain/settings";
+import { closureSchema, packagingTypeSchema, pointTypeSchema } from "@/modules/masterdata/domain/settings";
 import { canEdit } from "../domain/access";
 import { apiKeyName, generateApiKey, hashApiKey } from "../domain/api-keys";
 import { requireTenantContext } from "./context";
@@ -121,4 +121,21 @@ export async function revokeApiKey(keyId: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("tenant_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", keyId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/ustawienia");
+}
+
+// ---------- TYPY OPAKOWAŃ ZWROTNYCH ----------
+export async function savePackagingType(typeId: string | null, _prev: FormState, fd: FormData): Promise<FormState> {
+  const { ctx, ok, supabase } = await editor();
+  if (!ok) return NO_RIGHTS;
+  const parsed = packagingTypeSchema.safeParse(formToObject(fd));
+  if (!parsed.success) return toFormErrors(parsed.error);
+  const v = parsed.data;
+  const row = { code: v.code, name: v.name, deposit_value: v.deposit_value, is_active: typeId ? v.is_active : true };
+  const { error } = typeId
+    ? await supabase.from("packaging_types").update(row).eq("id", typeId).eq("tenant_id", ctx.tenantId)
+    : await supabase.from("packaging_types").insert({ ...row, tenant_id: ctx.tenantId });
+  if (error?.code === "23505") return { ok: false, fieldErrors: { code: ["Ten kod jest zajęty"] }, message: "Popraw kod." };
+  if (error) return DB_ERROR;
+  revalidatePath("/ustawienia");
+  return { ok: true, message: typeId ? "Zapisano opakowanie." : "Dodano opakowanie." };
 }

@@ -149,7 +149,7 @@ export function Delta({
 /** Pasek wypełnienia (ładowność, postęp). Kolor rośnie z ryzykiem. */
 export function Meter({ pct, tone, className, label }: { pct: number | null; tone?: Tone; className?: string; label?: string }) {
   const p = pct ?? 0;
-  // zwykłe wypełnienie w stalowym granacie — pomarańcz marki zostaje dla akcji, nie dla stanów
+  // zwykłe wypełnienie w stalowej zieleni — limonka marki zostaje dla akcji, nie dla stanów
   const auto: Tone = p > 100 ? "danger" : p >= 90 ? "warning" : "neutral";
   const t = tone ?? auto;
   const bg = {

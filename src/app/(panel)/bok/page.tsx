@@ -119,7 +119,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
         description="Gdzie jest dostawa klienta, gdzie jest teraz kierowca, ile punktów ma przed sobą i kiedy dojedzie."
         actions={
           <>
-            {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} />}
+            {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} tenantId={ctx.tenantId} />}
             <div className="flex items-center gap-1">
               <Link
                 href={href({ dzien: shiftDay(day, -1) })}

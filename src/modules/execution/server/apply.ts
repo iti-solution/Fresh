@@ -39,7 +39,8 @@ async function insertEvent(
     stop_id: stopId,
     driver_id: c.driverId,
     type,
-    payload: payload as never,
+    // współrzędne także w treści zdarzenia — biuro czyta je bez funkcji PostGIS
+    payload: (location ? { ...payload, gps: { lat: location.lat, lng: location.lng, accuracy: location.accuracy } } : payload) as never,
     occurred_at: occurredAt,
     location: ewkt(location) as never,
   });

@@ -14,7 +14,7 @@ export function nowInWarsaw(): string {
   return hhmm.format(new Date());
 }
 
-const NOTE_TYPES = ["stop_complaint", "stop_refused", "stop_absent", "return_recorded", "comment"];
+const NOTE_TYPES = ["stop_complaint", "stop_refused", "stop_absent", "return_recorded", "comment", "problem_reported"];
 
 /**
  * Trasy z punktami w zakresie dat — wspólne źródło dla BOK, centrum operacyjnego i raportu zarządu.
@@ -73,8 +73,9 @@ export async function getReportRoutes(
       const p = (e.payload ?? {}) as { reason?: string; text?: string };
       const cur = notes.get(e.stop_id) ?? { reason: null, note: null };
       if (e.type.startsWith("stop_") && p.reason) cur.reason = p.reason;
-      if ((e.type === "return_recorded" || e.type === "comment") && p.text) {
-        cur.note = cur.note ? `${cur.note} · ${p.text}` : e.type === "return_recorded" ? `Zwrot: ${p.text}` : p.text;
+      if ((e.type === "return_recorded" || e.type === "comment" || e.type === "problem_reported") && p.text) {
+        const text = e.type === "return_recorded" ? `Zwrot: ${p.text}` : e.type === "problem_reported" ? `Problem: ${p.text}` : p.text;
+        cur.note = cur.note ? `${cur.note} · ${text}` : text;
       }
       notes.set(e.stop_id, cur);
     }

@@ -58,6 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/opakowania", label: "Opakowania i gotówka", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
   { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
+  { href: "/start", label: "Pierwsze kroki", group: "System", milestone: "M6", built: true, roles: ["admin", "dispatcher"] },
   { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
 
