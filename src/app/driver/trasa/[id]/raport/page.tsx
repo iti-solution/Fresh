@@ -57,7 +57,7 @@ export default async function ReportPage({ params }: PageProps<"/driver/trasa/[i
         <h1 className="text-2xl font-semibold">Raport zmiany · {route.name}</h1>
       </header>
 
-      <section className="flex flex-col gap-1 rounded-2xl bg-primary px-4 py-4 text-white">
+      <section className="flex flex-col gap-1 rounded-2xl bg-ink px-4 py-4 text-white">
         <p className="text-sm font-semibold opacity-90">Twoje wynagrodzenie za dziś</p>
         <p className="text-2xl font-bold">pojawi się po ustawieniu stawek</p>
         <p className="text-xs opacity-85">Naliczanie (dniówka, premia, stawki dowózkowe) — kolejny etap wdrożenia.</p>

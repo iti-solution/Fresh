@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/panel/brand";
 import { portalLogout } from "@/modules/portal/server/actions";
 import { requirePortalContext } from "@/modules/portal/server/context";
+import { BRAND } from "@/lib/brand";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePortalContext();
@@ -41,7 +42,7 @@ export default async function PortalLayout({ children }: { children: React.React
         </div>
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">{children}</main>
-      <footer className="mx-auto w-full max-w-2xl px-4 pb-6 text-xs text-subtle">{ctx.email} · Fresh TMS</footer>
+      <footer className="mx-auto w-full max-w-2xl px-4 pb-6 text-xs text-subtle">{ctx.email} · {BRAND.full}</footer>
     </div>
   );
 }

@@ -245,7 +245,7 @@ export function Segmented({
           className={cn(
             "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors",
             i.active
-              ? "bg-surface text-primary-strong shadow-[0_1px_2px_rgb(15_31_51/0.14)]"
+              ? "bg-surface text-primary-strong shadow-[0_1px_2px_rgb(19_36_31/0.14)]"
               : "text-muted hover:text-foreground",
           )}
         >

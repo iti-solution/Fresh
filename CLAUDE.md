@@ -1,6 +1,6 @@
-# Fresh TMS — instrukcje dla Claude Code
+# Driver (dawniej Fresh) — instrukcje dla Claude Code
 
-Fresh to SaaS TMS dla hurtowni owoców i warzyw dostarczających do HoReCa własną flotą (5–100 pojazdów). Właściciel produktu: Arkadiusz — **nie programuje**, zarządza produktem. Tłumacz decyzje techniczne prostym językiem, pokazuj plan przed większą zmianą.
+Driver (nazwa robocza, w kodzie i repo nadal `fresh`) to SaaS TMS dla **hurtowni dowożących towar własną flotą** (5–100 pojazdów) — dowolna branża: spożywcza, budowlana, przemysłowa; odbiorcy to sklepy, lokale, zakłady, **budowy** i adresy prywatne. Pierwszy pilot to hurtownia owocowo-warzywna. Nazwa produktu w UI pochodzi wyłącznie z `src/lib/brand.ts`. Właściciel produktu: Arkadiusz — **nie programuje**, zarządza produktem. Tłumacz decyzje techniczne prostym językiem, pokazuj plan przed większą zmianą.
 
 ## Dokumenty źródłowe (czytaj przed pracą)
 - `docs/01-architektura.md` — architektura, moduły, przepływy, ADR

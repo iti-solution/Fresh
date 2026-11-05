@@ -14,7 +14,7 @@ export default async function PortalLoginPage({ searchParams }: PageProps<"/port
           <Wordmark inverted />
           <h1 className="mt-8 text-[28px] font-semibold leading-tight tracking-[-0.015em] text-white">Zamów dostawę na jutro</h1>
           <p className="mt-2 text-[15px] leading-relaxed text-ink-muted">
-            Warzywa i owoce prosto z hurtowni — wybierz produkty, dzień dostawy i gotowe.
+            Zamówienia prosto do hurtowni — wybierz produkty, dzień dostawy i gotowe.
           </p>
         </div>
       </header>

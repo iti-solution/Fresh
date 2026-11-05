@@ -13,7 +13,7 @@ import { requireTenantContext } from "@/modules/tenancy/server/context";
 export const metadata: Metadata = { title: "Punkt dostawy" };
 
 const OUTCOMES = [
-  { v: "delivered", l: "Dostarczono", cls: "peer-checked:bg-primary peer-checked:text-white" },
+  { v: "delivered", l: "Dostarczono", cls: "peer-checked:bg-success peer-checked:text-white" },
   { v: "partial", l: "Częściowo", cls: "peer-checked:bg-warning peer-checked:text-white" },
   { v: "absent", l: "Brak odbioru", cls: "peer-checked:bg-foreground peer-checked:text-background" },
   { v: "refused", l: "Odmowa", cls: "peer-checked:bg-foreground peer-checked:text-background" },

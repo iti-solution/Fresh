@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { BRAND } from "@/lib/brand";
 
-export const metadata: Metadata = { title: { default: "Portal zamówień", template: "%s · Fresh TMS portal zamówień" } };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0f2a48" };
+export const metadata: Metadata = { title: { default: "Portal zamówień", template: `%s · ${BRAND.full} portal zamówień` } };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: BRAND.themeColor };
 
 // Portal zamówień klienta hurtowni (restauracja, hotel, sklep): telefon wieczorem po zamknięciu kuchni,
 // więc jedna kolumna, duże przyciski (min. 48 px) i jak najmniej pisania.

@@ -9,6 +9,7 @@ import { getDriverRoutes } from "@/modules/execution/server/queries";
 import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { ROUTE_STATUS_LABELS } from "@/modules/planning/domain/load";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Moje trasy" };
 
@@ -19,7 +20,7 @@ export default async function DriverHome() {
   if (ctx.role !== "driver") {
     return (
       <main className="flex flex-col gap-4 p-5">
-        <p className="text-2xl font-semibold text-primary-strong">Fresh TMS · aplikacja kierowcy</p>
+        <p className="text-2xl font-semibold text-primary-strong">{BRAND.full} · aplikacja kierowcy</p>
         <Card className="flex flex-col gap-3 text-sm">
           <p>
             Jesteś zalogowany jako <strong>{ctx.email}</strong> (nie kierowca).

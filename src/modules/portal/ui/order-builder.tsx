@@ -310,7 +310,7 @@ export function OrderBuilder({
                         "flex h-11 items-center justify-center rounded-lg font-semibold transition-colors",
                         inCart
                           ? "w-11 border border-border-strong bg-surface hover:bg-surface-2"
-                          : "gap-1 bg-accent px-3 text-primary-strong hover:bg-[#ffe2cf]",
+                          : "gap-1 bg-accent px-3 text-primary-strong hover:bg-accent-hover",
                       )}
                       aria-label={`Więcej: ${p.name}`}
                     >
@@ -340,7 +340,7 @@ export function OrderBuilder({
       </section>
 
       {/* PODSUMOWANIE */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 shadow-[0_-4px_16px_-8px_rgb(15_31_51/0.18)] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 shadow-[0_-4px_16px_-8px_rgb(19_36_31/0.18)] backdrop-blur">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-4 py-3">
           {state.message && !state.ok && (
             <p role="alert" className="flex items-start gap-2 text-sm text-danger">

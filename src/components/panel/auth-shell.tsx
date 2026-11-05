@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import { Wordmark } from "./brand";
+import { BRAND } from "@/lib/brand";
 
 const STOPS = [
-  { t: "06:12", n: "Hotel pod Wawelem", s: "done" },
-  { t: "06:41", n: "Bistro Kazimierz", s: "done" },
-  { t: "07:20", n: "Stołówka Podgórze", s: "now" },
-  { t: "08:00", n: "Pizzeria Nowa Huta", s: "next" },
-  { t: "12:00", n: "Kawiarnia Rynek", s: "next" },
+  { t: "06:12", n: "Hurtownia Budmat — magazyn", s: "done" },
+  { t: "06:41", n: "Budowa ul. Lipowa 12", s: "done" },
+  { t: "07:20", n: "Sklep Społem Podgórze", s: "now" },
+  { t: "08:00", n: "Restauracja Nowa Huta", s: "next" },
+  { t: "12:00", n: "Zakład Stolbud, Skawina", s: "next" },
 ] as const;
 
 /** Ekran logowania i wyboru firmy: po lewej świat produktu (trasa poranka), po prawej formularz. */
@@ -17,11 +18,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <Wordmark inverted />
         <div className="max-w-md">
           <p className="text-[34px] font-semibold leading-[1.15] tracking-[-0.02em] text-white">
-            Każda skrzynka na czas, w oknie przyjęć restauracji.
+            Każda dostawa na czas, w oknie przyjęć klienta.
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-muted">
-            Planowanie tras, aplikacja kierowcy, opakowania zwrotne i rozliczenia — dla hurtowni owoców i warzyw obsługujących
-            HoReCa.
+            {BRAND.tagline}
           </p>
           <ol className="relative mt-10 space-y-4 border-l-2 border-white/10 pl-6">
             {STOPS.map((s) => (
@@ -29,9 +29,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
                 <span
                   className={
                     s.s === "done"
-                      ? "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full bg-[#3fbf7f]"
+                      ? "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full bg-primary"
                       : s.s === "now"
-                        ? "live-dot absolute top-1 -left-[33px] h-4 w-4 rounded-full border-[3px] border-[#7fb3e6] bg-ink"
+                        ? "live-dot absolute top-1 -left-[33px] h-4 w-4 rounded-full border-[3px] border-white bg-ink"
                         : "absolute top-1.5 -left-[31px] h-3 w-3 rounded-full border-2 border-white/25 bg-ink"
                   }
                   aria-hidden
