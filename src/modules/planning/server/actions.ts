@@ -228,3 +228,41 @@ export async function copyRoute(routeId: string, from: string, fd: FormData): Pr
   await p.supabase.rpc("copy_day_routes", { p_tenant: p.ctx.tenantId, p_from: from, p_to: to, p_route: routeId });
   done();
 }
+
+/**
+ * Tablica tras (przeciągnij i upuść): przenosi zamówienia na trasę albo zdejmuje je z trasy (routeId = null).
+ * Zwraca liczbę przeniesionych zamówień — UI pokazuje komunikat, a błędy z bazy (np. zablokowana trasa) jako tekst.
+ */
+export async function boardMoveOrders(orderIds: string[], routeId: string | null): Promise<{ moved: number; error?: string }> {
+  const p = await planner();
+  if (!p) return { moved: 0, error: "Brak uprawnień do zmiany planu." };
+  let moved = 0;
+  for (const id of orderIds) {
+    const { error } = routeId
+      ? await p.supabase.rpc("assign_order_to_route", { p_order: id, p_route: routeId })
+      : await p.supabase.rpc("unassign_order", { p_order: id });
+    if (error) {
+      done();
+      return { moved, error: error.message };
+    }
+    moved += 1;
+  }
+  done();
+  return { moved };
+}
+
+/** Tablica tras: przesuwa punkt o `delta` miejsc w obrębie trasy (ujemne = w górę). */
+export async function boardMoveStop(stopId: string, delta: number): Promise<{ error?: string }> {
+  const p = await planner();
+  if (!p) return { error: "Brak uprawnień do zmiany planu." };
+  const dir = delta < 0 ? -1 : 1;
+  for (let i = 0; i < Math.min(Math.abs(delta), 200); i++) {
+    const { error } = await p.supabase.rpc("move_stop", { p_stop: stopId, p_dir: dir });
+    if (error) {
+      done();
+      return { error: error.message };
+    }
+  }
+  done();
+  return {};
+}

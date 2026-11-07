@@ -50,6 +50,25 @@ export async function createDemoTenant(): Promise<void> {
   redirect("/pulpit");
 }
 
+/**
+ * Przełącznik „Dane przykładowe / Prawdziwe dane” w górnym pasku.
+ * Demo: przechodzi do firmy demo (zakłada ją, gdy jej brak). Prawdziwe: przechodzi do pierwszej firmy nie-demo,
+ * a gdy takiej nie ma — na ekran zakładania firmy. Ekran zostaje ten sam, jeśli rola na to pozwala.
+ */
+export async function switchDataMode(mode: "demo" | "real", fd: FormData): Promise<void> {
+  const returnTo = String(fd.get("returnTo") ?? "");
+  const user = await getUserWithMemberships();
+  if (!user) redirect("/login");
+  const target = user.memberships.find((m) => m.isDemo === (mode === "demo") && m.role !== "customer" && m.role !== "driver");
+  if (!target) {
+    if (mode === "demo") return createDemoTenant();
+    redirect("/wybierz-firme?nowa=1");
+  }
+  await setTenantCookie(target.tenantId);
+  const path = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : homePathForRole(target.role);
+  redirect(path);
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

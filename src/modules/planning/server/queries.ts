@@ -26,7 +26,14 @@ export type PlanStop = {
   customerCode: string | null;
   branch: string;
   city: string;
+  address: string;
+  phone: string | null;
   window: string;
+  windowStart: string | null;
+  windowEnd: string | null;
+  status: string;
+  arrivedAt: string | null;
+  completedAt: string | null;
   closed: boolean;
   orders: PlanOrder[];
 };
@@ -43,6 +50,7 @@ export type PlanRoute = {
   vehicleLabel: string | null;
   driverId: string | null;
   driverLabel: string | null;
+  driverPhone: string | null;
   stops: PlanStop[];
   load: RouteLoad;
   issues: Issue[];
@@ -53,7 +61,11 @@ export type UnassignedOrder = PlanOrder & {
   customerCode: string | null;
   branch: string;
   city: string;
+  address: string;
+  phone: string | null;
   window: string;
+  windowStart: string | null;
+  windowEnd: string | null;
 };
 
 export type PlanningDay = {
@@ -74,7 +86,8 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
   const weekday = isoWeekday(day);
   const orderCols =
     "id, external_ref, weight_kg, pallets, crates, volume_m3, readiness, priority, notes_logistics, window_start, window_end, status";
-  const pointCols = "id, name, city, customers(name, external_code), delivery_point_windows(weekday, opens_at, closes_at)";
+  const pointCols =
+    "id, name, city, address_line, contact_phone, customers(name, external_code), delivery_point_windows(weekday, opens_at, closes_at)";
 
   const [routesRes, ordersRes, excRes, vehRes, drvRes, tplRes] = await Promise.all([
     supabase
@@ -82,8 +95,9 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .select(
         `id, name, kind, course_no, status, extra_reason, planned_start, vehicle_id, driver_id,
          vehicles(registration, capacity_kg, capacity_pallets, capacity_crates, capacity_m3),
-         drivers(first_name, last_name),
-         route_stops(id, sequence, delivery_point_id, delivery_points(${pointCols}), route_stop_orders(orders(${orderCols})))`,
+         drivers(first_name, last_name, phone),
+         route_stops(id, sequence, delivery_point_id, status, arrived_at, completed_at, window_start, window_end,
+           delivery_points(${pointCols}), route_stop_orders(orders(${orderCols})))`,
       )
       .eq("tenant_id", tenantId)
       .eq("route_date", day)
@@ -121,12 +135,21 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
   );
 
   type Win = { weekday: number; opens_at: string; closes_at: string };
+  const dayWins = (wins: Win[] | undefined) =>
+    (wins ?? []).filter((w) => w.weekday === weekday).sort((a, b) => a.opens_at.localeCompare(b.opens_at));
   const pointWindow = (wins: Win[] | undefined) =>
-    (wins ?? [])
-      .filter((w) => w.weekday === weekday)
-      .sort((a, b) => a.opens_at.localeCompare(b.opens_at))
+    dayWins(wins)
       .map((w) => `${t(w.opens_at)}–${t(w.closes_at)}`)
       .join(", ");
+  /** Pierwsze otwarcie i ostatnie zamknięcie okna dnia (do terminowości i prognozy dojazdu). */
+  const winBounds = (wins: Win[] | undefined) => {
+    const w = dayWins(wins);
+    return w.length ? { start: t(w[0].opens_at), end: t(w[w.length - 1].closes_at) } : { start: null, end: null };
+  };
+  const hhmm = (ts: string | null) =>
+    ts
+      ? new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+      : null;
 
   type RawOrder = NonNullable<typeof ordersRes.data>[number];
   const toPlanOrder = (
@@ -153,6 +176,11 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
         const p = s.delivery_points;
         const orders = (s.route_stop_orders ?? []).map((so) => so.orders).filter((o): o is NonNullable<typeof o> => Boolean(o));
         const override = orders.find((o) => o.window_start);
+        const bounds = override
+          ? { start: t(override.window_start), end: t(override.window_end) }
+          : s.window_start
+            ? { start: t(s.window_start), end: t(s.window_end) }
+            : winBounds(p?.delivery_point_windows);
         return {
           id: s.id,
           sequence: s.sequence,
@@ -161,9 +189,16 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
           customerCode: p?.customers?.external_code ?? null,
           branch: p?.name ?? "—",
           city: p?.city ?? "",
+          address: p?.address_line ?? "",
+          phone: p?.contact_phone ?? null,
           window: override
             ? `${t(override.window_start)}–${t(override.window_end)}`
             : pointWindow(p?.delivery_point_windows) || "—",
+          windowStart: bounds.start || null,
+          windowEnd: bounds.end || null,
+          status: s.status,
+          arrivedAt: hhmm(s.arrived_at),
+          completedAt: hhmm(s.completed_at),
           closed: closedPoints.has(s.delivery_point_id),
           orders: orders.map(toPlanOrder),
         };
@@ -194,6 +229,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       vehicleLabel: r.vehicles?.registration ?? null,
       driverId: r.driver_id,
       driverLabel: r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : null,
+      driverPhone: r.drivers?.phone ?? null,
       stops,
       load,
       issues,
@@ -204,13 +240,18 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
     .filter((o) => !o.route_stop_orders)
     .map((o) => {
       const p = o.delivery_points;
+      const bounds = o.window_start ? { start: t(o.window_start), end: t(o.window_end) } : winBounds(p?.delivery_point_windows);
       return {
         ...toPlanOrder(o),
         customer: p?.customers?.name ?? "—",
         customerCode: p?.customers?.external_code ?? null,
         branch: p?.name ?? "—",
         city: p?.city ?? "",
+        address: p?.address_line ?? "",
+        phone: p?.contact_phone ?? null,
         window: o.window_start ? `${t(o.window_start)}–${t(o.window_end)}` : pointWindow(p?.delivery_point_windows) || "—",
+        windowStart: bounds.start || null,
+        windowEnd: bounds.end || null,
       };
     })
     .sort((a, b) => a.window.localeCompare(b.window));

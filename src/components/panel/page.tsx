@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { PageTitle } from "@/components/panel/topbar";
 import { TONE_TEXT, type Tone } from "@/components/ui/status";
 import { cn } from "@/lib/utils";
 
@@ -16,10 +17,10 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-      <div className="min-w-0 space-y-1">
-        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.015em] text-foreground">{title}</h1>
-        {description && <p className="max-w-3xl text-sm text-muted">{description}</p>}
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <div className="min-w-0 space-y-0.5">
+        <PageTitle>{title}</PageTitle>
+        {description && <p className="max-w-3xl text-[13px] text-muted">{description}</p>}
         {children}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
