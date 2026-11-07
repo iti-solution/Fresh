@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CloudOff, Phone, RefreshCw, TriangleAlert } from "lucide-react";
+import { CircleCheck, CloudOff, Navigation, Phone, RefreshCw, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Plate } from "@/components/ui/status";
 import { formatPln } from "@/lib/forms";
@@ -17,6 +17,7 @@ import {
   STOP_STATUS_LABELS,
   type QuickStatus,
 } from "../domain/execution";
+import { isStopDone, planEtas } from "@/modules/planning/domain/board";
 import { progress, type RouteSnapshot, type SnapshotStop } from "../domain/offline";
 import { PhotoPicker, SignaturePad } from "./media";
 import { useRoute, type NewFile, type SyncState } from "./use-route";
@@ -175,19 +176,19 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
-    <main className="flex flex-col pb-6">
-      {banners}
-      <div className="flex flex-col gap-4 p-5">
-        <Link href="/driver" className="h-11 text-sm text-primary-strong">
+    <main className="flex flex-col bg-[#e4ebe6] pb-6">
+      <header className="bg-ink px-4 pt-2 pb-4 text-white">
+        <Link href="/driver" className="flex h-10 items-center text-sm text-ink-muted">
           ‹ Moje trasy
         </Link>
-        <div>
-          <p className="text-sm font-medium text-muted">{formatDayLabel(route.date)}</p>
-          <h1 className="text-2xl font-semibold">{route.name}</h1>
-          <p className="text-sm text-muted">
-            {route.stops.length} punktów · pierwszy: {route.stops[0]?.customer ?? "—"} ({route.stops[0]?.window})
-          </p>
-        </div>
+        <p className="text-sm font-medium text-ink-muted capitalize">{formatDayLabel(route.date)}</p>
+        <h1 className="text-[24px] leading-tight font-bold">{route.name}</h1>
+        <p className="mt-1 text-[15px] text-ink-foreground">
+          {route.stops.length} punktów · pierwszy: {route.stops[0]?.customer ?? "—"} ({route.stops[0]?.window})
+        </p>
+      </header>
+      {banners}
+      <div className="flex flex-col gap-4 p-3">
         <form
           className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5"
           onSubmit={async (e) => {
@@ -231,15 +232,15 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
         </form>
         <ol className="flex flex-col gap-2">
           {route.stops.map((s) => (
-            <li key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-sm">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                {s.sequence}
-              </span>
+            <li
+              key={s.id}
+              className="flex items-start gap-3 rounded-xl border-l-[5px] border-l-success bg-surface px-3 py-2.5 shadow-[0_1px_2px_rgb(19_36_31/0.08)]"
+            >
+              <span className="w-6 shrink-0 pt-0.5 text-right text-sm font-semibold text-subtle tabular-nums">{s.sequence}</span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-semibold">{s.customer}</span>
-                <span className="text-muted">
-                  {s.branch} · okno {s.window}
-                </span>
+                <span className="block truncate text-base font-semibold">{s.customer}</span>
+                <span className="block truncate text-sm text-muted">{s.address}</span>
+                <span className="text-sm font-medium tabular-nums">okno {s.window}</span>
               </span>
             </li>
           ))}
@@ -250,6 +251,24 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
 }
 
 // ---------------- LISTA ----------------
+/** Początek okna z tekstu „HH:MM–HH:MM” (do prognozy dojazdu). */
+const windowStartOf = (w: string) => /^(\d{2}:\d{2})/.exec(w)?.[1] ?? null;
+
+function useNowHHMM() {
+  const [now, setNow] = useState<string | null>(null);
+  useEffect(() => {
+    const fmt = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" });
+    const tick = () => setNow(fmt.format(new Date()));
+    tick();
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
+/** Link do nawigacji po adresie (bez współrzędnych — otwiera mapy w telefonie). */
+const navHref = (s: SnapshotStop) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.address)}`;
+
 function ListScreen({
   route,
   record,
@@ -263,112 +282,201 @@ function ListScreen({
 }) {
   const p = progress(route);
   const [err, setErr] = useState<string | null>(null);
+  const [showDone, setShowDone] = useState(false);
+  const now = useNowHHMM();
+  const etas = planEtas(
+    null,
+    route.stops.map((s) => ({
+      id: s.id,
+      sequence: s.sequence,
+      status: s.status,
+      windowStart: windowStartOf(s.window),
+      windowEnd: s.windowEnd,
+      arrivedAt: null,
+      completedAt: s.completedAt,
+    })),
+    now,
+  );
+  const done = route.stops.filter((s) => isStopDone(s.status));
+  const open = route.stops.filter((s) => !isStopDone(s.status));
+  const current = open.find((s) => s.status === "in_progress") ?? open[0];
+  const rest = open.filter((s) => s.id !== current?.id);
+
+  const quick = (s: SnapshotStop) => {
+    const q = quickStatusOf(s.status);
+    return (
+      <div role="group" aria-label="Status punktu" className="grid grid-cols-4 gap-1 rounded-xl bg-foreground/[0.06] p-1">
+        {(Object.keys(QUICK_STATUSES) as QuickStatus[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={q === k}
+            onClick={async () => setErr(await record({ type: "stop_quick", stop_id: s.id, status: k }))}
+            className={cn(
+              "h-12 w-full rounded-lg px-1 text-[11.5px] leading-tight font-bold",
+              q === k ? ON[k] : "text-foreground/80",
+            )}
+          >
+            {QUICK_STATUSES[k].label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <main className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex flex-col bg-ink text-white">
-        <div className="flex flex-col gap-3 px-4 pt-4 pb-4">
+    <main className="flex min-h-screen flex-col bg-[#e4ebe6]">
+      <header className="sticky top-0 z-10 flex flex-col bg-ink text-white shadow-[0_2px_8px_rgb(0_0_0/0.18)]">
+        <div className="flex flex-col gap-2.5 px-4 pt-3 pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/driver" className="flex h-10 items-center text-sm text-ink-muted" aria-label="Moje trasy">
+              ‹ Trasy
+            </Link>
+            <p className="text-2xl leading-none font-bold tabular-nums">{now ?? ""}</p>
+          </div>
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold">{route.name}</h1>
-              <p className="text-xs text-ink-muted">licznik start {route.odometerStart?.toLocaleString("pl-PL")} km</p>
-            </div>
+            <h1 className="min-w-0 truncate text-xl leading-tight font-semibold">{route.name}</h1>
             {route.vehicle && <Plate>{route.vehicle}</Plate>}
           </div>
           <div className="flex items-center gap-3">
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/15">
               <div className="h-full rounded-full bg-primary" style={{ width: `${p.pct}%` }} />
             </div>
-            <span className="text-base font-semibold tabular-nums">
-              {p.finished} / {p.total}
+            <span className="text-base font-bold tabular-nums">
+              {p.finished}/{p.total}
             </span>
           </div>
         </div>
         {banners}
       </header>
-      <ErrorText text={err} />
-      <ol className="flex flex-1 flex-col gap-2 p-3">
-        {route.stops.map((s) => {
-          const q = quickStatusOf(s.status);
-          return (
-            <li
-              key={s.id}
-              className={cn(
-                "flex flex-col gap-2.5 rounded-2xl border bg-surface p-3",
-                s.status === "in_progress" ? "border-2 border-info shadow-[0_0_0_4px_rgb(42_111_176/0.12)]" : "border-border",
-              )}
-            >
-              <button type="button" onClick={() => go({ name: "stop", id: s.id })} className="flex items-start gap-3 text-left">
-                <span
-                  className={cn(
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                    q === "done"
-                      ? "bg-success text-white"
-                      : q === "partial"
-                        ? "bg-warning text-white"
-                        : q === null
-                          ? "bg-danger-soft text-danger"
-                          : q === "now"
-                            ? "bg-info text-white"
-                            : "bg-ink text-white",
-                  )}
+      <div className="px-3 pt-2">
+        <ErrorText text={err} />
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        {current ? (
+          <section
+            aria-label="Następny punkt"
+            className={cn(
+              "flex flex-col gap-3 rounded-2xl border-l-[6px] bg-surface p-4 shadow-[0_2px_8px_rgb(19_36_31/0.12)]",
+              current.status === "in_progress" ? "border-l-info" : "border-l-success",
+            )}
+          >
+            <p className="text-[12px] font-semibold tracking-[0.06em] text-muted uppercase">
+              {current.status === "in_progress" ? "Teraz realizujesz" : "Następny punkt"} · {current.sequence} z{" "}
+              {route.stops.length}
+            </p>
+            <button type="button" onClick={() => go({ name: "stop", id: current.id })} className="text-left">
+              <span className="block text-[22px] leading-tight font-bold">{current.customer}</span>
+              <span className="mt-0.5 block text-[15px] text-muted">
+                {current.branch} · {current.address}
+              </span>
+            </button>
+            <StopMeta stop={current} eta={etas.get(current.id)} big />
+            <div className="grid grid-cols-2 gap-2">
+              {current.phone ? (
+                <a
+                  href={`tel:${current.phone}`}
+                  className="flex h-14 items-center justify-center gap-2 rounded-xl border border-border-strong bg-surface text-base font-bold"
                 >
+                  <Phone className="size-5" /> Zadzwoń
+                </a>
+              ) : (
+                <span className="flex h-14 items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted">
+                  brak telefonu
+                </span>
+              )}
+              <a
+                href={navHref(current)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex h-14 items-center justify-center gap-2 rounded-xl bg-info text-base font-bold text-white"
+              >
+                <Navigation className="size-5" /> Nawiguj
+              </a>
+            </div>
+            {quick(current)}
+            <button
+              type="button"
+              onClick={() => go({ name: "stop", id: current.id })}
+              className="h-12 rounded-xl bg-ink text-base font-semibold text-white"
+            >
+              Opakowania, gotówka, zdjęcia ›
+            </button>
+          </section>
+        ) : (
+          <section className="flex flex-col items-center gap-2 rounded-2xl bg-surface p-6 text-center">
+            <CircleCheck className="size-8 text-success" />
+            <p className="text-lg font-semibold">Wszystkie punkty zrealizowane</p>
+            <p className="text-sm text-muted">Zakończ zmianę, żeby wpisać licznik i zobaczyć raport.</p>
+          </section>
+        )}
+
+        {rest.length > 0 && (
+          <p className="mt-2 px-1 text-[12px] font-semibold tracking-[0.06em] text-muted uppercase">Dalej na trasie</p>
+        )}
+        <ol className="flex flex-col gap-1.5">
+          {rest.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => go({ name: "stop", id: s.id })}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-xl border-l-[5px] bg-surface px-3 py-2.5 text-left shadow-[0_1px_2px_rgb(19_36_31/0.08)]",
+                  quickStatusOf(s.status) === null ? "border-l-danger" : "border-l-success",
+                )}
+              >
+                <span className="w-6 shrink-0 pt-0.5 text-right text-sm font-semibold text-subtle tabular-nums">
                   {s.sequence}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-base font-semibold">{s.customer}</span>
-                  <span className="block text-sm text-muted">
-                    {s.branch} · {s.address}
-                  </span>
-                  <span className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="rounded-md bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2 tabular-nums">
-                      okno {s.window}
-                    </span>
-                    {s.temporary && s.pointType && (
-                      <span className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
-                        {s.pointType}
-                      </span>
-                    )}
-                    {s.notes.map((n) => (
-                      <span key={n} className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
-                        {n}
-                      </span>
-                    ))}
-                    {s.orders.some((o) => o.cod) && (
-                      <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">pobranie</span>
-                    )}
-                    {q === null && (
-                      <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
-                        {STOP_STATUS_LABELS[s.status]}
-                      </span>
-                    )}
-                  </span>
+                  <span className="block truncate text-base font-semibold">{s.customer}</span>
+                  <span className="block truncate text-sm text-muted">{s.address}</span>
+                  <StopMeta stop={s} eta={etas.get(s.id)} />
                 </span>
-                <span className="flex h-11 items-center px-1 text-sm font-semibold text-primary-strong">Szczegóły ›</span>
               </button>
-              <div role="group" aria-label="Status punktu" className="grid grid-cols-4 gap-1 rounded-xl bg-foreground/[0.06] p-1">
-                {(Object.keys(QUICK_STATUSES) as QuickStatus[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    aria-pressed={q === k}
-                    onClick={async () => setErr(await record({ type: "stop_quick", stop_id: s.id, status: k }))}
-                    className={cn(
-                      "h-12 w-full rounded-lg px-1 text-xs font-bold leading-tight",
-                      q === k ? ON[k] : "text-foreground/80",
-                    )}
-                  >
-                    {QUICK_STATUSES[k].label}
-                  </button>
-                ))}
-              </div>
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ol>
+
+        {done.length > 0 && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowDone((v) => !v)}
+              aria-expanded={showDone}
+              className="flex h-12 w-full items-center justify-center gap-1 rounded-xl text-sm font-semibold text-info"
+            >
+              {showDone ? "▲ Ukryj" : "▼ Pokaż"} zrealizowane ({done.length})
+            </button>
+            {showDone && (
+              <ol className="flex flex-col gap-1.5">
+                {done.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => go({ name: "stop", id: s.id })}
+                      className="flex w-full items-center gap-3 rounded-xl border-l-[5px] border-l-border-strong bg-foreground/[0.04] px-3 py-2 text-left text-muted"
+                    >
+                      <span className="w-6 shrink-0 text-right text-sm tabular-nums">{s.sequence}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{s.customer}</span>
+                      <span className="shrink-0 text-xs">
+                        ✓ {STOP_STATUS_LABELS[s.status]}
+                        {s.completedAt ? ` ${s.completedAt}` : ""}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
+      </div>
+
       <footer className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-border bg-surface p-3">
         <button
           type="button"
-          onClick={() => go({ name: "problem", stopId: null })}
+          onClick={() => go({ name: "problem", stopId: current?.id ?? null })}
           className="h-14 rounded-xl border border-border-strong bg-surface text-base font-semibold"
         >
           Zgłoś problem
@@ -382,6 +490,54 @@ function ListScreen({
         </button>
       </footer>
     </main>
+  );
+}
+
+/** Okno, prognoza dojazdu i znaczniki (uwagi, pobranie, typ punktu) pod nazwą punktu. */
+function StopMeta({ stop: s, eta, big }: { stop: SnapshotStop; eta: string | undefined; big?: boolean }) {
+  const late = Boolean(eta && s.windowEnd && eta > s.windowEnd);
+  const crates = s.orders.reduce((a, o) => a + o.crates, 0);
+  const pallets = s.orders.reduce((a, o) => a + o.pallets, 0);
+  return (
+    <span className="mt-1 flex flex-col gap-1.5">
+      <span className="flex items-baseline justify-between gap-2">
+        <span
+          className={cn(
+            "tabular-nums",
+            big ? "text-base" : "text-sm",
+            late ? "font-bold text-danger" : "font-medium text-foreground",
+          )}
+        >
+          {late && "▲ "}okno {s.window}
+        </span>
+        {eta && (
+          <span className={cn("font-bold tabular-nums", big ? "text-2xl" : "text-lg", late ? "text-danger" : "text-ink")}>
+            {eta}
+          </span>
+        )}
+      </span>
+      <span className="flex flex-wrap gap-1.5">
+        <span className="rounded bg-foreground/[0.06] px-2 py-0.5 text-xs font-semibold text-muted tabular-nums">
+          {crates} skrz.{pallets ? ` · ${pallets} pal.` : ""}
+        </span>
+        {s.temporary && s.pointType && (
+          <span className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">{s.pointType}</span>
+        )}
+        {s.notes.map((n) => (
+          <span key={n} className="rounded bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
+            {n}
+          </span>
+        ))}
+        {s.orders.some((o) => o.cod) && (
+          <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">pobranie</span>
+        )}
+        {quickStatusOf(s.status) === null && (
+          <span className="rounded bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
+            {STOP_STATUS_LABELS[s.status]}
+          </span>
+        )}
+      </span>
+    </span>
   );
 }
 
@@ -516,22 +672,20 @@ function StopScreen({
 
   return (
     <main className="flex flex-col gap-3 pb-6">
-      <header className="flex flex-col gap-1 border-b border-border bg-surface px-4 py-3">
-        <button type="button" onClick={back} className="flex h-10 items-center text-left text-sm text-primary-strong">
+      <header className="flex flex-col gap-1 bg-ink px-4 pt-2 pb-4 text-white">
+        <button type="button" onClick={back} className="flex h-10 items-center text-left text-sm text-ink-muted">
           ‹ Trasa · punkt {stop.sequence} z {route.stops.length}
         </button>
-        <h1 className="text-xl font-semibold">{stop.customer}</h1>
-        <p className="text-sm text-muted">
+        <h1 className="text-[22px] leading-tight font-bold">{stop.customer}</h1>
+        <p className="text-[15px] text-ink-foreground">
           {stop.branch}
           {stop.pointType ? ` (${stop.pointType.toLowerCase()})` : ""} · {stop.address}
         </p>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          <span className="rounded bg-steel-soft px-2 py-0.5 text-xs font-semibold text-ink-2">okno {stop.window}</span>
-          <span className="rounded bg-foreground/[0.08] px-2 py-0.5 text-xs font-semibold">
-            {STOP_STATUS_LABELS[stop.status]}
-          </span>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <span className="rounded bg-white/15 px-2 py-0.5 text-[13px] font-semibold tabular-nums">okno {stop.window}</span>
+          <span className="rounded bg-white/10 px-2 py-0.5 text-[13px] font-semibold">{STOP_STATUS_LABELS[stop.status]}</span>
           {(stop.photos > 0 || stop.signed) && (
-            <span className="rounded bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
+            <span className="rounded bg-primary/25 px-2 py-0.5 text-[13px] font-semibold text-primary">
               {stop.photos ? `${stop.photos} zdj.` : ""}
               {stop.photos && stop.signed ? " · " : ""}
               {stop.signed ? "podpis" : ""}
@@ -542,6 +696,14 @@ function StopScreen({
       {banners}
 
       <div className="grid grid-cols-2 gap-2 px-3">
+        <a
+          href={navHref(stop)}
+          target="_blank"
+          rel="noreferrer"
+          className="col-span-2 flex h-14 items-center justify-center gap-2 rounded-xl bg-info text-base font-bold text-white"
+        >
+          <Navigation className="size-5" /> Nawiguj do punktu
+        </a>
         <CallButton phone={stop.phone} label="Odbiorca" sub={stop.branch} />
         <CallButton phone={stop.salesRepPhone} label="Opiekun" sub={stop.salesRep} tone="primary" />
         {(stop.siteManager || stop.siteManagerPhone) && (
