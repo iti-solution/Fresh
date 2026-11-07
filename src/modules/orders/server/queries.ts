@@ -27,7 +27,13 @@ export type DayOrder = {
   customerId: string | null;
   branchName: string;
   city: string;
+  address: string;
+  pointId: string | null;
+  volume_m3: number;
+  /** Trasa stała adresu (szablon). */
   route: string;
+  /** Trasa dnia, na której jest zamówienie (null = poza trasą). */
+  dayRoute: string | null;
 };
 
 const t = (s?: string | null) => (s ? s.slice(0, 5) : "");
@@ -39,7 +45,7 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, external_ref, readiness, status, priority, order_value, cod_amount, weight_kg, pallets, crates, notes_sales, notes_logistics, source, customer_note, window_start, window_end, order_lines(line_no, product_name, qty, unit), delivery_points(name, city, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
+      "id, external_ref, readiness, status, priority, order_value, cod_amount, weight_kg, pallets, crates, volume_m3, notes_sales, notes_logistics, source, customer_note, window_start, window_end, delivery_point_id, order_lines(line_no, product_name, qty, unit), route_stop_orders(route_stops(routes(name))), delivery_points(name, city, address_line, customers(id, name, external_code), delivery_point_windows(weekday, opens_at, closes_at), route_template_points(route_templates(name)))",
     )
     .eq("tenant_id", tenantId)
     .eq("delivery_date", day)
@@ -77,7 +83,11 @@ export async function getDayOrders(tenantId: string, day: string): Promise<DayOr
       customerId: p?.customers?.id ?? null,
       branchName: p?.name ?? "—",
       city: p?.city ?? "",
+      address: p?.address_line ?? "",
+      pointId: o.delivery_point_id,
+      volume_m3: Number(o.volume_m3 ?? 0),
       route: p?.route_template_points?.[0]?.route_templates?.name ?? "Bez trasy stałej",
+      dayRoute: o.route_stop_orders?.route_stops?.routes?.name ?? null,
     };
   });
 }

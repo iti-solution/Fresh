@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  Banknote,
+  CalendarClock,
+  ClipboardList,
+  IdCard,
+  MapPin,
+  MessageSquareText,
+  Package,
+  Route,
+  Store,
+  Truck,
+  User,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +90,29 @@ const WEEKDAYS = [
   { v: 7, l: "nd" },
 ];
 
-const inputCls = inputClass;
+const inputCls = cn(inputClass, "h-11 rounded-md");
+
+/** Ikona sekcji dobrana po tytule (formularze kartotek, zamówień, rozliczeń). */
+const SECTION_ICONS: [RegExp, LucideIcon][] = [
+  [/pojazd|auto/i, Truck],
+  [/ładown|ładunek|opakow/i, Package],
+  [/koszt|własno|stawk|rozlicz/i, Wallet],
+  [/gotówk|pobran/i, Banknote],
+  [/kierowc|osoba|opiekun|kontakt/i, User],
+  [/adres|dostawy$/i, MapPin],
+  [/kiedy|okno|godzin|harmonogram|przydział/i, CalendarClock],
+  [/trasa/i, Route],
+  [/uwag/i, MessageSquareText],
+  [/klient|kontrahent|firma/i, Store],
+  [/etat|umow|zatrudn/i, IdCard],
+];
+function sectionIcon(title: string): LucideIcon {
+  return SECTION_ICONS.find(([re]) => re.test(title))?.[1] ?? ClipboardList;
+}
+
+/** Etykieta w górnej krawędzi pola (jak w Material) — więcej pól na ekranie, opis zawsze widoczny. */
+const floatLabel =
+  "pointer-events-none absolute -top-2 left-2.5 z-[1] max-w-[calc(100%-1.25rem)] truncate bg-surface px-1 text-[11.5px] leading-4 font-medium text-muted";
 
 const spanCls = { 1: "sm:col-span-1", 2: "sm:col-span-2", 3: "sm:col-span-3" } as const;
 
@@ -139,10 +176,18 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
       break;
     case "checkbox":
       return (
-        <label className={cn("flex h-10 items-center gap-2 self-end text-sm sm:col-span-1", f.span && spanCls[f.span])}>
-          <input type="checkbox" name={f.name} defaultChecked={f.defaultChecked} className="h-5 w-5 accent-[var(--primary)]" />
-          {f.label}
-          {f.hint && <span className="text-xs text-muted">({f.hint})</span>}
+        <label
+          className={cn(
+            "flex min-h-11 cursor-pointer items-center gap-3 self-start rounded-md text-[13px] sm:col-span-1",
+            f.span && spanCls[f.span],
+          )}
+        >
+          <input type="checkbox" name={f.name} defaultChecked={f.defaultChecked} className="peer sr-only" />
+          <span className="relative h-5 w-9 shrink-0 rounded-full bg-foreground/15 transition-colors after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-primary-strong peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40" />
+          <span>
+            <span className="block font-medium">{f.label}</span>
+            {f.hint && <span className="block text-[11.5px] text-muted">{f.hint}</span>}
+          </span>
         </label>
       );
     case "weekdays":
@@ -157,7 +202,7 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
                 defaultChecked={f.defaultValue?.includes(d.v)}
                 className="peer sr-only"
               />
-              <span className="flex h-10 w-11 items-center justify-center rounded-lg border border-border-strong bg-surface text-sm font-medium peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
+              <span className="flex h-8 min-w-12 items-center justify-center rounded-md border border-border-strong bg-surface px-2 text-[12.5px] font-semibold peer-checked:border-primary-strong peer-checked:bg-accent peer-checked:text-primary-strong peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
                 {d.l}
               </span>
             </label>
@@ -203,7 +248,7 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
             className={cn(inputCls, f.suffix && "pr-12")}
           />
           {f.suffix && (
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted">
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-muted">
               {f.suffix}
             </span>
           )}
@@ -226,19 +271,33 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
       );
   }
 
+  const floating = f.kind !== "weekdays";
+  const required = "required" in f && f.required;
   return (
-    <div className={cn("flex flex-col gap-1.5 sm:col-span-1", f.span && spanCls[f.span])}>
-      <label id={`${id}-label`} htmlFor={f.kind === "weekdays" ? undefined : id} className="text-sm font-medium">
-        {f.label}
-      </label>
-      {control}
+    <div className={cn("flex flex-col gap-1 sm:col-span-1", f.span && spanCls[f.span])}>
+      {floating ? (
+        <div className="relative">
+          <label id={`${id}-label`} htmlFor={id} className={cn(floatLabel, invalid && "text-danger")}>
+            {f.label}
+            {required && "*"}
+          </label>
+          {control}
+        </div>
+      ) : (
+        <>
+          <label id={`${id}-label`} className="text-[12.5px] font-medium text-muted">
+            {f.label}
+          </label>
+          {control}
+        </>
+      )}
       {invalid ? (
-        <p id={`${id}-err`} className="text-xs text-danger">
+        <p id={`${id}-err`} className="px-1 text-[11.5px] text-danger">
           {errors!.join(" ")}
         </p>
       ) : (
         f.hint && (
-          <p id={`${id}-hint`} className="text-xs text-muted">
+          <p id={`${id}-hint`} className="px-1 text-[11.5px] leading-snug text-muted">
             {f.hint}
           </p>
         )
@@ -267,38 +326,46 @@ export function FormRenderer({
   }, {});
   const sub = submitted.values;
   return (
-    <form key={submitted.version} action={formAction} className="flex max-w-4xl flex-col gap-6" noValidate>
-      {sections.map((s) => (
-        <fieldset
-          key={s.title}
-          className="overflow-hidden rounded-[var(--radius-panel)] border border-border bg-surface shadow-[var(--shadow-panel)]"
-        >
-          <legend className="sr-only">{s.title}</legend>
-          <div className="border-b border-border px-5 py-3.5" aria-hidden>
-            <p className="text-[15px] font-semibold">{s.title}</p>
-            {s.description && <p className="mt-0.5 text-xs text-muted">{s.description}</p>}
-          </div>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:grid-cols-3">
-            {s.fields.map((f) => (
-              <Field key={f.name} f={withSubmitted(f, sub)} errors={state.fieldErrors?.[f.name]} />
-            ))}
-          </div>
-        </fieldset>
-      ))}
-      <div className="sticky bottom-0 flex items-center gap-3 border-t border-border bg-background/95 py-3 backdrop-blur">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Zapisywanie…" : submitLabel}
-        </Button>
-        {cancelHref && (
-          <Link href={cancelHref} className="text-sm text-muted hover:underline">
-            Anuluj
-          </Link>
-        )}
+    <form
+      key={submitted.version}
+      action={formAction}
+      className="max-w-4xl overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-panel)]"
+      noValidate
+    >
+      {sections.map((s) => {
+        const Icon = sectionIcon(s.title);
+        return (
+          <fieldset key={s.title} className="border-b border-border px-5 pt-4 pb-5 last-of-type:border-b-0">
+            <legend className="sr-only">{s.title}</legend>
+            <div className="mb-4" aria-hidden>
+              <p className="flex items-center gap-2 text-[11.5px] font-semibold tracking-[0.06em] text-foreground uppercase">
+                <Icon className="size-4 text-muted" strokeWidth={1.8} />
+                {s.title}
+              </p>
+              {s.description && <p className="mt-1 pl-6 text-[12px] text-muted">{s.description}</p>}
+            </div>
+            <div className="grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-3">
+              {s.fields.map((f) => (
+                <Field key={f.name} f={withSubmitted(f, sub)} errors={state.fieldErrors?.[f.name]} />
+              ))}
+            </div>
+          </fieldset>
+        );
+      })}
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-border bg-surface-2/95 px-5 py-3 backdrop-blur">
         {state.message && (
-          <p role="status" className={cn("text-sm font-medium", state.ok ? "text-success" : "text-danger")}>
+          <p role="status" className={cn("mr-auto text-sm font-medium", state.ok ? "text-success" : "text-danger")}>
             {state.message}
           </p>
         )}
+        {cancelHref && (
+          <Link href={cancelHref} className="rounded-md px-3 py-2 text-[13px] font-semibold text-foreground hover:bg-foreground/[0.05]">
+            Anuluj
+          </Link>
+        )}
+        <Button type="submit" disabled={pending} size="sm" className="min-w-24">
+          {pending ? "Zapisywanie…" : submitLabel}
+        </Button>
       </div>
     </form>
   );
