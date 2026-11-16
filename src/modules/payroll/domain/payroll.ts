@@ -214,7 +214,7 @@ export const LINE_LABELS: Record<PayLineCode, string> = {
   turnover: "Od obrotu trasy",
   delivered_value: "Od wartości dostaw",
   on_time_bonus: "Premia za terminowość",
-  manual: "Dodatek ręczny",
+  manual: "Dodatki ręczne / potrącenia",
 };
 
 const isExtra = (r: RouteFacts) => r.kind !== "regular" || r.courseNo > 1;
@@ -367,7 +367,7 @@ export function summarizeLines(lines: SummaryLine[]): { days: number; byCode: Re
   return { days, byCode };
 }
 
-/** Składniki, które wystąpiły choć raz — do kolumn tabeli i wydruku (puste kolumny pomijamy). */
+/** Składniki, które wystąpiły choć raz — do kolumn tabeli i wydruku. Dodatki ręczne są zawsze widoczne. */
 export function activeCodes(sums: { byCode: Record<PayLineCode, number> }[]): PayLineCode[] {
-  return PAY_CODES.filter((c) => sums.some((s) => s.byCode[c] !== 0));
+  return PAY_CODES.filter((c) => c === "manual" || sums.some((s) => s.byCode[c] !== 0));
 }
