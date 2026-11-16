@@ -25,6 +25,8 @@ export type ReportStop = {
   kg: number;
   reason: string | null;
   note: string | null;
+  /** Dane odbiorcy: uwagi stałe i tymczasowe do kontrahenta, punktu i zamówienia (handlowe, logistyczne, od klienta). */
+  info?: { kind: "customer" | "point" | "sales" | "logistics" | "client"; text: string }[];
 };
 
 export type ReportRoute = {

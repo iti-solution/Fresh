@@ -31,8 +31,8 @@ export async function getReportRoutes(
     drivers(first_name, last_name, phone),
     vehicles(registration, cost_per_km, driver_cost_per_day, fixed_cost_per_day),
     route_stops(id, sequence, status, arrived_at, completed_at,
-      delivery_points(name, city, contact_phone, customers(id, name, external_code, sales_rep_name), delivery_point_windows(weekday, opens_at, closes_at)),
-      route_stop_orders(orders(external_ref, order_value, cod_amount, crates, weight_kg, window_start, window_end, status)))`;
+      delivery_points(name, city, contact_phone, driver_instructions, customers(id, name, external_code, sales_rep_name, notes), delivery_point_windows(weekday, opens_at, closes_at)),
+      route_stop_orders(orders(external_ref, order_value, cod_amount, crates, weight_kg, window_start, window_end, status, notes_sales, notes_logistics, customer_note)))`;
 
   type Raw = NonNullable<Awaited<ReturnType<typeof fetchPage>>["data"]>[number];
   const fetchPage = (offset: number) =>
@@ -117,6 +117,13 @@ export async function getReportRoutes(
         kg: Math.round(orders.reduce((a, o) => a + Number(o.weight_kg ?? 0), 0)),
         reason: n?.reason ?? null,
         note: n?.note ?? null,
+        info: [
+          ...(p?.customers?.notes ? [{ kind: "customer" as const, text: p.customers.notes }] : []),
+          ...(p?.driver_instructions ? [{ kind: "point" as const, text: p.driver_instructions }] : []),
+          ...[...new Set(orders.map((o) => o.notes_sales).filter((x): x is string => Boolean(x)))].map((text) => ({ kind: "sales" as const, text })),
+          ...[...new Set(orders.map((o) => o.notes_logistics).filter((x): x is string => Boolean(x)))].map((text) => ({ kind: "logistics" as const, text })),
+          ...[...new Set(orders.map((o) => o.customer_note).filter((x): x is string => Boolean(x)))].map((text) => ({ kind: "client" as const, text })),
+        ],
       };
     });
     const v = r.vehicles;
