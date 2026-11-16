@@ -31,11 +31,12 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { LiveSearchCard } from "@/components/panel/search-card";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   autoPanels,
   DEFAULT_BOARD_VIEW,
-  hasProblems,
   matchesFilter,
   parseBoardView,
   ROUTE_FILTER_LABELS,
@@ -168,6 +169,7 @@ export function PlanningBoard({
   const [view, setView] = useState<BoardView>(DEFAULT_BOARD_VIEW);
   const [sort, setSort] = useState<RouteSort>("name");
   const [filter, setFilter] = useState<RouteFilter>("all");
+  const [query, setQuery] = useState("");
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -217,15 +219,39 @@ export function PlanningBoard({
     return () => clearTimeout(t);
   }, [toast]);
 
-  const problems = routes.filter((r) => hasProblems(r)).length;
+  const needle = query.trim().toLowerCase();
+  const routeMatchesQuery = useCallback(
+    (r: BoardRoute) =>
+      !needle ||
+      [r.name, r.driverLabel ?? "", r.vehicleLabel ?? ""].some((x) => x.toLowerCase().includes(needle)) ||
+      r.stops.some((st) => [st.customer, st.address, st.phone ?? ""].some((x) => x.toLowerCase().includes(needle))),
+    [needle],
+  );
   const visible = useMemo(
     () =>
       sortRoutes(
         routes.map((r) => ({ ...r, stopsCount: r.stops.length })),
         sort,
-      ).filter((r) => matchesFilter(r, filter)),
-    [routes, sort, filter],
+      )
+        .filter((r) => matchesFilter(r, filter))
+        .filter(routeMatchesQuery),
+    [routes, sort, filter, routeMatchesQuery],
   );
+  const unassignedShown = useMemo(
+    () =>
+      needle
+        ? unassigned.filter((o) => [o.customer, o.address, o.ref ?? ""].some((x) => x.toLowerCase().includes(needle)))
+        : unassigned,
+    [unassigned, needle],
+  );
+  const filterCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        (Object.keys(ROUTE_FILTER_LABELS) as RouteFilter[]).map((k) => [k, routes.filter((r) => matchesFilter({ ...r, stopsCount: r.stops.length }, k)).length]),
+      ) as Record<RouteFilter, number>,
+    [routes],
+  );
+  const totalStops = routes.reduce((a, r) => a + r.stops.length, 0);
 
   const run = useCallback(
     (fn: () => Promise<{ error?: string; moved?: number }>, okText: string) => {
@@ -316,54 +342,88 @@ export function PlanningBoard({
 
   return (
     <div className="flex h-[calc(100vh-var(--chrome,3rem)-2.25rem)] min-h-[560px] flex-col gap-2.5 md:h-[calc(100vh-var(--chrome,3rem)-2.75rem)]">
-      {/* pasek narzędzi */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
-        <ToolButton label="Odśwież" onClick={() => router.refresh()} tone="primary">
-          <RefreshCw className={cn(pending && "animate-spin")} />
-        </ToolButton>
-        {dayNav}
-        <LabeledSelect label="Pokaż trasy" value={filter} onChange={(v) => setFilter(v as RouteFilter)} options={ROUTE_FILTER_LABELS} />
-        {problems > 0 && (
-          <button
-            type="button"
-            onClick={() => setFilter(filter === "problems" ? "all" : "problems")}
-            aria-pressed={filter === "problems"}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors",
-              filter === "problems" ? "bg-danger text-white" : "bg-danger-soft text-danger hover:bg-danger/15",
-            )}
-          >
-            <CircleAlert className="size-4" />
-            {problems} {problems === 1 ? "trasa" : problems < 5 ? "trasy" : "tras"} z problemami
-          </button>
-        )}
-        <div className="relative">
-          <ToolButton label="Widok tablicy" onClick={() => setSettingsOpen((o) => !o)} active={settingsOpen}>
-            <SlidersHorizontal />
-          </ToolButton>
-          {settingsOpen && <ViewSettings view={view} onChange={saveView} onClose={() => setSettingsOpen(false)} />}
-        </div>
-        <ToolButton
-          label={allCollapsed ? "Rozwiń wszystkie trasy" : "Zwiń wszystkie trasy"}
-          onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(visible.map((r) => r.id)))}
-        >
-          {allCollapsed ? <ChevronsUpDown /> : <ChevronsDownUp />}
-        </ToolButton>
-        <div className="ml-auto flex flex-wrap items-center gap-2">{toolbarActions}</div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-1 text-[12px] text-muted">
-        <span>
+      {/* nagłówek ekranu: opis + wybór dnia (jak na pozostałych ekranach) */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-1">
+        <p className="text-[13px] text-muted">
           {editable
-            ? "Przeciągnij punkt, aby zmienić trasę lub kolejność · Ctrl / Shift + klik, aby zaznaczyć kilka"
-            : "Podgląd planu — zmiany wprowadza dyspozytor"}
+            ? "Przeciągnij punkt, aby zmienić trasę lub kolejność · Ctrl / Shift + klik, aby zaznaczyć kilka."
+            : "Podgląd planu — zmiany wprowadza dyspozytor."}
           {selected.size > 0 && (
             <button type="button" onClick={() => setSelected(new Set())} className="ml-3 font-semibold text-info hover:underline">
               Zaznaczono {selected.size} — wyczyść
             </button>
           )}
-        </span>
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <ToolButton label="Odśwież" onClick={() => router.refresh()} tone="primary">
+            <RefreshCw className={cn(pending && "animate-spin")} />
+          </ToolButton>
+          {dayNav}
+        </div>
+      </div>
+
+      <LiveSearchCard
+        value={query}
+        onChange={setQuery}
+        placeholder="Klient, adres, telefon, kierowca, numer rejestracyjny albo trasa"
+        label="Szukaj na tablicy tras"
+        result={needle ? `${visible.length} z ${routes.length} tras` : undefined}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="text-[15px] text-muted tabular-nums">
+          <b className="font-semibold text-foreground">{totalStops}</b> punktów na {routes.length}{" "}
+          {routes.length === 1 ? "trasie" : "trasach"}
+          {unassigned.length > 0 && (
+            <>
+              {" "}
+              · <b className="font-semibold text-warning">{unassigned.length} nieprzypisanych</b>
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(visible.map((r) => r.id)))}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            {allCollapsed ? <ChevronsUpDown /> : <ChevronsDownUp />} {allCollapsed ? "Rozwiń trasy" : "Zwiń trasy"}
+          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((o) => !o)}
+              aria-pressed={settingsOpen}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <SlidersHorizontal /> Widok tablicy
+            </button>
+            {settingsOpen && <ViewSettings view={view} onChange={saveView} onClose={() => setSettingsOpen(false)} />}
+          </div>
+          <nav className="inline-flex flex-wrap gap-0.5 rounded-lg bg-foreground/[0.06] p-0.5" aria-label="Pokaż trasy">
+            {(["all", "problems", "draft", "ready", "on_road", "done"] as RouteFilter[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setFilter(k)}
+                aria-pressed={filter === k}
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium transition-colors",
+                  filter === k ? "bg-surface text-primary-strong shadow-[0_1px_2px_rgb(19_36_31/0.14)]" : "text-muted hover:text-foreground",
+                  k === "problems" && filter !== k && filterCounts[k] > 0 && "text-danger",
+                )}
+              >
+                {ROUTE_FILTER_LABELS[k]}
+                <span className={cn("tabular-nums text-xs", filter === k ? "text-muted" : "text-subtle")}>{filterCounts[k]}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <Legend />
+        <div className="flex flex-wrap items-center gap-2">{toolbarActions}</div>
       </div>
 
       {notices}
@@ -372,7 +432,7 @@ export function PlanningBoard({
       {view.layout === "panels" ? (
         <div className="flex min-h-0 flex-1 gap-2.5">
           <UnassignedPanel
-            items={unassigned}
+            items={unassignedShown}
             open={showUnassigned}
             onToggle={() => setShowUnassigned((o) => !o)}
             onDrop={onDrop}
@@ -381,7 +441,7 @@ export function PlanningBoard({
           />
           {visible.length === 0 ? (
             <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border-strong bg-surface text-sm text-muted">
-              Żadna trasa nie pasuje do filtra.
+              Żadna trasa nie pasuje do filtra ani wyszukiwania.
             </div>
           ) : (
             panels.map((list, i) => (
@@ -404,7 +464,7 @@ export function PlanningBoard({
       ) : (
         <div className="flex min-h-0 flex-1 gap-2.5 overflow-x-auto pb-1">
           <UnassignedPanel
-            items={unassigned}
+            items={unassignedShown}
             open={showUnassigned}
             onToggle={() => setShowUnassigned((o) => !o)}
             onDrop={onDrop}
@@ -475,36 +535,6 @@ function ToolButton({
   );
 }
 
-function LabeledSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: Record<string, string>;
-}) {
-  return (
-    <label className="relative inline-flex h-9 items-center rounded-lg border border-border-strong bg-surface pr-8 pl-3 text-[13px] hover:border-subtle">
-      <span className="pointer-events-none absolute -top-2 left-2 bg-surface px-1 text-[10.5px] text-muted">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-full cursor-pointer appearance-none bg-transparent font-medium outline-none"
-        aria-label={label}
-      >
-        {Object.entries(options).map(([k, v]) => (
-          <option key={k} value={k}>
-            {v}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-2.5 size-4 text-subtle" />
-    </label>
-  );
-}
 
 function Legend() {
   return (

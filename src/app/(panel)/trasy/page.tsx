@@ -1,10 +1,12 @@
-import { ChevronDown, CircleAlert, Columns3, Inbox, Printer, Search } from "lucide-react";
+import { ChevronDown, CircleAlert, Columns3, Inbox, Printer } from "lucide-react";
 import type { Metadata } from "next";
 import { DayNav } from "@/components/panel/day-nav";
+import { PageHeader } from "@/components/panel/page";
+import { SearchCard } from "@/components/panel/search-card";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DATE_RE } from "@/lib/forms";
-import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { todayInWarsaw } from "@/modules/orders/domain/orders";
 import { normalizeSearch } from "@/modules/ops/domain/reports";
 import { nowInWarsaw } from "@/modules/ops/server/queries";
 import { hasProblems, sortRoutes } from "@/modules/planning/domain/board";
@@ -55,40 +57,46 @@ export default async function RoutesPage({ searchParams }: PageProps<"/trasy">) 
   };
 
   return (
-    <div className="space-y-2.5">
-      <h1 className="sr-only">Trasy — {formatDayLabel(day)}</h1>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
-        <DayNav day={day} today={today} href={(d) => link({ dzien: d })} />
-        <form action="/trasy" className="relative w-full max-w-sm">
-          <input type="hidden" name="dzien" value={day} />
-          {onlyProblems && <input type="hidden" name="problemy" value="1" />}
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Szukaj trasy, kierowcy, nr rej., klienta"
-            aria-label="Szukaj trasy"
-            className="h-9 w-full rounded-lg border border-border-strong bg-surface pr-3 pl-9 text-[13px] outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15"
-          />
-        </form>
-        <Link
-          href={`/planowanie?dzien=${day}`}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-info-soft px-3.5 text-[13px] font-semibold text-info hover:bg-info/15"
-        >
-          <Inbox className="size-4" /> Nieprzypisane: {unassignedStops} pkt
-        </Link>
-        {problems > 0 && (
+    <div className="space-y-4">
+      <PageHeader
+        title="Trasy"
+        description="Ładunek względem limitu pojazdu, terminowość i postęp każdej trasy — rozwiń trasę, żeby zobaczyć jej punkty."
+        actions={<DayNav day={day} today={today} href={(d) => link({ dzien: d })} />}
+      />
+
+      <SearchCard
+        action="/trasy"
+        q={q}
+        hidden={{ dzien: day, problemy: onlyProblems ? "1" : undefined }}
+        placeholder="Trasa, kierowca, numer rejestracyjny albo klient"
+        label="Szukaj trasy"
+        clearHref={link({ q: undefined })}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="text-[15px] text-muted tabular-nums">
+          <b className="font-semibold text-foreground">{all.length}</b> {all.length === 1 ? "trasa" : all.length < 5 && all.length > 1 ? "trasy" : "tras"} ·
+          czerwony ładunek oznacza przekroczenie limitu pojazdu
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
           <Link
-            href={link({ problemy: onlyProblems ? undefined : "1" })}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold",
-              onlyProblems ? "bg-danger text-white" : "bg-danger-soft text-danger hover:bg-danger/15",
-            )}
+            href={`/planowanie?dzien=${day}`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-info-soft px-3.5 text-[13px] font-semibold text-info hover:bg-info/15"
           >
-            <CircleAlert className="size-4" /> {problems} {problems === 1 ? "trasa" : problems < 5 ? "trasy" : "tras"} z problemami
+            <Inbox className="size-4" /> Nieprzypisane: {unassignedStops} pkt
           </Link>
-        )}
-        <span className="ml-auto text-[12px] text-muted">Ładunek / limit pojazdu · czerwony oznacza przekroczenie</span>
+          {problems > 0 && (
+            <Link
+              href={link({ problemy: onlyProblems ? undefined : "1" })}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold",
+                onlyProblems ? "bg-danger text-white" : "bg-danger-soft text-danger hover:bg-danger/15",
+              )}
+            >
+              <CircleAlert className="size-4" /> {problems} {problems === 1 ? "trasa" : problems < 5 ? "trasy" : "tras"} z problemami
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-panel)]">

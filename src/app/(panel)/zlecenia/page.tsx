@@ -1,8 +1,9 @@
 import { DayNav } from "@/components/panel/day-nav";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronDown, ClipboardList, Flag, Inbox, Plus, Search, Upload } from "lucide-react";
-import { EmptyState, Notice, Panel, Segmented } from "@/components/panel/page";
+import { ChevronDown, ClipboardList, Flag, Inbox, Plus, Upload } from "lucide-react";
+import { SearchCard } from "@/components/panel/search-card";
+import { EmptyState, Notice, PageHeader, Panel, Segmented } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DocRef, Pill } from "@/components/ui/status";
 import { DATE_RE, formatPln, toGrosze } from "@/lib/forms";
@@ -108,36 +109,35 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
   const unrouted = active.filter((o) => !o.dayRoute).length;
 
   return (
-    <div className="space-y-2.5">
-      <h1 className="sr-only">Zamówienia — {formatDayLabel(day)}</h1>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
-        <DayNav day={day} today={today} href={(d) => href(d)} />
-        <form action="/zlecenia" className="relative w-full max-w-sm">
-          <input type="hidden" name="dzien" value={day} />
-          {filter && <input type="hidden" name="filtr" value={filter} />}
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Szukaj kontrahenta, dokumentu, trasy"
-            aria-label="Szukaj zamówień"
-            className="h-9 w-full rounded-lg border border-border-strong bg-surface pr-3 pl-9 text-[13px] outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15"
-          />
-        </form>
-        <Segmented
-          items={FILTERS.map((f) => ({ href: href(day, f.key), label: f.label, active: filter === f.key, count: counts[f.key] }))}
-        />
-        {editable && (
-          <div className="ml-auto flex items-center gap-2">
-            <Link href="/zlecenia/import" className={buttonVariants({ variant: "outline", size: "sm" })}>
-              <Upload /> Import z pliku
-            </Link>
-            <Link href={`/zlecenia/nowe?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
-              <Plus /> Nowe zamówienie
-            </Link>
-          </div>
-        )}
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Zamówienia"
+        description="Zamówienia na wybrany dzień — rozwiń kontrahenta, aby zobaczyć zamówienia, a zamówienie, aby zobaczyć pozycje."
+        actions={
+          <>
+            {editable && (
+              <>
+                <Link href="/zlecenia/import" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  <Upload /> Import z pliku
+                </Link>
+                <Link href={`/zlecenia/nowe?dzien=${day}`} className={buttonVariants({ size: "sm" })}>
+                  <Plus /> Nowe zamówienie
+                </Link>
+              </>
+            )}
+            <DayNav day={day} today={today} href={(d) => href(d)} />
+          </>
+        }
+      />
+
+      <SearchCard
+        action="/zlecenia"
+        q={q}
+        hidden={{ dzien: day, filtr: filter || undefined }}
+        placeholder="Kontrahent, miasto, numer zamówienia, dokument albo trasa"
+        label="Szukaj zamówień"
+        clearHref={href(day, filter).replace(/&q=[^&]*/, "")}
+      />
 
       {sp.dodano && <Notice>Dodano zamówienie.</Notice>}
       {toReview > 0 && (
@@ -160,17 +160,19 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
         </Notice>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-1 text-[12px] text-muted">
-        <span>Zamówienia na wybrany dzień — rozwiń kontrahenta, aby zobaczyć zamówienia, a zamówienie, aby zobaczyć pozycje</span>
-        <span className="tabular-nums">
-          {summary.count} zam. · {summary.weightKg.toLocaleString("pl-PL")} kg · {summary.crates} skrz. · {summary.pallets} pal. ·{" "}
-          {formatPln(summary.valueGrosze)}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="text-[15px] text-muted tabular-nums">
+          <b className="font-semibold text-foreground">{summary.count}</b> zam. · {summary.weightKg.toLocaleString("pl-PL")} kg ·{" "}
+          {summary.crates} skrz. · {summary.pallets} pal. · {formatPln(summary.valueGrosze)}
           {unrouted > 0 && (
-            <Link href={`/planowanie?dzien=${day}`} className="ml-2 font-semibold text-info hover:underline">
+            <Link href={`/planowanie?dzien=${day}`} className="ml-3 text-[13px] font-semibold text-info hover:underline">
               {unrouted} poza trasą
             </Link>
           )}
-        </span>
+        </p>
+        <Segmented
+          items={FILTERS.map((f) => ({ href: href(day, f.key), label: f.label, active: filter === f.key, count: counts[f.key] }))}
+        />
       </div>
 
       {active.length === 0 ? (
