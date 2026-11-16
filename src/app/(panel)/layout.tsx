@@ -7,7 +7,7 @@ import { SectionTabs, SidebarNav } from "@/components/panel/sidebar-nav";
 import { CurrentPathInput, FullscreenButton, TopbarTitle } from "@/components/panel/topbar";
 import { cn } from "@/lib/utils";
 import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
-import { navForRole, ROLE_LABELS, sectionsForRole } from "@/modules/tenancy/domain/access";
+import { ROLE_LABELS, sectionsForRole } from "@/modules/tenancy/domain/access";
 import { signOut, switchDataMode } from "@/modules/tenancy/server/actions";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { BRAND } from "@/lib/brand";
@@ -16,9 +16,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const ctx = await requireTenantContext();
   if (ctx.role === "driver") redirect("/driver");
   if (ctx.role === "customer") redirect("/portal");
-  const nav = navForRole(ctx.role);
   const sections = sectionsForRole(ctx.role);
-  const canSettings = nav.some((i) => i.href === "/ustawienia");
+  // Ikona w stopce prowadzi do działu „Ustawienia” (administrator) albo samych „Pierwszych kroków” (dyspozytor).
+  const system = sections.find((s) => s.key === "system");
   const initials = (ctx.email ?? "?").slice(0, 2).toUpperCase();
 
   return (
@@ -40,12 +40,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <span className="block truncate text-[12px] text-white">{ctx.email}</span>
             <span className="block truncate text-[11px] text-ink-muted">{ROLE_LABELS[ctx.role]}</span>
           </span>
-          {canSettings && (
+          {system && (
             <Link
-              href="/ustawienia"
+              href={system.href}
               className="rounded-md p-1.5 text-ink-muted hover:bg-white/[0.06] hover:text-white"
-              title="Ustawienia"
-              aria-label="Ustawienia"
+              title={system.label}
+              aria-label={system.label}
             >
               <Settings className="size-4" />
             </Link>
