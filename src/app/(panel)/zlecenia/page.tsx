@@ -146,7 +146,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
           className="flex items-center gap-3 rounded-xl border-2 border-warning bg-warning-soft px-4 py-3 text-[14px] font-semibold text-[#6e4700] shadow-[var(--shadow-panel)] hover:bg-warning-soft/70"
         >
           <Inbox className="size-5 text-warning" />
-          <span className="rounded-full bg-warning px-2.5 py-0.5 text-[13px] text-white tabular-nums">{toReview}</span>
+          <span className="rounded-full bg-danger px-2.5 py-0.5 text-[13px] text-white tabular-nums">{toReview}</span>
           {toReview === 1 ? "zamówienie od klienta czeka" : "zamówień od klientów czeka"} na sprawdzenie — kliknij, aby je zatwierdzić
           <span className="ml-auto">›</span>
         </Link>

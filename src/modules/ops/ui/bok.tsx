@@ -95,6 +95,9 @@ export function StopList({
   );
 }
 
+const INFO_LABEL = { customer: "Kontrahent", point: "Punkt", sales: "Handlowa", logistics: "Logistyczna", client: "Od klienta" } as const;
+const INFO_TONE = { customer: "text-info", point: "text-foreground", sales: "text-info", logistics: "text-warning", client: "text-plum" } as const;
+
 function StopRow({ stop: s, now, eta, highlight }: { stop: ReportStop; now: string | null; eta?: string; highlight?: boolean }) {
   const done = isFinished(s.status);
   const fits = etaFitsWindow(s, eta);
@@ -131,6 +134,17 @@ function StopRow({ stop: s, now, eta, highlight }: { stop: ReportStop; now: stri
             </>
           )}
         </span>
+        {s.phone && (
+          <a href={`tel:${s.phone.replace(/\s/g, "")}`} className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary-strong hover:underline">
+            <Phone className="size-3" /> {s.phone}
+          </a>
+        )}
+        {s.info?.map((i, k) => (
+          <span key={k} className={cn("mt-0.5 flex gap-1.5 text-xs", INFO_TONE[i.kind])}>
+            <span className="shrink-0 font-semibold">{INFO_LABEL[i.kind]}:</span>
+            <span className="min-w-0">{i.text}</span>
+          </span>
+        ))}
         {(s.reason || s.note) && (
           <span className="mt-1 flex gap-1.5 text-xs text-plum">
             <MessageSquare className="mt-0.5 size-3 shrink-0" />

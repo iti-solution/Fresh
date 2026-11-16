@@ -8,7 +8,7 @@ import type { BoardRoute, BoardStop, BoardUnassigned } from "@/modules/planning/
 
 /**
  * Monitor tras — ekran na telewizor w dyspozytorni: zegar, postęp dnia i kolumna na każdą trasę.
- * Zrealizowane punkty zwijają się u góry („N dostarczonych wyżej”), widać najbliższe dostawy i prognozę dojazdu.
+ * Zrealizowane punkty zwijają się u góry („N dostarczonych”), widać najbliższe dostawy i prognozę dojazdu.
  * Ustawienia (wielkość tekstu, szerokość kolumn, pola) zapamiętuje przeglądarka tego ekranu.
  */
 
@@ -409,7 +409,7 @@ function RouteColumn({ route: r, view }: { route: BoardRoute; view: MonitorView 
         top={
           view.hideDone && doneStops.length > 0 ? (
             <p className="border-b border-border bg-surface-2 py-1 text-center text-[0.8em] font-semibold text-info">
-              ▲ {doneStops.length} {doneStops.length === 1 ? "dostarczony" : "dostarczonych"} wyżej
+              ▲ {doneStops.length} {doneStops.length === 1 ? "dostarczony" : "dostarczonych"}
             </p>
           ) : undefined
         }
