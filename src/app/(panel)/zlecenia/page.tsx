@@ -1,7 +1,7 @@
 import { DayNav } from "@/components/panel/day-nav";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronDown, ClipboardList, Plus, Search, Upload } from "lucide-react";
+import { ChevronDown, ClipboardList, Flag, Inbox, Plus, Search, Upload } from "lucide-react";
 import { EmptyState, Notice, Panel, Segmented } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DocRef, Pill } from "@/components/ui/status";
@@ -10,13 +10,14 @@ import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import {
   formatDayLabel,
+  FULFILMENT_LABELS,
   nextWorkingDay,
-  READINESS_LABELS,
+  type Fulfilment,
   shiftDay,
   summarizeOrders,
   todayInWarsaw,
 } from "@/modules/orders/domain/orders";
-import { cancelOrder, setReadiness } from "@/modules/orders/server/actions";
+import { cancelOrder, setPriority } from "@/modules/orders/server/actions";
 import { getDayOrders, nearestDayWithOrders, type DayOrder } from "@/modules/orders/server/queries";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { unitLabel } from "@/modules/portal/domain/portal";
@@ -26,10 +27,22 @@ export const metadata: Metadata = { title: "Zamówienia" };
 
 const FILTERS = [
   { key: "", label: "Wszystkie" },
-  { key: "gotowe", label: "Skompletowane" },
-  { key: "magazyn", label: "Do realizacji" },
+  { key: "niezaplanowane", label: "Niezaplanowane" },
+  { key: "zaplanowane", label: "Zaplanowane" },
+  { key: "dostawa", label: "W dostawie" },
+  { key: "dostarczone", label: "Dostarczone" },
+  { key: "priorytet", label: "Priorytetowe" },
   { key: "uwagi", label: "Z uwagami" },
 ] as const;
+
+const FILTER_FULFILMENT: Record<string, Fulfilment[]> = {
+  niezaplanowane: ["unplanned"],
+  zaplanowane: ["planned"],
+  dostawa: ["in_delivery"],
+  dostarczone: ["delivered", "failed"],
+};
+
+const FULFILMENT_ORDER: Fulfilment[] = ["unplanned", "planned", "in_delivery", "delivered", "failed"];
 
 export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia">) {
   const ctx = await requireAccess("/zlecenia");
@@ -41,7 +54,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
   const editable = canEdit(ctx.role);
 
   const supabase = await createClient();
-  const [all, { count: unmatchedCount }] = await Promise.all([
+  const [all, { count: unmatchedCount }, { count: reviewCount }] = await Promise.all([
     getDayOrders(ctx.tenantId, day),
     supabase
       .from("orders")
@@ -50,25 +63,26 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
       .is("delivery_point_id", null)
       .neq("status", "cancelled")
       .gte("delivery_date", shiftDay(today, -14)),
+    supabase
+      .from("order_drafts")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", ctx.tenantId)
+      .eq("status", "needs_review"),
   ]);
+  const toReview = reviewCount ?? 0;
   const unmatched = unmatchedCount ?? 0;
   const active = all.filter((o) => o.status !== "cancelled");
   const summary = summarizeOrders(active);
-  const counts = {
-    "": active.length,
-    gotowe: summary.ready,
-    magazyn: summary.awaiting,
-    uwagi: active.filter((o) => o.notes_sales || o.notes_logistics).length,
-  } as Record<string, number>;
-  const visible = active.filter((o) =>
-    filter === "gotowe"
-      ? o.readiness === "ready"
-      : filter === "magazyn"
-        ? o.readiness === "awaiting_warehouse"
-        : filter === "uwagi"
-          ? Boolean(o.notes_sales || o.notes_logistics)
-          : true,
-  );
+  const inFilter = (o: DayOrder, key: string) =>
+    key === "priorytet"
+      ? o.priority > 0
+      : key === "uwagi"
+        ? Boolean(o.notes_sales || o.notes_logistics)
+        : key in FILTER_FULFILMENT
+          ? FILTER_FULFILMENT[key].includes(o.fulfilment)
+          : true;
+  const counts = Object.fromEntries(FILTERS.map((f) => [f.key, active.filter((o) => inFilter(o, f.key)).length])) as Record<string, number>;
+  const visible = active.filter((o) => inFilter(o, filter));
   const cancelled = all.length - active.length;
   const nearest = active.length === 0 ? await nearestDayWithOrders(ctx.tenantId, today) : null;
   const href = (d: string, f = filter) => `/zlecenia?dzien=${d}${f ? `&filtr=${f}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
@@ -89,7 +103,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
     points.set(key, [...(points.get(key) ?? []), o]);
   }
   const rows = [...points.values()].sort(
-    (a, b) => a[0].customerName.localeCompare(b[0].customerName, "pl") || a[0].city.localeCompare(b[0].city, "pl"),
+    (a, b) => Number(b.some((o) => o.priority > 0)) - Number(a.some((o) => o.priority > 0)) || a[0].customerName.localeCompare(b[0].customerName, "pl") || a[0].city.localeCompare(b[0].city, "pl"),
   );
   const unrouted = active.filter((o) => !o.dayRoute).length;
 
@@ -126,6 +140,17 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
       </div>
 
       {sp.dodano && <Notice>Dodano zamówienie.</Notice>}
+      {toReview > 0 && (
+        <Link
+          href="/do-sprawdzenia"
+          className="flex items-center gap-3 rounded-xl border-2 border-warning bg-warning-soft px-4 py-3 text-[14px] font-semibold text-[#6e4700] shadow-[var(--shadow-panel)] hover:bg-warning-soft/70"
+        >
+          <Inbox className="size-5 text-warning" />
+          <span className="rounded-full bg-warning px-2.5 py-0.5 text-[13px] text-white tabular-nums">{toReview}</span>
+          {toReview === 1 ? "zamówienie od klienta czeka" : "zamówień od klientów czeka"} na sprawdzenie — kliknij, aby je zatwierdzić
+          <span className="ml-auto">›</span>
+        </Link>
+      )}
       {unmatched > 0 && (
         <Notice tone="warning">
           {unmatched} zamówień z importu czeka na przypięcie do adresu dostawy.{" "}
@@ -182,7 +207,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
                   <th className="py-2.5 pr-3 text-right font-medium">Objętość</th>
                   <th className="py-2.5 pr-3 text-right font-medium">Skrz.</th>
                   <th className="py-2.5 pr-3 text-right font-medium">Wartość</th>
-                  <th className="py-2.5 pr-3 font-medium">Magazyn</th>
+                  <th className="py-2.5 pr-3 font-medium">Status</th>
                   <th className="w-10 py-2.5" />
                 </tr>
               </thead>
@@ -207,7 +232,7 @@ function PointRows({ orders, editable }: { orders: DayOrder[]; editable: boolean
   const s = summarizeOrders(orders);
   const m3 = orders.reduce((a, o) => a + o.volume_m3, 0);
   const routes = [...new Set(orders.map((o) => o.dayRoute ?? ""))];
-  const awaiting = orders.filter((o) => o.readiness === "awaiting_warehouse").length;
+  const hasPriority = orders.some((o) => o.priority > 0);
   const hasNotes = orders.some((o) => o.notes_sales || o.notes_logistics || o.customer_note);
   const id = `pt-${o0.pointId ?? o0.id}`;
   return (
@@ -246,10 +271,18 @@ function PointRows({ orders, editable }: { orders: DayOrder[]; editable: boolean
         <td className="py-2.5 pr-3 text-right tabular-nums">{s.crates || "—"}</td>
         <td className="py-2.5 pr-3 text-right tabular-nums">{formatPln(s.valueGrosze)}</td>
         <td className="py-2.5 pr-3">
-          <span className="flex items-center gap-1.5">
-            <span className={readinessCls(awaiting ? "awaiting_warehouse" : "ready")}>
-              {awaiting ? `${awaiting} w magazynie` : "skompletowane"}
-            </span>
+          <span className="flex flex-wrap items-center gap-1.5">
+            {FULFILMENT_ORDER.filter((f) => orders.some((o) => o.fulfilment === f)).map((f) => (
+              <span key={f} className={fulfilmentCls(f)}>
+                {FULFILMENT_LABELS[f]}
+                {orders.length > 1 && ` ${orders.filter((o) => o.fulfilment === f).length}`}
+              </span>
+            ))}
+            {hasPriority && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger" title="Zamówienie priorytetowe">
+                <Flag className="size-3" /> priorytet
+              </span>
+            )}
             {hasNotes && <span className="h-2 w-2 rounded-full bg-info" title="Są uwagi do zamówienia" />}
           </span>
         </td>
@@ -274,20 +307,22 @@ function PointRows({ orders, editable }: { orders: DayOrder[]; editable: boolean
                   )}
                   {o.source === "portal" && <Pill tone="info">portal</Pill>}
                   {o.priority > 0 && <Pill tone="danger">priorytet</Pill>}
+                  <span className={fulfilmentCls(o.fulfilment)}>{FULFILMENT_LABELS[o.fulfilment]}</span>
                   <span className="text-[12.5px] text-muted tabular-nums">
                     {o.window} · {Math.round(o.weight_kg)} kg · {o.crates} skrz.{o.pallets ? ` · ${o.pallets} pal.` : ""}
                     {o.order_value !== null ? ` · ${formatPln(toGrosze(o.order_value))}` : ""}
                     {o.cod_amount ? ` · pobranie ${formatPln(toGrosze(o.cod_amount))}` : ""}
                   </span>
                   <span className="flex-1" />
-                  {editable ? (
-                    <form action={setReadiness.bind(null, o.id, o.readiness === "ready" ? "awaiting_warehouse" : "ready")}>
-                      <button title="Kliknij, aby zmienić" className={readinessCls(o.readiness, true)}>
-                        {READINESS_LABELS[o.readiness]}
+                  {editable && o.fulfilment !== "delivered" && (
+                    <form action={setPriority.bind(null, o.id, o.priority === 0)}>
+                      <button
+                        title={o.priority > 0 ? "Zdejmij priorytet" : "Oznacz jako priorytetowe"}
+                        className={buttonVariants({ variant: o.priority > 0 ? "outline" : "ghost", size: "xs" })}
+                      >
+                        <Flag /> {o.priority > 0 ? "Zdejmij priorytet" : "Priorytet"}
                       </button>
                     </form>
-                  ) : (
-                    <span className={readinessCls(o.readiness)}>{READINESS_LABELS[o.readiness]}</span>
                   )}
                   {editable && (
                     <form action={cancelOrder.bind(null, o.id)}>
@@ -329,10 +364,13 @@ function PointRows({ orders, editable }: { orders: DayOrder[]; editable: boolean
   );
 }
 
-function readinessCls(r: string, button = false) {
+function fulfilmentCls(f: Fulfilment) {
   return cn(
-    "inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium before:h-1.5 before:w-1.5 before:rounded-full before:bg-current",
-    r === "ready" ? "bg-success-soft text-success" : "bg-warning-soft text-warning",
-    button && "cursor-pointer hover:ring-2 hover:ring-current/25",
+    "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium before:h-1.5 before:w-1.5 before:rounded-full before:bg-current",
+    f === "unplanned" && "bg-warning-soft text-warning",
+    f === "planned" && "bg-info-soft text-info",
+    f === "in_delivery" && "bg-accent text-primary-strong",
+    f === "delivered" && "bg-success-soft text-success",
+    f === "failed" && "bg-danger-soft text-danger",
   );
 }

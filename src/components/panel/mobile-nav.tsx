@@ -4,9 +4,9 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import type { NavSection } from "@/modules/tenancy/domain/access";
 import { Wordmark } from "./brand";
-import { SidebarNav } from "./sidebar-nav";
+import { SidebarNav, type NavBadges } from "./sidebar-nav";
 
-export function MobileNav({ sections }: { sections: NavSection[] }) {
+export function MobileNav({ sections, badges }: { sections: NavSection[]; badges?: NavBadges }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -29,7 +29,7 @@ export function MobileNav({ sections }: { sections: NavSection[] }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SidebarNav sections={sections} onNavigate={() => setOpen(false)} />
+              <SidebarNav sections={sections} badges={badges} onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>

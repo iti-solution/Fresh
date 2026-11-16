@@ -63,12 +63,12 @@ export default async function NewOrderPage({ searchParams }: PageProps<"/zleceni
               { kind: "text", name: "external_ref", label: "Numer zamówienia", placeholder: "np. ZK/10/4600" },
               {
                 kind: "select",
-                name: "readiness",
-                label: "Magazyn",
-                defaultValue: "ready",
+                name: "priority",
+                label: "Priorytet",
+                defaultValue: "0",
                 options: [
-                  { value: "ready", label: "Skompletowane" },
-                  { value: "awaiting_warehouse", label: "Do realizacji" },
+                  { value: "0", label: "Zwykłe" },
+                  { value: "1", label: "Priorytetowe — dostarczyć w pierwszej kolejności" },
                 ],
               },
               {
