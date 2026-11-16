@@ -18,7 +18,6 @@ import {
   PanelLeftOpen,
   PanelsTopLeft,
   Phone,
-  Printer,
   RefreshCw,
   RotateCcw,
   Search,
@@ -28,7 +27,6 @@ import {
   Weight,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { LiveSearchCard } from "@/components/panel/search-card";
@@ -946,14 +944,6 @@ function RouteCard({
             )}
           </h3>
           {!column && <RouteBadges route={r} doneCount={doneCount} />}
-          <Link
-            href={r.printHref}
-            title="Lista załadunkowa"
-            aria-label={`Lista załadunkowa ${r.name}`}
-            className="shrink-0 rounded p-1 text-subtle hover:bg-surface-2 hover:text-foreground"
-          >
-            <Printer className="size-4" />
-          </Link>
           {editable && (
             <div className="relative">
               <button
@@ -976,15 +966,29 @@ function RouteCard({
             {r.subtitle && <span className="truncate text-[11.5px] text-muted">{r.subtitle}</span>}
           </div>
         )}
+        {r.canChange && r.actions.setVehicle && r.actions.setDriver ? (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <form action={r.actions.setVehicle}>
+              <AssignSelect name="vehicle_id" icon={<Truck />} placeholder="Wybierz auto" value={r.vehicleId} options={vehicles} mono />
+            </form>
+            <form action={r.actions.setDriver}>
+              <AssignSelect name="driver_id" icon={<User />} placeholder="Wybierz kierowcę" value={r.driverId} options={drivers} />
+            </form>
+          </div>
+        ) : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px]">
-          <span className={cn("inline-flex items-center gap-1 font-semibold", !r.vehicleLabel && "text-danger")}>
-            <Truck className="size-3.5 text-subtle" />
-            <span className="font-mono">{r.vehicleLabel ?? "brak auta"}</span>
-          </span>
-          <span className={cn("inline-flex min-w-0 items-center gap-1", !r.driverLabel && "font-semibold text-danger")}>
-            <User className="size-3.5 shrink-0 text-subtle" />
-            <span className="truncate">{r.driverLabel ?? "brak kierowcy"}</span>
-          </span>
+          {!(r.canChange && r.actions.setVehicle && r.actions.setDriver) && (
+            <>
+              <span className={cn("inline-flex items-center gap-1 font-semibold", !r.vehicleLabel && "text-danger")}>
+                <Truck className="size-3.5 text-subtle" />
+                <span className="font-mono">{r.vehicleLabel ?? "brak auta"}</span>
+              </span>
+              <span className={cn("inline-flex min-w-0 items-center gap-1", !r.driverLabel && "font-semibold text-danger")}>
+                <User className="size-3.5 shrink-0 text-subtle" />
+                <span className="truncate">{r.driverLabel ?? "brak kierowcy"}</span>
+              </span>
+            </>
+          )}
           {view.show.driverPhone && r.driverPhone && (
             <a href={`tel:${r.driverPhone}`} className="inline-flex items-center gap-1 text-muted tabular-nums hover:text-foreground">
               <Phone className="size-3.5 text-subtle" />
@@ -1378,6 +1382,53 @@ function RouteMenu({
         )}
       </div>
     </div>
+  );
+}
+
+/** Wybór auta / kierowcy wprost na karcie trasy; brakujący przydział jest wyraźnie wyróżniony na pomarańczowo. */
+function AssignSelect({
+  name,
+  icon,
+  placeholder,
+  value,
+  options,
+  mono,
+}: {
+  name: string;
+  icon: ReactNode;
+  placeholder: string;
+  value: string | null;
+  options: { id: string; label: string }[];
+  mono?: boolean;
+}) {
+  return (
+    <label
+      className={cn(
+        "relative flex h-9 items-center rounded-lg border-2 text-[13px] transition-colors [&_svg]:size-4",
+        value ? "border-border-strong bg-surface hover:border-primary" : "border-primary bg-warning-soft font-semibold hover:bg-warning-soft/70",
+      )}
+    >
+      <span className={cn("pointer-events-none absolute left-2.5", value ? "text-subtle" : "text-primary-strong")}>{icon}</span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+        aria-label={placeholder}
+        className={cn(
+          "h-full w-full cursor-pointer appearance-none truncate bg-transparent pr-7 pl-8 outline-none",
+          mono && value && "font-mono font-semibold",
+          !value && "text-primary-strong",
+        )}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2 text-subtle" />
+    </label>
   );
 }
 
