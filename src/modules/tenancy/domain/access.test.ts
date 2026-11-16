@@ -53,7 +53,7 @@ describe("menu i przekierowania", () => {
   it("kierowca nie ma menu panelu", () => {
     expect(navForRole("driver")).toHaveLength(0);
     expect(homePathForRole("driver")).toBe("/driver");
-    expect(homePathForRole("dispatcher")).toBe("/pulpit");
+    expect(homePathForRole("dispatcher")).toBe("/centrum");
     expect(homePathForRole("customer_service")).toBe("/bok");
     expect(homePathForRole("management")).toBe("/raport");
   });
@@ -117,15 +117,16 @@ describe("dane finansowe kierowców i konto monitora", () => {
 });
 
 describe("działy menu", () => {
-  it("administrator ma 7 działów w menu zamiast 20 pozycji", () => {
+  it("administrator ma 8 pozycji w menu zamiast 20", () => {
     const sidebar = sectionsForRole("admin").filter((s) => s.inSidebar);
     expect(sidebar.map((s) => s.label)).toEqual([
-      "Pulpit",
+      "Centrum operacyjne",
+      "Monitor tras",
+      "Gdzie jest dostawa",
       "Zamówienia",
       "Planowanie tras",
-      "Realizacja",
       "Rozliczenia",
-      "Raport zarządu",
+      "Rentowność",
       "Kartoteki",
     ]);
     expect(sidebar.every((s) => s.href === s.items[0].href)).toBe(true);

@@ -425,3 +425,14 @@ export function packagingSummary(rows: BalanceRow[]): PackagingSummary {
     drivers: [...drivers.values()].filter((d) => Object.values(d.byType).some((x) => x !== 0)),
   };
 }
+
+/** Trasy pogrupowane „po kierunku”: trasy stałe po nazwie, wszystkie kursy dodatkowe razem. */
+export const EXTRA_LANE = "Kursy dodatkowe i dowózki";
+export function groupByLane(routes: ReportRoute[]): Map<string, ReportRoute[]> {
+  const lanes = new Map<string, ReportRoute[]>();
+  for (const r of routes) {
+    const key = r.kind === "regular" ? r.name : EXTRA_LANE;
+    lanes.set(key, [...(lanes.get(key) ?? []), r]);
+  }
+  return lanes;
+}

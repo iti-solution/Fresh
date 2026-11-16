@@ -44,17 +44,16 @@ export type NavItem = {
 const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "management"];
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
   { href: "/monitor", label: "Monitor tras", group: "Operacje", milestone: "M6", built: true, roles: [...STAFF, "monitor"] },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
   { href: "/planowanie", label: "Tablica tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/trasy", label: "Trasy", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/do-sprawdzenia", label: "Do sprawdzenia", group: "Operacje", milestone: "P1", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
-  { href: "/bok", label: "Dostawy dla BOK", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
+  { href: "/bok", label: "Gdzie jest dostawa", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
   {
     href: "/raport",
-    label: "Raport zarządu",
+    label: "Rentowność",
     group: "Zestawienia",
     milestone: "M6",
     built: true,
@@ -107,14 +106,15 @@ export function navForRole(role: Role): NavItem[] {
  * Menu boczne = kilka działów zamiast dwudziestu pozycji. Ekrany jednego działu są zakładkami
  * u góry strony (ścieżki ekranów się nie zmieniają). `divider` = cienka kreska nad działem.
  */
-export type NavSectionKey = "pulpit" | "zamowienia" | "planowanie" | "realizacja" | "rozliczenia" | "raporty" | "kartoteki" | "system";
+export type NavSectionKey = "centrum" | "monitor" | "bok" | "zamowienia" | "planowanie" | "rozliczenia" | "raporty" | "kartoteki" | "system";
 export type NavSection = { key: NavSectionKey; label: string; href: string; divider: boolean; inSidebar: boolean; items: NavItem[] };
 
 const SECTION_DEFS: { key: NavSectionKey; label: string; divider?: boolean; inSidebar?: boolean; hrefs: string[] }[] = [
-  { key: "pulpit", label: "Pulpit", hrefs: ["/pulpit"] },
+  { key: "centrum", label: "Centrum operacyjne", hrefs: ["/centrum"] },
+  { key: "monitor", label: "Monitor tras", hrefs: ["/monitor"] },
+  { key: "bok", label: "Gdzie jest dostawa", hrefs: ["/bok"] },
   { key: "zamowienia", label: "Zamówienia", divider: true, hrefs: ["/zlecenia", "/do-sprawdzenia"] },
   { key: "planowanie", label: "Planowanie tras", hrefs: ["/planowanie", "/trasy"] },
-  { key: "realizacja", label: "Realizacja", hrefs: ["/centrum", "/monitor", "/bok"] },
   { key: "rozliczenia", label: "Rozliczenia", divider: true, hrefs: ["/opakowania", "/rozliczenia"] },
   { key: "raporty", label: "Raporty", hrefs: ["/raport", "/audyt"] },
   {
@@ -190,7 +190,7 @@ export function homePathForRole(role: Role): string {
   if (role === "customer_service") return "/bok";
   if (role === "management") return "/raport";
   if (role === "monitor") return "/monitor";
-  return "/pulpit";
+  return "/centrum";
 }
 
 /** Bezpieczny cel przekierowania po logowaniu: tylko ścieżki wewnętrzne. */

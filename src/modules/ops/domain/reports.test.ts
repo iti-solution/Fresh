@@ -226,3 +226,13 @@ describe("mini-KPI (M6.2)", () => {
     expect(miniKpis(k)).toMatchObject({ kmPerStop: 7.5, stopsPerRoute: 10, serviceMinutesAvg: 10 });
   });
 });
+
+import { groupByLane, EXTRA_LANE } from "./reports";
+describe("groupByLane", () => {
+  it("trasy stałe po nazwie, kursy dodatkowe w jednej grupie", () => {
+    const r = (name: string, kind: string) => ({ name, kind }) as unknown as Parameters<typeof groupByLane>[0][number];
+    const lanes = groupByLane([r("T01", "regular"), r("T01", "regular"), r("Ekspres", "express"), r("T02", "regular")]);
+    expect([...lanes.keys()]).toEqual(["T01", EXTRA_LANE, "T02"]);
+    expect(lanes.get("T01")).toHaveLength(2);
+  });
+});
