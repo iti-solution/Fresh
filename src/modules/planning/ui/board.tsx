@@ -317,7 +317,7 @@ export function PlanningBoard({
   };
 
   return (
-    <div className="flex h-[calc(100vh-5.25rem)] min-h-[560px] flex-col gap-2.5 md:h-[calc(100vh-5.75rem)]">
+    <div className="flex h-[calc(100vh-var(--chrome,3rem)-2.25rem)] min-h-[560px] flex-col gap-2.5 md:h-[calc(100vh-var(--chrome,3rem)-2.75rem)]">
       {/* pasek narzędzi */}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
         <ToolButton label="Odśwież" onClick={() => router.refresh()} tone="primary">

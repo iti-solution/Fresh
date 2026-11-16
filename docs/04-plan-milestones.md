@@ -147,7 +147,8 @@ Decyzje właściciela: bez daty w nazwie trasy (nazwę ustawia dyspozytor), bez 
 - [x] O1.5 Dane finansowe kierowców (rozliczenia, stawki, eksport) widzi tylko **administrator i zarząd**; zmienia administrator. Dyspozytor nadal zamyka trasę (opakowania, gotówka, licznik)
 - [x] O1.6 Rola **„Monitor tras”** — konto na telewizor: widzi wyłącznie Monitor tras
 - [ ] O1.7 Blokada danych finansowych także w bazie (RLS): wymaga przeniesienia przeliczenia wynagrodzeń przy zamknięciu trasy na stronę serwera — razem z Etapem 3
-- [ ] O1.8 Migracje `0023`–`0024` uruchomić na bazie dev i wygenerować typy (`npm run db:types`) — typy dopisane ręcznie
+- [~] O1.8 Migracje `0023`–`0024` są na bazie (2026-11-16; funkcja `set_stop_window` sprawdzona na danych demo). Zostało: wygenerować typy (`npm run db:types`) — dziś dopisane ręcznie
+- [x] O1.9 **Menu boczne: 7 działów zamiast 20 pozycji** (Pulpit · Zamówienia · Planowanie tras · Realizacja · Rozliczenia · Raport zarządu · Kartoteki). Ekrany działu są zakładkami u góry strony, adresy ekranów bez zmian; Ustawienia i „Pierwsze kroki” pod ikoną w stopce; niegotowy „Audyt tras” schowany do czasu budowy (`sectionsForRole` w `access.ts`)
 
 ### Etap 2 — tablica i zamówienia
 - [ ] O2.1 Zamówienia niezrealizowane przechodzą na kolejny dzień ze wskaźnikiem „z poprzednich dni”

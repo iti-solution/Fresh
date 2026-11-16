@@ -103,6 +103,69 @@ export function navForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => item.roles.includes(role));
 }
 
+/**
+ * Menu boczne = kilka działów zamiast dwudziestu pozycji. Ekrany jednego działu są zakładkami
+ * u góry strony (ścieżki ekranów się nie zmieniają). `divider` = cienka kreska nad działem.
+ */
+export type NavSectionKey = "pulpit" | "zamowienia" | "planowanie" | "realizacja" | "rozliczenia" | "raporty" | "kartoteki" | "system";
+export type NavSection = { key: NavSectionKey; label: string; href: string; divider: boolean; inSidebar: boolean; items: NavItem[] };
+
+const SECTION_DEFS: { key: NavSectionKey; label: string; divider?: boolean; inSidebar?: boolean; hrefs: string[] }[] = [
+  { key: "pulpit", label: "Pulpit", hrefs: ["/pulpit"] },
+  { key: "zamowienia", label: "Zamówienia", divider: true, hrefs: ["/zlecenia", "/do-sprawdzenia"] },
+  { key: "planowanie", label: "Planowanie tras", hrefs: ["/planowanie", "/trasy"] },
+  { key: "realizacja", label: "Realizacja", hrefs: ["/centrum", "/monitor", "/bok"] },
+  { key: "rozliczenia", label: "Rozliczenia", divider: true, hrefs: ["/opakowania", "/rozliczenia"] },
+  { key: "raporty", label: "Raporty", hrefs: ["/raport", "/audyt"] },
+  {
+    key: "kartoteki",
+    label: "Kartoteki",
+    divider: true,
+    hrefs: [
+      "/kartoteki/klienci",
+      "/kartoteki/szablony",
+      "/kartoteki/pojazdy",
+      "/kartoteki/kierowcy",
+      "/kartoteki/przewoznicy",
+      "/kartoteki/produkty",
+    ],
+  },
+  // Ustawienia mają ikonę w stopce paska bocznego — nie zajmują miejsca na liście.
+  { key: "system", label: "Ustawienia", inSidebar: false, hrefs: ["/ustawienia", "/start"] },
+];
+
+/** Działy menu dla roli: tylko gotowe ekrany, do których rola ma dostęp; puste działy znikają. */
+export function sectionsForRole(role: Role): NavSection[] {
+  return SECTION_DEFS.flatMap((d) => {
+    const items = d.hrefs
+      .map((h) => NAV_ITEMS.find((i) => i.href === h))
+      .filter((i): i is NavItem => Boolean(i && i.built && i.roles.includes(role)));
+    if (items.length === 0) return [];
+    return [
+      {
+        key: d.key,
+        // dział z jednym ekranem nazywa się tak jak ten ekran (np. sam „Monitor tras”)
+        label: items.length === 1 ? items[0].label : d.label,
+        href: items[0].href,
+        divider: Boolean(d.divider),
+        inSidebar: d.inSidebar !== false,
+        items,
+      },
+    ];
+  });
+}
+
+const matchesPath = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+/** Dział i ekran, do których należy ścieżka (najdłuższe dopasowanie, np. /kartoteki/pojazdy/dziennik → Pojazdy). */
+export function sectionForPath(sections: NavSection[], pathname: string): { section: NavSection; item: NavItem } | null {
+  let best: { section: NavSection; item: NavItem } | null = null;
+  for (const section of sections)
+    for (const item of section.items)
+      if (matchesPath(pathname, item.href) && (!best || item.href.length > best.item.href.length)) best = { section, item };
+  return best;
+}
+
 /** Czy rola może wejść na ścieżkę panelu / aplikacji kierowcy. */
 export function canAccess(role: Role, pathname: string): boolean {
   // Portal zamówień: wyłącznie klient hurtowni; klient nie widzi niczego poza portalem.

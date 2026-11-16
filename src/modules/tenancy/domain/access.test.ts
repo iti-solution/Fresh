@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, canEditDriverPay, canSeeDriverPay, homePathForRole, isPublicPath, navForRole, safeNextPath } from "./access";
+import { canAccess, canEditDriverPay, canSeeDriverPay, homePathForRole, isPublicPath, navForRole, safeNextPath, sectionForPath, sectionsForRole } from "./access";
 
 describe("isPublicPath", () => {
   it("traktuje logowanie i callback auth jako publiczne", () => {
@@ -113,5 +113,44 @@ describe("dane finansowe kierowców i konto monitora", () => {
     for (const path of ["/pulpit", "/planowanie", "/kartoteki/klienci", "/driver", "/portal", "/nieznana"]) {
       expect(canAccess("monitor", path)).toBe(false);
     }
+  });
+});
+
+describe("działy menu", () => {
+  it("administrator ma 7 działów w menu zamiast 20 pozycji", () => {
+    const sidebar = sectionsForRole("admin").filter((s) => s.inSidebar);
+    expect(sidebar.map((s) => s.label)).toEqual([
+      "Pulpit",
+      "Zamówienia",
+      "Planowanie tras",
+      "Realizacja",
+      "Rozliczenia",
+      "Raport zarządu",
+      "Kartoteki",
+    ]);
+    expect(sidebar.every((s) => s.href === s.items[0].href)).toBe(true);
+  });
+  it("każdy gotowy ekran z menu należy do jakiegoś działu", () => {
+    const hrefs = sectionsForRole("admin").flatMap((s) => s.items.map((i) => i.href));
+    for (const item of navForRole("admin").filter((i) => i.built)) expect(hrefs).toContain(item.href);
+    expect(hrefs).not.toContain("/audyt"); // niegotowy ekran nie zaśmieca menu
+  });
+  it("dyspozytor: Rozliczenia to tylko opakowania i gotówka", () => {
+    const s = sectionsForRole("dispatcher").find((x) => x.key === "rozliczenia");
+    expect(s?.label).toBe("Opakowania i gotówka");
+    expect(sectionsForRole("dispatcher").some((x) => x.key === "system")).toBe(true); // Pierwsze kroki
+  });
+  it("konto monitora ma jeden dział bez zakładek", () => {
+    const s = sectionsForRole("monitor");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ label: "Monitor tras", href: "/monitor" });
+  });
+  it("sectionForPath wybiera najdłuższe dopasowanie", () => {
+    const all = sectionsForRole("admin");
+    expect(sectionForPath(all, "/kartoteki/pojazdy/dziennik")?.item.href).toBe("/kartoteki/pojazdy");
+    expect(sectionForPath(all, "/rozliczenia/stawki")?.section.key).toBe("rozliczenia");
+    expect(sectionForPath(all, "/trasy")?.section.key).toBe("planowanie");
+    expect(sectionForPath(all, "/nieznana")).toBeNull();
+    expect(sectionForPath(sectionsForRole("dispatcher"), "/rozliczenia/zamkniecie/1")).toBeNull();
   });
 });
