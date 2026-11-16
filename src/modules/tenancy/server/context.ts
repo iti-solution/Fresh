@@ -21,13 +21,16 @@ export type TenantContext = {
 /** Zalogowany użytkownik + jego firmy. Null gdy brak sesji. */
 export const getUserWithMemberships = cache(async () => {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return null;
+  // getClaims sprawdza podpis tokenu lokalnie (bez zapytania do serwera Auth) — proxy robi to samo przy każdym żądaniu.
+  const { data: auth } = await supabase.auth.getClaims();
+  const userId = auth?.claims?.sub;
+  if (!userId) return null;
+  const email = typeof auth?.claims?.email === "string" ? auth.claims.email : null;
 
   const { data, error } = await supabase
     .from("memberships")
     .select("tenant_id, role, tenants(name, settings)")
-    .eq("user_id", auth.user.id);
+    .eq("user_id", userId);
   if (error) throw error;
 
   const memberships: Membership[] = (data ?? []).map((m) => {
@@ -41,7 +44,7 @@ export const getUserWithMemberships = cache(async () => {
   });
   memberships.sort((a, b) => a.tenantName.localeCompare(b.tenantName, "pl"));
 
-  return { userId: auth.user.id, email: auth.user.email ?? null, memberships };
+  return { userId, email, memberships };
 });
 
 /** Kontekst firmy + sprawdzenie roli dla danej ścieżki. Brak uprawnień → strona startowa roli. */
