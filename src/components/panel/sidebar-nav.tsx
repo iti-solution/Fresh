@@ -68,7 +68,30 @@ const SECTION_ICONS: Record<NavSectionKey, LucideIcon> = {
  * Menu boczne: jedna krótka lista działów (bez nagłówków grup i zwijania). Ekrany działu są
  * zakładkami u góry strony — patrz `SectionTabs`. Cienkie kreski dzielą: start · praca dnia · pieniądze i raporty · dane stałe.
  */
-export function SidebarNav({ sections, onNavigate }: { sections: NavSection[]; onNavigate?: () => void }) {
+/** Plakietka z liczbą spraw (np. zamówienia do sprawdzenia) — klucz to adres ekranu. */
+export type NavBadges = Record<string, number>;
+
+function Badge({ n, className }: { n: number; className?: string }) {
+  if (n <= 0) return null;
+  return (
+    <span
+      className={cn("inline-flex min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[11px] leading-5 font-bold text-white tabular-nums", className)}
+      aria-label={`${n} do sprawdzenia`}
+    >
+      {n > 99 ? "99+" : n}
+    </span>
+  );
+}
+
+export function SidebarNav({
+  sections,
+  onNavigate,
+  badges = {},
+}: {
+  sections: NavSection[];
+  onNavigate?: () => void;
+  badges?: NavBadges;
+}) {
   const pathname = usePathname();
   const current = sectionForPath(sections, pathname)?.section.key;
   return (
@@ -96,6 +119,7 @@ export function SidebarNav({ sections, onNavigate }: { sections: NavSection[]; o
                     strokeWidth={2}
                   />
                   <span className="flex-1 truncate">{s.label}</span>
+                  <Badge n={s.items.reduce((a, i) => a + (badges[i.href] ?? 0), 0)} />
                 </Link>
               </li>
             );
@@ -110,7 +134,7 @@ export function SidebarNav({ sections, onNavigate }: { sections: NavSection[]; o
  * Gdy dział ma jeden ekran (albo ścieżka nie należy do żadnego działu), paska nie ma.
  * `peer` + `data-tabs` pozwalają ekranom na pełną wysokość (tablica, monitor) odjąć wysokość paska.
  */
-export function SectionTabs({ sections }: { sections: NavSection[] }) {
+export function SectionTabs({ sections, badges = {} }: { sections: NavSection[]; badges?: NavBadges }) {
   const pathname = usePathname();
   const hit = sectionForPath(sections, pathname);
   if (!hit || hit.section.items.length < 2) return null;
@@ -135,6 +159,7 @@ export function SectionTabs({ sections }: { sections: NavSection[] }) {
           >
             <Icon className={cn("size-4", active ? "text-primary-strong" : "text-subtle")} strokeWidth={2} />
             {item.label}
+            <Badge n={badges[item.href] ?? 0} />
             {active && <span className="absolute inset-x-1.5 bottom-0 h-[3px] rounded-t bg-primary" aria-hidden />}
           </Link>
         );

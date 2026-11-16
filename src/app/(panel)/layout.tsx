@@ -11,12 +11,23 @@ import { ROLE_LABELS, sectionsForRole } from "@/modules/tenancy/domain/access";
 import { signOut, switchDataMode } from "@/modules/tenancy/server/actions";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { BRAND } from "@/lib/brand";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireTenantContext();
   if (ctx.role === "driver") redirect("/driver");
   if (ctx.role === "customer") redirect("/portal");
   const sections = sectionsForRole(ctx.role);
+  // zamówienia od klientów czekające na sprawdzenie — plakietka przy „Zamówienia” i „Do sprawdzenia”
+  const reviewsVisible = sections.some((x) => x.items.some((i) => i.href === "/do-sprawdzenia"));
+  const { count: reviewCount } = reviewsVisible
+    ? await (await createClient())
+        .from("order_drafts")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", ctx.tenantId)
+        .eq("status", "needs_review")
+    : { count: 0 };
+  const badges = { "/do-sprawdzenia": reviewCount ?? 0 };
   // Ikona w stopce prowadzi do działu „Ustawienia” (administrator) albo samych „Pierwszych kroków” (dyspozytor).
   const system = sections.find((s) => s.key === "system");
   const initials = (ctx.email ?? "?").slice(0, 2).toUpperCase();
@@ -30,7 +41,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-2.5 py-3">
-          <SidebarNav sections={sections} />
+          <SidebarNav sections={sections} badges={badges} />
         </div>
         <div className="flex shrink-0 items-center gap-2.5 border-t border-white/[0.07] px-3.5 py-2.5">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[11px] font-bold text-primary">
@@ -64,7 +75,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-border bg-surface px-3 text-foreground md:px-5">
-          <MobileNav sections={sections} />
+          <MobileNav sections={sections} badges={badges} />
           <div className="min-w-0 shrink-0 md:w-56">
             <TopbarTitle />
           </div>
@@ -93,7 +104,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <FullscreenButton className="hidden md:flex" />
           </div>
         </header>
-        <SectionTabs sections={sections} />
+        <SectionTabs sections={sections} badges={badges} />
         {/* --chrome = wysokość pasków nad treścią; ekrany na pełną wysokość (tablica, monitor) odejmują ją od okna */}
         <main className="w-full flex-1 px-3 py-4 [--chrome:3rem] peer-data-[tabs=on]:[--chrome:5.5rem] md:px-5 md:py-5">
           {children}

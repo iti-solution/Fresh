@@ -48,6 +48,7 @@ export async function createOrder(_prev: FormState, fd: FormData): Promise<FormS
     readiness: v.readiness,
     notes_sales: v.notes_sales,
     notes_logistics: v.notes_logistics,
+    priority: v.priority === "1" ? 1 : 0,
     type: "delivery",
     status: "new",
   });
@@ -69,6 +70,21 @@ export async function setReadiness(orderId: string, readiness: Readiness): Promi
   const supabase = await createClient();
   await supabase.from("orders").update({ readiness }).eq("id", orderId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/zlecenia");
+  revalidatePath("/centrum");
+}
+
+export async function setPriority(orderId: string, on: boolean): Promise<void> {
+  const ctx = await requireTenantContext();
+  if (!canEdit(ctx.role)) return;
+  const supabase = await createClient();
+  await supabase
+    .from("orders")
+    .update({ priority: on ? 1 : 0 })
+    .eq("id", orderId)
+    .eq("tenant_id", ctx.tenantId)
+    .neq("status", "cancelled");
+  revalidatePath("/zlecenia");
+  revalidatePath("/planowanie");
   revalidatePath("/centrum");
 }
 

@@ -10,6 +10,32 @@ export const READINESS_LABELS: Record<Readiness, string> = {
   awaiting_warehouse: "Do realizacji",
 };
 
+/** Status realizacji widoczny dla biura: zaplanowane → w dostawie → dostarczone (magazyn nas tu nie obchodzi). */
+export type Fulfilment = "unplanned" | "planned" | "in_delivery" | "delivered" | "failed";
+
+export const FULFILMENT_LABELS: Record<Fulfilment, string> = {
+  unplanned: "Niezaplanowane",
+  planned: "Zaplanowane",
+  in_delivery: "W dostawie",
+  delivered: "Dostarczone",
+  failed: "Nie dostarczono",
+};
+
+export function deriveFulfilment(o: {
+  orderStatus: string;
+  onRoute: boolean;
+  routeStatus: string | null;
+  stopStatus: string | null;
+}): Fulfilment {
+  if (o.orderStatus === "delivered" || o.orderStatus === "partial") return "delivered";
+  const st = o.stopStatus;
+  if (st === "delivered" || st === "partial") return "delivered";
+  if (st === "refused" || st === "absent" || st === "skipped" || o.orderStatus === "failed") return "failed";
+  if (!o.onRoute) return "unplanned";
+  if (o.routeStatus === "dispatched" || o.routeStatus === "in_progress" || st === "arrived") return "in_delivery";
+  return "planned";
+}
+
 export const orderSchema = z
   .object({
     delivery_point_id: z.string().uuid({ message: "Wybierz adres dostawy klienta" }),
@@ -22,6 +48,7 @@ export const orderSchema = z
     window_start: optionalTime,
     window_end: optionalTime,
     readiness: z.enum(READINESS).default("ready"),
+    priority: z.enum(["0", "1"]).default("0"),
     notes_sales: optionalText(500),
     notes_logistics: optionalText(500),
   })
