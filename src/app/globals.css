@@ -1,36 +1,36 @@
 @import "tailwindcss";
 
 /*
-  Driver — system wizualny v4 (2026-11-05): butelkowa zieleń (nawigacja, nagłówki) + limonka (akcje, wyróżnienia)
-  na lekko zielonkawej, jasnej powierzchni. Celowo inna niż ExpertWMS (granat + pomarańcz).
+  Driver — system wizualny v5 (2026-11-16): granat-kobalt (nawigacja, linki, struktura) + pomarańcz (akcje)
+  na chłodnej, jasnej powierzchni. Pomarańcz to wyłącznie marka i główne przyciski — nie status (na pomarańczu zawsze ciemny tekst).
   Kolory statusów pozostają znaczeniowe: zieleń = w oknie / dostarczono, bursztyn = uwaga, czerwień = alarm,
-  błękit = w trasie / teraz, śliwka = reklamacje i zwroty. Limonka to wyłącznie marka i akcje — nie status (na limonce zawsze ciemny tekst).
+  turkus = w trasie / teraz, śliwka = reklamacje i zwroty.
   Typografia: IBM Plex Sans (cyfry tabelaryczne w danych), IBM Plex Mono tylko dla tablic rejestracyjnych i numerów dokumentów.
 */
 :root {
-  --background: #f3f6f2;
+  --background: #f1f4fa;
   --surface: #ffffff;
-  --surface-2: #f6f9f5;
-  --foreground: #13241f;
-  --muted: #546660;
-  --subtle: #85958f;
-  --border: #dfe7e2;
-  --border-strong: #c5d1ca;
+  --surface-2: #f6f8fc;
+  --foreground: #13203a;
+  --muted: #55627a;
+  --subtle: #8793a8;
+  --border: #dfe5ef;
+  --border-strong: #c3cddf;
 
-  --primary: #6bbf2a;
-  --primary-strong: #3b7a12;
-  --primary-foreground: #0d2a20;
-  --accent: #eef7e3;
-  --primary-hover: #5daa22;
-  --accent-hover: #dcefc6;
+  --primary: #f28c1e;
+  --primary-strong: #1f55b5;
+  --primary-foreground: #2a1500;
+  --accent: #e8f0fc;
+  --primary-hover: #dd7b10;
+  --accent-hover: #d3e2f8;
 
-  --ink: #12332b;
-  --ink-2: #1c4a3e;
-  --ink-foreground: #d4e5dd;
-  --ink-muted: #8fb0a3;
+  --ink: #14275a;
+  --ink-2: #1f3b80;
+  --ink-foreground: #d6e0f5;
+  --ink-muted: #94a8d4;
 
-  --steel: #2f6b5a;
-  --steel-soft: #e6f0ec;
+  --steel: #2f5fa8;
+  --steel-soft: #e6eef9;
 
   --success: #17864d;
   --success-soft: #e3f4ea;
@@ -38,12 +38,12 @@
   --warning-soft: #fdf4dc;
   --danger: #d0352a;
   --danger-soft: #fcebe9;
-  --info: #2563b0;
-  --info-soft: #e7effa;
+  --info: #0e7a9c;
+  --info-soft: #e1f3f8;
   --plum: #7b4aa0;
   --plum-soft: #f2eaf8;
 
-  --ring: #4f9a1c;
+  --ring: #2f6fd6;
 }
 
 @theme inline {
@@ -85,8 +85,8 @@
   --text-2xs--line-height: 1rem;
 
   --radius-panel: 12px;
-  --shadow-panel: 0 1px 2px rgb(19 36 31 / 0.05), 0 2px 8px -4px rgb(19 36 31 / 0.06);
-  --shadow-pop: 0 12px 32px -12px rgb(19 36 31 / 0.28), 0 2px 6px rgb(19 36 31 / 0.08);
+  --shadow-panel: 0 1px 2px rgb(19 32 58 / 0.05), 0 2px 8px -4px rgb(19 32 58 / 0.07);
+  --shadow-pop: 0 12px 32px -12px rgb(19 32 58 / 0.28), 0 2px 6px rgb(19 32 58 / 0.08);
 }
 
 html {
@@ -111,7 +111,7 @@ table td {
 }
 
 ::selection {
-  background: #dcefc6;
+  background: #d3e2f8;
 }
 
 @media (prefers-reduced-motion: reduce) {

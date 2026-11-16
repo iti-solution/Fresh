@@ -9,5 +9,5 @@ export const BRAND = {
   /** Jedno zdanie o produkcie (logowanie, metadane). */
   tagline: "Planowanie tras, aplikacja kierowcy, opakowania zwrotne i rozliczenia — dla hurtowni z własnym transportem.",
   /** Kolor paska przeglądarki na telefonie (nawigacja). */
-  themeColor: "#12332b",
+  themeColor: "#14275a",
 } as const;

@@ -176,7 +176,7 @@ function StartScreen({ route, record, banners }: { route: RouteSnapshot; record:
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
-    <main className="flex flex-col bg-[#e4ebe6] pb-6">
+    <main className="flex flex-col bg-[#e2e8f3] pb-6">
       <header className="bg-ink px-4 pt-2 pb-4 text-white">
         <Link href="/driver" className="flex h-10 items-center text-sm text-ink-muted">
           ‹ Moje trasy
@@ -325,7 +325,7 @@ function ListScreen({
   };
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#e4ebe6]">
+    <main className="flex min-h-screen flex-col bg-[#e2e8f3]">
       <header className="sticky top-0 z-10 flex flex-col bg-ink text-white shadow-[0_2px_8px_rgb(0_0_0/0.18)]">
         <div className="flex flex-col gap-2.5 px-4 pt-3 pb-3">
           <div className="flex items-center justify-between gap-3">
