@@ -155,3 +155,20 @@ describe("działy menu", () => {
     expect(sectionForPath(sectionsForRole("dispatcher"), "/rozliczenia/zamkniecie/1")).toBeNull();
   });
 });
+
+describe("zakładki ustawień", () => {
+  it("administrator widzi 7 zakładek w ustalonej kolejności, dyspozytor tylko Pierwsze kroki", () => {
+    const sys = (r: Parameters<typeof sectionsForRole>[0]) => sectionsForRole(r).find((s) => s.key === "system");
+    expect(sys("admin")?.items.map((i) => i.href)).toEqual([
+      "/ustawienia",
+      "/ustawienia/pracownicy",
+      "/start",
+      "/ustawienia/adresy",
+      "/ustawienia/opakowania",
+      "/ustawienia/dni-wolne",
+      "/ustawienia/api",
+    ]);
+    expect(sys("dispatcher")?.items.map((i) => i.href)).toEqual(["/start"]);
+    expect(canAccess("dispatcher", "/ustawienia/api")).toBe(false);
+  });
+});
