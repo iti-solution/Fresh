@@ -9,7 +9,6 @@ import {
   FolderOpen,
   Headset,
   IdCard,
-  LayoutDashboard,
   ListOrdered,
   MonitorPlay,
   Package,
@@ -31,7 +30,6 @@ import { sectionForPath, type NavSection, type NavSectionKey } from "@/modules/t
 
 /** Ikony ekranów (zakładki działu, tytuły). */
 export const NAV_ICONS: Record<string, LucideIcon> = {
-  "/pulpit": LayoutDashboard,
   "/centrum": Radar,
   "/start": Route,
   "/planowanie": Columns3,
@@ -55,10 +53,11 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
 
 /** Ikony działów menu bocznego. Dział z jednym ekranem bierze ikonę tego ekranu. */
 const SECTION_ICONS: Record<NavSectionKey, LucideIcon> = {
-  pulpit: LayoutDashboard,
+  centrum: Radar,
+  monitor: MonitorPlay,
+  bok: Headset,
   zamowienia: ClipboardList,
   planowanie: Columns3,
-  realizacja: Radar,
   rozliczenia: Wallet,
   raporty: ChartNoAxesCombined,
   kartoteki: FolderOpen,

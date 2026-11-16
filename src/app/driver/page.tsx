@@ -32,7 +32,7 @@ export default async function DriverHome() {
           <Link href="/driver/terminal" className={buttonVariants({ size: "lg" })}>
             Przypisz to urządzenie jako terminal
           </Link>
-          <Link href="/pulpit" className="text-center text-primary-strong">
+          <Link href="/centrum" className="text-center text-primary-strong">
             Wróć do panelu
           </Link>
         </Card>

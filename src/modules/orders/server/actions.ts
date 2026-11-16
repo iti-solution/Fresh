@@ -59,7 +59,7 @@ export async function createOrder(_prev: FormState, fd: FormData): Promise<FormS
     };
   if (error) return { ok: false, message: "Nie udało się zapisać zamówienia." };
   revalidatePath("/zlecenia");
-  revalidatePath("/pulpit");
+  revalidatePath("/centrum");
   redirect(`/zlecenia?dzien=${v.delivery_date}&dodano=1`);
 }
 
@@ -69,7 +69,7 @@ export async function setReadiness(orderId: string, readiness: Readiness): Promi
   const supabase = await createClient();
   await supabase.from("orders").update({ readiness }).eq("id", orderId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/zlecenia");
-  revalidatePath("/pulpit");
+  revalidatePath("/centrum");
 }
 
 export async function cancelOrder(orderId: string): Promise<void> {
@@ -83,7 +83,7 @@ export async function cancelOrder(orderId: string): Promise<void> {
     .eq("tenant_id", ctx.tenantId)
     .neq("status", "delivered");
   revalidatePath("/zlecenia");
-  revalidatePath("/pulpit");
+  revalidatePath("/centrum");
 }
 
 // ---------- IMPORT Z PLIKU (M1.5) ----------
@@ -130,7 +130,7 @@ export async function importOrdersFromFile(payload: FileImportPayload): Promise<
     firstLine: payload.firstLine,
   });
   revalidatePath("/zlecenia");
-  revalidatePath("/pulpit");
+  revalidatePath("/centrum");
   revalidatePath("/planowanie");
   return { ok: true, result };
 }

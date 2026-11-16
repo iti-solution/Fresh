@@ -1,103 +1,45 @@
-import { ChevronLeft, ChevronRight, ChartNoAxesCombined, MessageSquare } from "lucide-react";
+import { ChartNoAxesCombined } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { BarChart, LineChart } from "@/components/panel/charts";
-import { Delta, EmptyState, Meter, PageHeader, Panel, Segmented, StatTile } from "@/components/panel/page";
-import { buttonVariants } from "@/components/ui/button";
-import { Pill } from "@/components/ui/status";
-import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
+import { Delta, EmptyState, PageHeader, Panel, Segmented, StatTile } from "@/components/panel/page";
+import { formatPln, formatPlnCompact } from "@/lib/forms";
 import { cn } from "@/lib/utils";
-import {
-  dayKpis,
-  nowForDay,
-  EXCEPTION_STATUSES,
-  packagingSummary,
-  pctChange,
-  routeCostGrosze,
-  sumKpis,
-  topCustomers,
-  type DayKpis,
-  type ReportRoute,
-} from "@/modules/ops/domain/reports";
-import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
+import { dayKpis, groupByLane, nowForDay, pctChange, routeCostGrosze } from "@/modules/ops/domain/reports";
+import { PERIOD_KEYS, PERIOD_LABELS, parsePeriod, resolvePeriod } from "@/modules/ops/domain/period";
+import { getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
-import { formatDayLabel, nextWorkingDay, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, nextWorkingDay, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { requireAccess } from "@/modules/tenancy/server/context";
-import { getCustomerPackaging } from "@/modules/packaging/server/queries";
 
-export const metadata: Metadata = { title: "Raport zarządu" };
-
-const PERIODS = {
-  dzien: { label: "Dzień", days: 1, compare: "ten sam dzień tydzień wcześniej" },
-  tydzien: { label: "7 dni", days: 7, compare: "poprzednie 7 dni" },
-  miesiac: { label: "4 tygodnie", days: 28, compare: "poprzednie 4 tygodnie" },
-} as const;
-type PeriodKey = keyof typeof PERIODS;
+export const metadata: Metadata = { title: "Rentowność" };
 
 const short = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
 const pct = (v: number | null) => (v === null ? "—" : `${v.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`);
 
-export default async function ManagementReportPage({ searchParams }: PageProps<"/raport">) {
+export default async function ProfitabilityPage({ searchParams }: PageProps<"/raport">) {
   const ctx = await requireAccess("/raport");
   const sp = await searchParams;
   const today = todayInWarsaw();
-  const period: PeriodKey = typeof sp.okres === "string" && sp.okres in PERIODS ? (sp.okres as PeriodKey) : "tydzien";
-  const end = typeof sp.do === "string" && DATE_RE.test(sp.do) && sp.do <= today ? sp.do : today;
-  const len = PERIODS[period].days;
-  const start = shiftDay(end, -(len - 1));
-  const prevEnd = len === 1 ? shiftDay(end, -7) : shiftDay(start, -1);
-  const prevStart = shiftDay(prevEnd, -(len - 1));
-  const trendStart = shiftDay(end, -27);
-  const rangeStart = [prevStart, trendStart].sort()[0];
-
+  const periodKey = parsePeriod(sp.okres);
+  const period = resolvePeriod(periodKey, today);
   const planKey = sp.plan === "jutro" ? "jutro" : "dzis";
   const planDate = planKey === "jutro" ? nextWorkingDay(today) : today;
   const planNow = nowForDay(planDate, today, nowInWarsaw());
-  const [all, current, cash, pack, planRoutes, overdueCtx] = await Promise.all([
-    getReportRoutes(ctx.tenantId, rangeStart, end),
-    getReportRoutes(ctx.tenantId, start, end, { withNotes: true }),
-    getDriverCash(ctx.tenantId),
-    getPackagingBalances(ctx.tenantId),
+
+  const [current, previous, planRoutes] = await Promise.all([
+    getReportRoutes(ctx.tenantId, period.start, period.end),
+    getReportRoutes(ctx.tenantId, period.prevStart, period.prevEnd),
     getReportRoutes(ctx.tenantId, planDate, planDate),
-    getCustomerPackaging(ctx.tenantId, today),
   ]);
-  // zalegające > 30 dni (FIFO z księgi): suma i największy dłużnik
-  const overdueRows = overdueCtx.rows.filter((r) => r.overdueTotal > 0);
-  const overdueQty = overdueRows.reduce((a, r) => a + r.overdueTotal, 0);
+  const cur = dayKpis(current);
+  const prev = dayKpis(previous);
+  const rangeLabel = period.start === period.end ? formatDayLabel(period.end) : `${short(period.start)} – ${short(period.end)}`;
 
-  const byDay = new Map<string, ReportRoute[]>();
-  for (const r of all) byDay.set(r.date, [...(byDay.get(r.date) ?? []), r]);
-  const kpisFor = (from: string, to: string) =>
-    sumKpis([...byDay.entries()].filter(([d]) => d >= from && d <= to).map(([, rs]) => dayKpis(rs)));
-  const cur = sumKpis([dayKpis(current)]);
-  const prev = kpisFor(prevStart, prevEnd);
-  const trendDays = Array.from({ length: 28 }, (_, i) => shiftDay(trendStart, i));
-  const trend = trendDays.map((d) => ({ day: d, k: dayKpis(byDay.get(d) ?? []) }));
-  const workDays = trend.filter((t) => t.k.stops > 0);
-  const avgValue = workDays.length ? workDays.reduce((a, t) => a + t.k.deliveredValueGrosze, 0) / workDays.length : 0;
-
-  // zestawienie dzień po dniu: dni okresu (dla widoku „Dzień” — tydzień kończący się wybranym dniem)
-  const tableDays = Array.from({ length: Math.max(len, 7) }, (_, i) => shiftDay(end, -(Math.max(len, 7) - 1) + i)).filter(
-    (d) => (byDay.get(d) ?? []).length > 0,
-  );
-  const dayRows = tableDays.map((d) => {
-    const k = dayKpis(byDay.get(d) ?? []);
-    const prevWeek = dayKpis(byDay.get(shiftDay(d, -7)) ?? []);
-    return { day: d, k, vsWeek: prevWeek.stops ? pctChange(k.deliveredValueGrosze, prevWeek.deliveredValueGrosze) : null };
-  });
-  const dayTotal = sumKpis(dayRows.map((r) => r.k));
-
+  const netCur = cur.deliveredValueGrosze - cur.costGrosze;
+  const netPrev = prev.deliveredValueGrosze - prev.costGrosze;
   const costShare = cur.deliveredValueGrosze ? Math.round((cur.costGrosze / cur.deliveredValueGrosze) * 1000) / 10 : null;
   const prevCostShare = prev.deliveredValueGrosze ? Math.round((prev.costGrosze / prev.deliveredValueGrosze) * 1000) / 10 : null;
-  const perStop = (k: DayKpis) => (k.finished ? Math.round(k.costGrosze / k.finished) : 0);
 
-  // efektywność kierunków (trasy stałe po nazwie, kursy dodatkowe razem)
-  const lanes = new Map<string, ReportRoute[]>();
-  for (const r of current) {
-    const key = r.kind === "regular" ? r.name : "Kursy dodatkowe i dowózki";
-    lanes.set(key, [...(lanes.get(key) ?? []), r]);
-  }
-  const laneRows = [...lanes.entries()]
+  const lanes = [...groupByLane(current).entries()]
     .map(([name, rs]) => ({
       name,
       k: dayKpis(rs),
@@ -105,200 +47,24 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
       cost: rs.reduce((a, r) => a + (r.km !== null ? routeCostGrosze(r) : 0), 0),
     }))
     .sort((a, b) => b.k.deliveredValueGrosze - a.k.deliveredValueGrosze);
-  const top = topCustomers(current, 6);
-  const exceptions = current
-    .flatMap((r) => r.stops.filter((s) => EXCEPTION_STATUSES.includes(s.status)).map((s) => ({ s, r })))
-    .sort((a, b) => (b.r.date + (b.s.completedAt ?? "")).localeCompare(a.r.date + (a.s.completedAt ?? "")));
-  const pkg = packagingSummary(pack.rows);
-  const typeName = (code: string) => pack.types.find((t) => t.code === code)?.name ?? code;
-  const pkgDeposit = pkg.atCustomers.reduce((a, t) => a + t.depositGrosze, 0);
-  const driverHeld = pkg.drivers.reduce((a, d) => a + Object.values(d.byType).reduce((x, q) => x + Math.max(0, q), 0), 0);
-  const driverMissing = pkg.drivers.reduce((a, d) => a + Object.values(d.byType).reduce((x, q) => x + Math.min(0, q), 0), 0);
-  const cashOpen = cash.reduce((a, c) => a + Math.max(0, c.cashGrosze), 0);
+  const problemLanes = [...lanes].filter((l) => l.k.exceptions > 0).sort((a, b) => b.k.exceptions - a.k.exceptions);
 
-  const href = (p: { okres?: PeriodKey; do?: string; plan?: string }) => {
+  const href = (p: { okres?: string; plan?: string }) => {
     const u = new URLSearchParams();
     const pl = p.plan ?? planKey;
     if (pl !== "dzis") u.set("plan", pl);
-    const o = p.okres ?? period;
-    if (o !== "tydzien") u.set("okres", o);
-    const d = p.do ?? end;
-    if (d !== today) u.set("do", d);
+    const o = p.okres ?? periodKey;
+    if (o !== "7") u.set("okres", o);
     const s = u.toString();
     return `/raport${s ? `?${s}` : ""}`;
   };
-  const rangeLabel = len === 1 ? formatDayLabel(end) : `${short(start)} – ${short(end)}`;
 
   return (
     <>
       <PageHeader
-        title="Raport zarządu"
-        description={`Sprzedaż dowieziona do klientów, jakość dostaw i koszt transportu. Porównanie: ${PERIODS[period].compare}.`}
-        actions={
-          <>
-            <Segmented
-              items={(Object.keys(PERIODS) as PeriodKey[]).map((k) => ({
-                href: href({ okres: k }),
-                label: PERIODS[k].label,
-                active: k === period,
-              }))}
-            />
-            <div className="flex items-center gap-1">
-              <Link
-                href={href({ do: shiftDay(end, -len) })}
-                aria-label="Wcześniej"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronLeft />
-              </Link>
-              <span className={cn(buttonVariants({ variant: "outline", size: "sm" }), "pointer-events-none min-w-36 capitalize")}>
-                {rangeLabel}
-              </span>
-              <Link
-                href={href({ do: shiftDay(end, len) > today ? today : shiftDay(end, len) })}
-                aria-label="Później"
-                aria-disabled={end === today}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  end === today && "pointer-events-none opacity-40",
-                )}
-              >
-                <ChevronRight />
-              </Link>
-            </div>
-          </>
-        }
+        title="Rentowność"
+        description="Ile dowieźliśmy, ile to kosztowało i gdzie tracimy. Wybierz okres; plan i prognoza dnia są zawsze na górze."
       />
-
-      <Panel
-        className="mb-6"
-        title="Dzień po dniu"
-        description={`Jak wyglądał każdy dzień: dostawy, sprzedaż, terminowość, problemy i koszt. Kliknij dzień, żeby zobaczyć go w szczegółach. Porównanie sprzedaży z tym samym dniem tydzień wcześniej.`}
-        flush
-      >
-        {dayRows.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted">Brak tras w tym okresie.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
-                  <th className="py-2.5 pr-3 pl-5 font-medium">Dzień</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Kursy</th>
-                  <th className="px-3 py-2.5 font-medium">Dostawy</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Sprzedaż dostarczona</th>
-                  <th className="px-3 py-2.5 font-medium">vs tydzień wcześniej</th>
-                  <th className="px-3 py-2.5 font-medium">Terminowość</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Reklamacje i odmowy</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Km</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Koszt transportu</th>
-                  <th className="py-2.5 pr-5 pl-3 text-right font-medium">Koszt / sprzedaż</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dayRows.map(({ day: d, k, vsWeek }) => {
-                  const share = k.deliveredValueGrosze ? (k.costGrosze / k.deliveredValueGrosze) * 100 : null;
-                  const isToday = d === today;
-                  const selected = len === 1 && d === end;
-                  return (
-                    <tr
-                      key={d}
-                      className={cn("border-b border-border last:border-0 hover:bg-surface-2", selected && "bg-accent/60")}
-                    >
-                      <td className="py-2.5 pr-3 pl-5 whitespace-nowrap">
-                        <Link href={href({ okres: "dzien", do: d })} className="font-medium capitalize hover:text-primary-strong">
-                          {formatDayLabel(d)}
-                        </Link>
-                        {isToday && (
-                          <Pill tone="info" className="ml-2">
-                            w trakcie
-                          </Pill>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">
-                        {k.routes}
-                        {k.extraCourses > 0 && <span className="text-xs text-muted"> (+{k.extraCourses} dod.)</span>}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="flex items-center gap-2">
-                          <Meter pct={k.stops ? Math.round((k.finished / k.stops) * 100) : 0} tone="success" className="w-16" />
-                          <span className="tabular-nums">
-                            {k.finished}
-                            <span className="text-muted"> / {k.stops}</span>
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-medium tabular-nums">
-                        {formatPlnCompact(k.deliveredValueGrosze)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {isToday ? <span className="text-xs text-subtle">dzień trwa</span> : <Delta value={vsWeek} />}
-                      </td>
-                      <td className="px-3 py-2.5 tabular-nums">
-                        <span
-                          className={cn(
-                            k.onTimePct !== null && k.onTimePct < 85
-                              ? "text-danger"
-                              : k.onTimePct !== null && k.onTimePct < 95
-                                ? "text-warning"
-                                : "text-success",
-                          )}
-                        >
-                          {pct(k.onTimePct)}
-                        </span>
-                      </td>
-                      <td
-                        className={cn(
-                          "px-3 py-2.5 text-right tabular-nums",
-                          k.exceptions ? "font-medium text-plum" : "text-subtle",
-                        )}
-                      >
-                        {k.exceptions || "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">{k.km ? k.km.toLocaleString("pl-PL") : "—"}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums">
-                        {k.costGrosze ? formatPlnCompact(k.costGrosze) : "—"}
-                      </td>
-                      <td
-                        className={cn(
-                          "py-2.5 pr-5 pl-3 text-right tabular-nums",
-                          share !== null && share > 10 ? "text-warning" : "",
-                        )}
-                      >
-                        {share === null || !k.costGrosze
-                          ? "—"
-                          : `${share.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-border-strong bg-surface-2 font-semibold">
-                  <td className="py-2.5 pr-3 pl-5">Razem ({dayRows.length} dni)</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.routes}</td>
-                  <td className="px-3 py-2.5 tabular-nums">
-                    {dayTotal.finished} <span className="font-normal text-muted">/ {dayTotal.stops}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{formatPlnCompact(dayTotal.deliveredValueGrosze)}</td>
-                  <td className="px-3 py-2.5 text-xs font-normal text-muted">
-                    średnio {formatPlnCompact(dayRows.length ? dayTotal.deliveredValueGrosze / dayRows.length : 0)} / dzień
-                  </td>
-                  <td className="px-3 py-2.5 tabular-nums">{pct(dayTotal.onTimePct)}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.exceptions}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{dayTotal.km.toLocaleString("pl-PL")}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">{formatPlnCompact(dayTotal.costGrosze)}</td>
-                  <td className="py-2.5 pr-5 pl-3 text-right tabular-nums">
-                    {dayTotal.deliveredValueGrosze
-                      ? `${((dayTotal.costGrosze / dayTotal.deliveredValueGrosze) * 100).toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`
-                      : "—"}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </Panel>
 
       <Panel
         className="mb-6"
@@ -331,20 +97,25 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
         )}
       </Panel>
 
-      <h2 className="mb-3 flex flex-wrap items-baseline gap-x-2 text-[17px] font-semibold">
-        Wyniki za okres <span className="font-normal text-muted capitalize">{rangeLabel}</span>
-        <span className="text-xs font-normal text-subtle">— zrealizowane dostawy, porównanie: {PERIODS[period].compare}</span>
-      </h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex flex-wrap items-baseline gap-x-2 text-[17px] font-semibold">
+          Wyniki <span className="font-normal text-muted capitalize">{rangeLabel}</span>
+          <span className="text-xs font-normal text-subtle">— porównanie: {period.compare}</span>
+        </h2>
+        <Segmented
+          items={PERIOD_KEYS.map((k) => ({ href: href({ okres: k }), label: PERIOD_LABELS[k], active: k === periodKey }))}
+        />
+      </div>
 
       {cur.stops === 0 ? (
         <Panel>
-          <EmptyState icon={<ChartNoAxesCombined />} title="Brak zrealizowanych tras w tym okresie">
-            Raport liczy się z tras, które kierowcy realizują w aplikacji. Wybierz inny okres albo poczekaj na pierwsze dostawy.
+          <EmptyState icon={<ChartNoAxesCombined />} title="Brak tras w tym okresie">
+            Wyniki liczą się z tras realizowanych w aplikacji kierowcy. Wybierz inny okres.
           </EmptyState>
         </Panel>
       ) : (
         <>
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <StatTile
               label="Sprzedaż dostarczona"
               value={formatPlnCompact(cur.deliveredValueGrosze)}
@@ -352,10 +123,26 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
               sub={`z ${formatPlnCompact(cur.plannedValueGrosze)} zaplanowanych`}
             />
             <StatTile
-              label="Dostawy zrealizowane"
-              value={cur.finished.toLocaleString("pl-PL")}
-              delta={pctChange(cur.finished, prev.finished)}
-              sub={`${cur.routes} kursów, ${cur.extraCourses} dodatkowych`}
+              label="Koszt transportu"
+              value={formatPlnCompact(cur.costGrosze)}
+              delta={pctChange(cur.costGrosze, prev.costGrosze)}
+              deltaGoodWhen="down"
+              sub={`${cur.km.toLocaleString("pl-PL")} km, ${cur.routes} kursów`}
+            />
+            <StatTile
+              label="Po kosztach transportu"
+              value={formatPlnCompact(netCur)}
+              delta={pctChange(netCur, netPrev)}
+              sub="sprzedaż minus transport"
+            />
+            <StatTile
+              label="Koszt / sprzedaż"
+              value={pct(costShare)}
+              tone={costShare !== null && costShare > 10 ? "warning" : undefined}
+              delta={costShare !== null && prevCostShare !== null ? Math.round((costShare - prevCostShare) * 10) / 10 : null}
+              deltaGoodWhen="down"
+              deltaSuffix=" pp."
+              sub={cur.finished ? `${formatPln(Math.round(cur.costGrosze / cur.finished))} na dostawę` : undefined}
             />
             <StatTile
               label="Terminowość"
@@ -368,7 +155,7 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
               sub="dostaw w oknie przyjęć"
             />
             <StatTile
-              label="Reklamacje i odmowy"
+              label="Reklamacje i braki odbioru"
               value={cur.exceptions}
               tone={cur.exceptions ? "plum" : undefined}
               delta={pctChange(cur.exceptions, prev.exceptions)}
@@ -379,93 +166,22 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                   : undefined
               }
             />
-            <StatTile
-              label="Koszt transportu"
-              value={formatPlnCompact(cur.costGrosze)}
-              delta={costShare !== null && prevCostShare !== null ? Math.round((costShare - prevCostShare) * 10) / 10 : null}
-              deltaGoodWhen="down"
-              deltaSuffix=" pp."
-              sub={`${pct(costShare)} sprzedaży · ${formatPln(perStop(cur))} na dostawę`}
-            />
-          </div>
-
-          <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-            <Panel
-              title="Sprzedaż dostarczona dzień po dniu"
-              description="Ostatnie 4 tygodnie. Ciemniejsze słupki to wybrany okres, linia przerywana — średnia dnia roboczego."
-              actions={
-                <span className="text-sm text-muted">
-                  średnio <b className="font-semibold text-foreground">{formatPlnCompact(avgValue)}</b> dziennie
-                </span>
-              }
-            >
-              <BarChart
-                height={236}
-                ariaLabel="Sprzedaż dostarczona w kolejnych dniach"
-                format={(v) => formatPlnCompact(v)}
-                reference={avgValue ? { value: avgValue, label: "średnia" } : undefined}
-                data={trend.map((t) => ({
-                  key: t.day,
-                  label: short(t.day),
-                  value: t.k.deliveredValueGrosze,
-                  highlight: t.day >= start && t.day <= end,
-                  muted: t.k.stops === 0,
-                  tooltip: t.k.stops
-                    ? `${formatDayLabel(t.day)}: ${formatPln(t.k.deliveredValueGrosze)}, ${t.k.finished} dostaw`
-                    : `${formatDayLabel(t.day)}: bez dostaw`,
-                }))}
-              />
-            </Panel>
-            <Panel title="Terminowość dzień po dniu" description="Udział dostaw w oknie przyjęć; cel 95%.">
-              <LineChart
-                ariaLabel="Terminowość w kolejnych dniach"
-                min={70}
-                max={100}
-                format={(v) => `${v}%`}
-                target={{ value: 95, label: "cel 95%" }}
-                points={trend.map((t) => ({
-                  key: t.day,
-                  label: short(t.day),
-                  value: t.k.onTimePct === null ? null : Math.max(70, t.k.onTimePct),
-                  tooltip:
-                    t.k.onTimePct === null
-                      ? `${formatDayLabel(t.day)}: bez dostaw`
-                      : `${formatDayLabel(t.day)}: ${pct(t.k.onTimePct)} (${t.k.onTime} z ${t.k.withWindow})`,
-                }))}
-              />
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-center sm:grid-cols-4">
-                <MiniStat label="km w okresie" value={cur.km.toLocaleString("pl-PL")} />
-                <MiniStat
-                  label="min obsługi punktu"
-                  value={cur.serviceCount ? String(Math.round(cur.serviceMinutes / cur.serviceCount)) : "—"}
-                />
-                <MiniStat
-                  label="km na dostawę"
-                  value={cur.finished ? (cur.km / cur.finished).toLocaleString("pl-PL", { maximumFractionDigits: 1 }) : "—"}
-                />
-                <MiniStat
-                  label="dostaw na kurs"
-                  value={cur.routes ? (cur.finished / cur.routes).toLocaleString("pl-PL", { maximumFractionDigits: 1 }) : "—"}
-                />
-              </div>
-            </Panel>
           </div>
 
           <Panel
-            title="Efektywność kierunków"
-            description={`Trasy stałe w okresie ${rangeLabel}. Koszt: km × stawka auta + dzień kierowcy + koszt stały auta.`}
+            title="Efektywność tras"
+            description="Trasy stałe, kursy dodatkowe razem. Koszt: km × stawka auta + dzień kierowcy + koszt stały auta."
             flush
             className="mb-6"
           >
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
-                    <th className="py-2.5 pr-3 pl-5 font-medium">Kierunek</th>
+                    <th className="py-2.5 pr-3 pl-5 font-medium">Trasa</th>
                     <th className="px-3 py-2.5 text-right font-medium">Kursy</th>
                     <th className="px-3 py-2.5 text-right font-medium">Dostawy</th>
                     <th className="px-3 py-2.5 font-medium">Terminowość</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Wyjątki</th>
                     <th className="px-3 py-2.5 text-right font-medium">Km</th>
                     <th className="px-3 py-2.5 text-right font-medium">Sprzedaż</th>
                     <th className="px-3 py-2.5 text-right font-medium">Koszt</th>
@@ -474,7 +190,7 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                   </tr>
                 </thead>
                 <tbody>
-                  {laneRows.map((l) => {
+                  {lanes.map((l) => {
                     const share = l.k.deliveredValueGrosze ? (l.cost / l.k.deliveredValueGrosze) * 100 : null;
                     return (
                       <tr key={l.name} className="border-b border-border last:border-0 hover:bg-surface-2">
@@ -498,9 +214,6 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
                             </span>
                             <span className="tabular-nums">{pct(l.k.onTimePct)}</span>
                           </span>
-                        </td>
-                        <td className={cn("px-3 py-2.5 text-right", l.k.exceptions && "font-medium text-plum")}>
-                          {l.k.exceptions || "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right">{l.k.km.toLocaleString("pl-PL")}</td>
                         <td className="px-3 py-2.5 text-right">{formatPlnCompact(l.k.deliveredValueGrosze)}</td>
@@ -528,141 +241,65 @@ export default async function ManagementReportPage({ searchParams }: PageProps<"
             </div>
           </Panel>
 
-          <div className="mb-6 grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
-            <Panel title="Najwięksi klienci" description="Sprzedaż dostarczona w okresie" flush>
-              <ol className="divide-y divide-border text-sm">
-                {top.map((c, i) => (
-                  <li key={c.customerId} className="flex items-center gap-3 px-5 py-2.5">
-                    <span className="w-4 text-right text-xs text-subtle tabular-nums">{i + 1}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium">{c.customer}</span>
-                      <span className="text-xs text-muted">
-                        {c.stops} dostaw{c.exceptions ? `, ${c.exceptions} z problemem` : ""}
-                      </span>
-                    </span>
-                    <span className="font-semibold tabular-nums">{formatPlnCompact(c.valueGrosze)}</span>
-                  </li>
-                ))}
-              </ol>
-            </Panel>
-
-            <Panel title="Reklamacje, odmowy i braki odbioru" description={`${exceptions.length} w okresie ${rangeLabel}`} flush>
-              {exceptions.length === 0 ? (
-                <p className="px-5 py-8 text-center text-sm text-muted">Bez problemów na punktach w tym okresie.</p>
-              ) : (
-                <ul className="max-h-[360px] divide-y divide-border overflow-y-auto text-sm">
-                  {exceptions.map(({ s, r }) => (
-                    <li key={s.id} className="flex gap-3 px-5 py-2.5">
-                      <MessageSquare className="mt-0.5 size-4 shrink-0 text-plum" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{s.customer}</span>
-                          <Pill tone={s.status === "complaint" ? "plum" : "danger"} dot={false}>
-                            {s.status === "complaint" ? "reklamacja" : s.status === "refused" ? "odmowa" : "brak odbioru"}
-                          </Pill>
-                        </span>
-                        <span className="block text-xs text-muted">
-                          {short(r.date)}, {r.name}
-                          {s.reason ? ` — ${s.reason}` : ""}
-                        </span>
-                      </span>
-                      <span className="text-xs text-muted tabular-nums">{formatPlnCompact(s.valueGrosze)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
-
-            <Panel
-              title="Opakowania i gotówka"
-              description="Stan na dziś, z księgi ruchów"
-              className="lg:col-span-2 2xl:col-span-1"
-            >
-              <div className="space-y-5 text-sm">
-                <div>
-                  <div className="flex items-baseline justify-between">
-                    <p className="font-medium">U klientów</p>
-                    <p className="text-xs text-muted">
-                      kaucja <b className="font-semibold text-foreground tabular-nums">{formatPln(pkgDeposit)}</b>
-                    </p>
-                  </div>
-                  <ul className="mt-2 grid grid-cols-3 gap-2">
-                    {pkg.atCustomers.map((t) => (
-                      <li key={t.typeCode} className="rounded-lg bg-surface-2 px-3 py-2">
-                        <p className="text-lg font-semibold tabular-nums">{t.qty.toLocaleString("pl-PL")}</p>
-                        <p className="truncate text-xs text-muted">{typeName(t.typeCode).toLowerCase()}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1.5 font-medium">Najwięcej zalega u</p>
-                  <ul className="space-y-1">
-                    {pkg.customersOwing.slice(0, 4).map((c) => (
-                      <li key={c.partyId} className="flex justify-between gap-3 text-[13px]">
-                        <span className="truncate">{pack.customerNames.get(c.partyId) ?? "—"}</span>
-                        <span className="whitespace-nowrap text-muted tabular-nums">
-                          {Object.entries(c.byType)
-                            .map(([code, q]) => `${q} ${code === "EUR" ? "pal." : "skrz."}`)
-                            .join(", ")}{" "}
-                          · {formatPln(c.depositGrosze)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className={cn("rounded-lg px-3 py-2", overdueQty ? "bg-warning-soft" : "bg-surface-2")}>
-                  <p className="text-xs text-muted">Zalega u klientów ponad 30 dni</p>
-                  <p className="text-lg font-semibold tabular-nums">
-                    {overdueQty.toLocaleString("pl-PL")} szt.{" "}
-                    <span className="text-xs font-normal text-muted">u {overdueRows.length} klientów</span>
-                  </p>
-                  {overdueRows[0] && (
-                    <p className="text-xs text-muted">
-                      najwięcej:{" "}
-                      <Link
-                        href={`/opakowania?widok=historia&klient=${overdueRows[0].customerId}`}
-                        className="font-medium text-foreground hover:underline"
-                      >
-                        {overdueRows[0].customer}
-                      </Link>{" "}
-                      ({overdueRows[0].overdueTotal} szt.)
-                    </p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
-                  <div>
-                    <p className="text-xs text-muted">Gotówka nierozliczona</p>
-                    <p className="text-lg font-semibold tabular-nums">{formatPlnCompact(cashOpen)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted">Opakowania u kierowców</p>
-                    <p className="text-lg font-semibold tabular-nums">{driverHeld.toLocaleString("pl-PL")} szt.</p>
-                    <p className={cn("text-xs", driverMissing ? "font-medium text-danger" : "text-muted")}>
-                      {driverMissing ? `brakuje ${Math.abs(driverMissing)} szt.` : "do zdania na magazyn"}
-                    </p>
-                  </div>
-                </div>
+          <Panel
+            title="Reklamacje i braki odbioru"
+            description={`Na których trasach pojawiają się problemy — ${cur.exceptions} w okresie ${rangeLabel}.`}
+            flush
+            className="mb-6"
+          >
+            {problemLanes.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-muted">Bez reklamacji, odmów i braków odbioru w tym okresie.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-surface-2 text-left text-xs text-muted">
+                      <th className="py-2.5 pr-3 pl-5 font-medium">Trasa</th>
+                      <th className="px-3 py-2.5 text-right font-medium">Dostawy</th>
+                      <th className="px-3 py-2.5 text-right font-medium">Reklamacje</th>
+                      <th className="px-3 py-2.5 text-right font-medium">Odmowy</th>
+                      <th className="px-3 py-2.5 text-right font-medium">Brak odbioru</th>
+                      <th className="px-3 py-2.5 text-right font-medium">Razem</th>
+                      <th className="py-2.5 pr-5 pl-3 text-right font-medium">% dostaw</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {problemLanes.map((l) => {
+                      const share = l.k.finished ? (l.k.exceptions / l.k.finished) * 100 : null;
+                      const dash = (n: number) => (n ? n : "—");
+                      return (
+                        <tr key={l.name} className="border-b border-border last:border-0 hover:bg-surface-2">
+                          <td className="py-2.5 pr-3 pl-5 font-medium">{l.name}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{l.k.finished}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{dash(l.k.complaints)}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{dash(l.k.refused)}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums">{dash(l.k.absent)}</td>
+                          <td className="px-3 py-2.5 text-right font-semibold text-plum tabular-nums">{l.k.exceptions}</td>
+                          <td
+                            className={cn(
+                              "py-2.5 pr-5 pl-3 text-right font-medium tabular-nums",
+                              share !== null && share > 8 ? "text-danger" : share !== null && share > 4 ? "text-warning" : "",
+                            )}
+                          >
+                            {share === null ? "—" : `${share.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </Panel>
-          </div>
+            )}
+          </Panel>
 
           <p className="text-xs text-subtle">
-            Porównanie okresu {rangeLabel} z {len === 1 ? formatDayLabel(prevEnd) : `${short(prevStart)} – ${short(prevEnd)}`}:
-            sprzedaż <Delta value={pctChange(cur.deliveredValueGrosze, prev.deliveredValueGrosze)} />, dostawy{" "}
+            Porównanie okresu {rangeLabel} z{" "}
+            {period.prevStart === period.prevEnd ? formatDayLabel(period.prevEnd) : `${short(period.prevStart)} – ${short(period.prevEnd)}`}
+            : sprzedaż <Delta value={pctChange(cur.deliveredValueGrosze, prev.deliveredValueGrosze)} />, dostawy{" "}
             <Delta value={pctChange(cur.finished, prev.finished)} />.
           </p>
         </>
       )}
     </>
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-lg font-semibold tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
-    </div>
   );
 }

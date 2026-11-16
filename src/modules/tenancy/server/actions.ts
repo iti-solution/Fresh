@@ -38,7 +38,7 @@ export async function createTenant(_prev: ActionState, formData: FormData): Prom
   const { data, error } = await supabase.rpc("create_tenant", { p_name: name });
   if (error || !data) return { error: "Nie udało się utworzyć firmy. Spróbuj ponownie." };
   await setTenantCookie(data);
-  redirect("/pulpit");
+  redirect("/centrum");
 }
 
 export async function createDemoTenant(): Promise<void> {
@@ -47,7 +47,7 @@ export async function createDemoTenant(): Promise<void> {
   if (error || !data) throw new Error("Nie udało się utworzyć firmy demo.");
   await seedDemoHistory(supabase, data);
   await setTenantCookie(data);
-  redirect("/pulpit");
+  redirect("/centrum");
 }
 
 /**
@@ -83,7 +83,7 @@ export async function resetDemoTenant(): Promise<void> {
   if (error || !data) throw new Error("Nie udało się odświeżyć firmy demo.");
   await seedDemoHistory(supabase, data);
   await setTenantCookie(data);
-  redirect("/pulpit?demo=odswiezone");
+  redirect("/centrum?demo=odswiezone");
 }
 
 /** Historia demo (~4 tygodnie tras) pod zestawienia. Brak migracji 0008 nie blokuje założenia firmy demo. */

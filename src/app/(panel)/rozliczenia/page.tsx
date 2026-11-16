@@ -7,7 +7,7 @@ import { Pill } from "@/components/ui/status";
 import { formatPln, toGrosze } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { todayInWarsaw } from "@/modules/orders/domain/orders";
 import { monthLabel, MONTH_RE, shiftMonth } from "@/modules/payroll/domain/month";
 import { monthRange } from "@/modules/payroll/domain/payroll";
 import { recomputeMonth } from "@/modules/payroll/server/actions";
@@ -29,7 +29,7 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
   const month = typeof sp.miesiac === "string" && MONTH_RE.test(sp.miesiac) ? sp.miesiac : today.slice(0, 7);
   const { from, to } = monthRange(month);
   const db = await createClient();
-  const [drivers, settlements, routes, toClose, rules] = await Promise.all([
+  const [drivers, settlements, routes, rules] = await Promise.all([
     db
       .from("drivers")
       .select("id, first_name, last_name, employment_type, is_active")
@@ -48,14 +48,6 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
       .gte("route_date", from)
       .lte("route_date", to)
       .in("status", ["completed", "closed"]),
-    db
-      .from("routes")
-      .select("id, name, route_date, status, drivers(first_name, last_name)")
-      .eq("tenant_id", ctx.tenantId)
-      .in("status", ["completed", "in_progress"])
-      .lt("route_date", shiftDay(today, 1))
-      .order("route_date")
-      .limit(50),
     db.from("driver_pay_rules").select("id", { count: "exact", head: true }).eq("tenant_id", ctx.tenantId),
   ]);
   const byDriver = new Map((settlements.data ?? []).map((s) => [s.driver_id, s]));
@@ -169,29 +161,6 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
               </tbody>
             </table>
           )}
-        </Panel>
-        <Panel title="Trasy do zamknięcia" description="Przyjęcie gotówki i opakowań, potem wynagrodzenie dnia" flush>
-          <ul className="divide-y divide-border text-sm">
-            {(toClose.data ?? []).length === 0 && <li className="px-4 py-3 text-muted">Wszystkie trasy zamknięte.</li>}
-            {(toClose.data ?? []).map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
-                <span className="min-w-0">
-                  <Link
-                    href={`/rozliczenia/zamkniecie/${r.id}`}
-                    className="font-medium hover:text-primary-strong hover:underline"
-                  >
-                    {r.name}
-                  </Link>
-                  <span className="block text-xs capitalize text-muted">
-                    {formatDayLabel(r.route_date)} · {r.drivers ? `${r.drivers.first_name} ${r.drivers.last_name}` : "—"}
-                  </span>
-                </span>
-                <Pill tone={r.status === "completed" ? "info" : "warning"}>
-                  {r.status === "completed" ? "wróciła" : "w trasie"}
-                </Pill>
-              </li>
-            ))}
-          </ul>
         </Panel>
       </div>
     </>
