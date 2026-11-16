@@ -209,7 +209,7 @@ export function DayForecastPanel({
                       ) : p.state === "done" || p.state === "in_progress" ? (
                         <Link
                           href={`/rozliczenia/zamkniecie/${r.id}`}
-                          className={buttonVariants({ variant: p.state === "done" ? "primary" : "outline", size: "sm" })}
+                          className={buttonVariants({ variant: "primary", size: "sm" })}
                         >
                           Zamknij trasę
                         </Link>
