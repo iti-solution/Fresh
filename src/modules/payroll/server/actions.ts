@@ -16,6 +16,37 @@ async function editor() {
   return { ctx, ok: canEditDriverPay(ctx.role), db: await createClient() };
 }
 
+/** Poprawka istniejącej wersji reguły (np. literówka w stawce). Kierowca i data początku zostają — to robi „nowa wersja”. */
+export async function updateRule(ruleId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const { ctx, db } = await editor();
+  if (ctx.role !== "admin") return { ok: false, message: "Stawki ustawia administrator." };
+  const { data: existing } = await db
+    .from("driver_pay_rules")
+    .select("id, driver_id, valid_from")
+    .eq("id", ruleId)
+    .eq("tenant_id", ctx.tenantId)
+    .maybeSingle();
+  if (!existing) return { ok: false, message: "Nie znaleziono reguły." };
+  const parsed = ruleFormSchema.safeParse({
+    ...formToObject(fd),
+    driver_id: existing.driver_id ?? "",
+    valid_from: existing.valid_from,
+  });
+  if (!parsed.success) return toFormErrors(parsed.error);
+  const { error } = await db
+    .from("driver_pay_rules")
+    .update({ components: parsed.data.components as never })
+    .eq("id", ruleId)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) return { ok: false, message: "Nie udało się zapisać zmian." };
+  revalidatePath("/rozliczenia");
+  revalidatePath("/rozliczenia/stawki");
+  return {
+    ok: true,
+    message: `Zapisano zmiany w „${parsed.data.components.name}”. Przelicz otwarte miesiące, żeby je uwzględnić.`,
+  };
+}
+
 /** Nowa wersja reguły wynagrodzeń (domyślnej albo dla kierowcy). Poprzednia wersja kończy się dzień wcześniej. */
 export async function saveRule(_prev: FormState, fd: FormData): Promise<FormState> {
   const { ctx, db } = await editor();
