@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, homePathForRole, isPublicPath, navForRole, safeNextPath } from "./access";
+import { canAccess, canEditDriverPay, canSeeDriverPay, homePathForRole, isPublicPath, navForRole, safeNextPath } from "./access";
 
 describe("isPublicPath", () => {
   it("traktuje logowanie i callback auth jako publiczne", () => {
@@ -85,6 +85,33 @@ describe("portal klienta", () => {
   it("pracownicy hurtowni i kierowcy nie wchodzą do portalu klienta", () => {
     for (const role of ["admin", "dispatcher", "driver", "viewer", "customer_service", "management"] as const) {
       expect(canAccess(role, "/portal")).toBe(false);
+    }
+  });
+});
+
+describe("dane finansowe kierowców i konto monitora", () => {
+  it("rozliczenia kierowców widzi tylko administrator i zarząd", () => {
+    expect(canAccess("admin", "/rozliczenia")).toBe(true);
+    expect(canAccess("management", "/rozliczenia/stawki")).toBe(true);
+    for (const role of ["dispatcher", "viewer", "customer_service", "monitor"] as const) {
+      expect(canAccess(role, "/rozliczenia")).toBe(false);
+      expect(canAccess(role, "/rozliczenia/stawki")).toBe(false);
+      expect(canSeeDriverPay(role)).toBe(false);
+      expect(navForRole(role).some((i) => i.href === "/rozliczenia")).toBe(false);
+    }
+    expect(canEditDriverPay("admin")).toBe(true);
+    expect(canEditDriverPay("management")).toBe(false);
+  });
+  it("dyspozytor nadal zamyka trasę", () => {
+    expect(canAccess("dispatcher", "/rozliczenia/zamkniecie/abc")).toBe(true);
+    expect(canAccess("monitor", "/rozliczenia/zamkniecie/abc")).toBe(false);
+  });
+  it("konto monitora widzi wyłącznie Monitor tras", () => {
+    expect(homePathForRole("monitor")).toBe("/monitor");
+    expect(navForRole("monitor").map((i) => i.href)).toEqual(["/monitor"]);
+    expect(canAccess("monitor", "/monitor")).toBe(true);
+    for (const path of ["/pulpit", "/planowanie", "/kartoteki/klienci", "/driver", "/portal", "/nieznana"]) {
+      expect(canAccess("monitor", path)).toBe(false);
     }
   });
 });

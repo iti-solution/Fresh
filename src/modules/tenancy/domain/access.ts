@@ -1,7 +1,15 @@
 // Czysta logika dostępu: role, ścieżki publiczne, menu panelu.
 // Bez importów z Next.js / Supabase — testowane jednostkowo.
 
-export type Role = "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
+export type Role =
+  | "admin"
+  | "dispatcher"
+  | "driver"
+  | "viewer"
+  | "customer_service"
+  | "management"
+  | "customer"
+  | "monitor";
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrator",
@@ -11,6 +19,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   customer_service: "Obsługa klienta (BOK)",
   management: "Zarząd",
   customer: "Klient (portal zamówień)",
+  monitor: "Monitor tras (tylko podgląd)",
 };
 
 // /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
@@ -36,7 +45,7 @@ const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "man
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
-  { href: "/monitor", label: "Monitor tras", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
+  { href: "/monitor", label: "Monitor tras", group: "Operacje", milestone: "M6", built: true, roles: [...STAFF, "monitor"] },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
   { href: "/planowanie", label: "Tablica tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/trasy", label: "Trasy", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
@@ -65,11 +74,30 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/kartoteki/produkty", label: "Katalog produktów", group: "Kartoteki", milestone: "P1", built: true, roles: STAFF },
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
   { href: "/opakowania", label: "Opakowania i gotówka", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
-  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
+  {
+    href: "/rozliczenia",
+    label: "Rozliczenia kierowców",
+    group: "Rozliczenia",
+    milestone: "M5",
+    built: true,
+    roles: ["admin", "management"],
+  },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
   { href: "/start", label: "Pierwsze kroki", group: "System", milestone: "M6", built: true, roles: ["admin", "dispatcher"] },
   { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
+
+export const CLOSE_ROUTE_PATH = "/rozliczenia/zamkniecie";
+
+/** Dane finansowe kierowców (stawki, rozliczenia, wynagrodzenia): tylko administrator i zarząd. */
+export function canSeeDriverPay(role: Role): boolean {
+  return role === "admin" || role === "management";
+}
+
+/** Zmiany w rozliczeniach (przeliczenie, dodatki, zatwierdzenie): tylko administrator. */
+export function canEditDriverPay(role: Role): boolean {
+  return role === "admin";
+}
 
 export function navForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => item.roles.includes(role));
@@ -84,6 +112,10 @@ export function canAccess(role: Role, pathname: string): boolean {
     return role === "driver" || role === "admin";
   }
   if (role === "driver") return false;
+  // Konto „monitor” (telewizor w dyspozytorni) widzi wyłącznie Monitor tras.
+  if (role === "monitor") return pathname === "/monitor" || pathname.startsWith("/monitor/");
+  // Zamknięcie trasy (opakowania, gotówka, licznik) to praca dyspozytora — bez wglądu w wynagrodzenia.
+  if (pathname === CLOSE_ROUTE_PATH || pathname.startsWith(`${CLOSE_ROUTE_PATH}/`)) return STAFF.includes(role);
   const item = NAV_ITEMS.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
   return item ? item.roles.includes(role) : true;
 }
@@ -94,6 +126,7 @@ export function homePathForRole(role: Role): string {
   if (role === "customer") return "/portal";
   if (role === "customer_service") return "/bok";
   if (role === "management") return "/raport";
+  if (role === "monitor") return "/monitor";
   return "/pulpit";
 }
 

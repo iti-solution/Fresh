@@ -68,6 +68,15 @@ export type FieldDef =
   | { kind: "checkbox"; name: string; label: string; defaultChecked?: boolean; span?: 1 | 2 | 3; hint?: string }
   | { kind: "weekdays"; name: string; label: string; defaultValue?: number[]; span?: 1 | 2 | 3; hint?: string }
   | {
+      kind: "checks";
+      name: string;
+      label: string;
+      options: FieldOption[];
+      defaultValue?: string[];
+      span?: 1 | 2 | 3;
+      hint?: string;
+    }
+  | {
       kind: "timerange";
       name: string;
       nameTo: string;
@@ -127,6 +136,8 @@ function withSubmitted(f: FieldDef, sub: Submitted): FieldDef {
       return { ...f, defaultChecked: sub[f.name] !== undefined };
     case "weekdays":
       return { ...f, defaultValue: ((sub[f.name] as string[] | undefined) ?? []).map(Number) };
+    case "checks":
+      return { ...f, defaultValue: (sub[f.name] as string[] | undefined) ?? [] };
     case "timerange":
       return { ...f, defaultFrom: str(f.name), defaultTo: str(f.nameTo) };
     default:
@@ -204,6 +215,26 @@ function Field({ f, errors }: { f: FieldDef; errors?: string[] }) {
               />
               <span className="flex h-8 min-w-12 items-center justify-center rounded-md border border-border-strong bg-surface px-2 text-[12.5px] font-semibold peer-checked:border-primary-strong peer-checked:bg-accent peer-checked:text-primary-strong peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
                 {d.l}
+              </span>
+            </label>
+          ))}
+        </div>
+      );
+      break;
+    case "checks":
+      control = (
+        <div role="group" aria-labelledby={`${id}-label`} className="flex flex-wrap gap-1.5">
+          {f.options.map((o) => (
+            <label key={o.value} className="cursor-pointer">
+              <input
+                type="checkbox"
+                name={`${f.name}[]`}
+                value={o.value}
+                defaultChecked={f.defaultValue?.includes(o.value)}
+                className="peer sr-only"
+              />
+              <span className="flex h-8 min-w-12 items-center justify-center rounded-md border border-border-strong bg-surface px-2 text-[12.5px] font-semibold peer-checked:border-primary-strong peer-checked:bg-accent peer-checked:text-primary-strong peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
+                {o.label}
               </span>
             </label>
           ))}

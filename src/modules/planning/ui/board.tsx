@@ -61,6 +61,10 @@ export type BoardStop = {
   address: string;
   phone: string | null;
   window: string;
+  windowFrom: string | null;
+  windowTo: string | null;
+  /** Okno zmienione jednorazowo na ten dzień */
+  windowOverride: boolean;
   eta: string | null;
   out: boolean;
   done: boolean;
@@ -103,6 +107,8 @@ export type BoardRoute = {
   actions: {
     setVehicle?: FormAction;
     setDriver?: FormAction;
+    rename?: FormAction;
+    setStopWindow?: (stopId: string, fd: FormData) => void | Promise<void>;
     sortByWindow?: VoidAction;
     markReady?: VoidAction;
     markReadyForce?: VoidAction;
@@ -1073,7 +1079,7 @@ function RouteCard({
                           <Phone className="size-3" /> {s.phone}
                         </span>
                       )}
-                      {view.show.window && <WindowText stop={s} className="pl-5.5" />}
+                      {view.show.window && <StopWindow stop={s} action={r.actions.setStopWindow} className="pl-5.5" />}
                     </span>
                     <span className="self-end text-right">
                       {s.done ? (
@@ -1090,7 +1096,7 @@ function RouteCard({
                     ) : (
                       <span />
                     )}
-                    {view.show.window ? <WindowText stop={s} /> : <span />}
+                    {view.show.window ? <StopWindow stop={s} action={r.actions.setStopWindow} /> : <span />}
                     <span className="flex min-w-0 items-baseline gap-1.5">
                       <span className={cn("shrink-0 truncate font-semibold", s.done ? "text-muted" : "text-foreground")}>
                         {s.customer}
@@ -1153,6 +1159,99 @@ function WindowText({ stop: s, className }: { stop: BoardStop; className?: strin
     >
       {s.out && <span aria-hidden>▲</span>}
       {s.window}
+      {s.windowOverride && (
+        <span className="text-info" title="Okno zmienione tylko na ten dzień" aria-label="okno zmienione na ten dzień">
+          •
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * Okno dostawy punktu. Na trasie, którą można planować, kliknięcie otwiera jednorazową zmianę okna
+ * na ten dzień (kartoteka adresu i trasa stała zostają bez zmian). Punkt zrealizowany — tylko podgląd.
+ */
+function StopWindow({
+  stop: s,
+  action,
+  className,
+}: {
+  stop: BoardStop;
+  action?: (stopId: string, fd: FormData) => void | Promise<void>;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (!action || s.done) return <WindowText stop={s} className={className} />;
+  const save = action.bind(null, s.id);
+  const input = "h-8 w-[5.5rem] rounded-md border border-border-strong bg-surface px-1.5 text-[13px] tabular-nums";
+  return (
+    <span ref={ref} className={cn("relative inline-flex", className)}>
+      <button
+        type="button"
+        draggable={false}
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey || e.shiftKey) return; // zaznaczanie wielu punktów
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        className="rounded px-0.5 hover:bg-foreground/[0.07] focus-visible:ring-2 focus-visible:ring-primary/40"
+        title="Zmień okno dostawy tylko na ten dzień"
+        aria-expanded={open}
+      >
+        <WindowText stop={s} />
+      </button>
+      {open && (
+        <form
+          action={async (fd) => {
+            await save(fd);
+            setOpen(false);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-6 left-0 z-40 w-[264px] cursor-default rounded-xl border border-border bg-surface p-3 text-left text-foreground shadow-[var(--shadow-pop)]"
+        >
+          <p className="text-[12.5px] font-semibold">Okno dostawy tylko na ten dzień</p>
+          <p className="mt-0.5 text-[11.5px] font-normal whitespace-normal text-muted">
+            {s.customer}. Kartoteka adresu i trasa stała się nie zmieniają.
+          </p>
+          <div className="mt-2.5 flex items-center gap-1.5 font-normal">
+            <input type="time" name="from" required defaultValue={s.windowFrom ?? ""} aria-label="Okno od" className={input} />
+            <span className="text-muted">–</span>
+            <input type="time" name="to" required defaultValue={s.windowTo ?? ""} aria-label="Okno do" className={input} />
+            <button className="ml-auto h-8 rounded-md bg-primary px-2.5 text-[12.5px] font-semibold text-primary-foreground">
+              Zapisz
+            </button>
+          </div>
+          {s.windowOverride && (
+            <button
+              type="submit"
+              formNoValidate
+              onClick={(e) => {
+                const f = e.currentTarget.form;
+                if (f) for (const el of f.querySelectorAll<HTMLInputElement>('input[type="time"]')) el.value = "";
+              }}
+              className="mt-2 text-[12px] font-medium text-primary-strong underline"
+            >
+              Przywróć okno z kartoteki
+            </button>
+          )}
+        </form>
+      )}
     </span>
   );
 }
@@ -1202,6 +1301,24 @@ function RouteMenu({
             <MenuSelect name="driver_id" label="Kierowca" value={r.driverId} options={drivers} />
           </form>
         </div>
+      )}
+      {r.canChange && a.rename && (
+        <form action={a.rename} className="flex items-center gap-2 border-b border-border px-1 pt-1 pb-3">
+          <label className="relative block min-w-0 flex-1">
+            <span className="pointer-events-none absolute -top-2 left-2 bg-surface px-1 text-[10.5px] text-muted">
+              Nazwa trasy na ten dzień
+            </span>
+            <input
+              name="name"
+              defaultValue={r.name}
+              required
+              minLength={2}
+              maxLength={120}
+              className="h-10 w-full rounded-lg border border-border-strong bg-surface px-3 text-[13px] outline-none focus:border-primary"
+            />
+          </label>
+          <button className="h-10 rounded-lg bg-primary px-3 text-[12.5px] font-semibold text-primary-foreground">OK</button>
+        </form>
       )}
       <div className="pt-1.5">
         {r.canChange && a.sortByWindow && r.stops.length > 1 && (

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { formToObject, parseGrosze, toFormErrors, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canEditDriverPay } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { closePreviousVersion, readComponents, ruleFormSchema } from "../domain/payroll";
 import { driversWithRoutes, recomputeSettlement, refreshTotal } from "./settlement";
@@ -13,7 +13,7 @@ const NO_RIGHTS: FormState = { ok: false, message: "Nie masz uprawnień." };
 
 async function editor() {
   const ctx = await requireTenantContext();
-  return { ctx, ok: canEdit(ctx.role), db: await createClient() };
+  return { ctx, ok: canEditDriverPay(ctx.role), db: await createClient() };
 }
 
 /** Nowa wersja reguły wynagrodzeń (domyślnej albo dla kierowcy). Poprzednia wersja kończy się dzień wcześniej. */

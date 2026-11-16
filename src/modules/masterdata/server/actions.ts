@@ -163,6 +163,7 @@ export async function saveVehicle(vehicleId: string | null, _prev: FormState, fd
     capacity_pallets: parsed.data.capacity_pallets ?? 0,
     capacity_crates: parsed.data.capacity_crates ?? 0,
     capacity_m3: parsed.data.capacity_m3 ?? 0,
+    capacity_box_pallets: parsed.data.capacity_box_pallets ?? 0,
   };
   if (v.is_own) v.carrier_id = null;
 

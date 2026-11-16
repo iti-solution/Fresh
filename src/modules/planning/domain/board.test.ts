@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   autoPanels,
   hasProblems,
+  normalizeRouteName,
+  parseOneTimeWindow,
   matchesFilter,
   outsideWindow,
   parseBoardView,
@@ -109,5 +111,30 @@ describe("widok", () => {
     expect(autoPanels(1000)).toBe(1);
     expect(autoPanels(1440)).toBe(2);
     expect(autoPanels(1920)).toBe(3);
+  });
+});
+
+describe("nazwa trasy na dany dzień", () => {
+  it("przycina i skleja spacje, bez dopisywania daty", () => {
+    expect(normalizeRouteName("  Kraków   Zachód ")).toBe("Kraków Zachód");
+  });
+  it("odrzuca za krótką i za długą", () => {
+    expect(normalizeRouteName(" a ")).toBeNull();
+    expect(normalizeRouteName("x".repeat(121))).toBeNull();
+  });
+});
+
+describe("jednorazowe okno dostawy", () => {
+  it("przyjmuje poprawne godziny", () => {
+    expect(parseOneTimeWindow("07:00", "09:30")).toEqual({ ok: true, from: "07:00", to: "09:30" });
+  });
+  it("puste pola przywracają okno z kartoteki", () => {
+    expect(parseOneTimeWindow("", "")).toEqual({ ok: true, from: null, to: null });
+  });
+  it("odrzuca połowę okna, zły format i odwróconą kolejność", () => {
+    expect(parseOneTimeWindow("07:00", "").ok).toBe(false);
+    expect(parseOneTimeWindow("7", "9").ok).toBe(false);
+    expect(parseOneTimeWindow("10:00", "09:00").ok).toBe(false);
+    expect(parseOneTimeWindow("10:00", "10:00").ok).toBe(false);
   });
 });

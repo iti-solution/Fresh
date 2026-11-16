@@ -134,3 +134,33 @@ Auto-planowanie całej floty (VRP multi-vehicle z przydziałem) · AI asystent d
 - [ ] Cenniki per klient (dziś jedna cena orientacyjna dla wszystkich), minimum logistyczne zamówienia
 - [ ] Powiadomienie dla hurtowni o nowym zamówieniu z portalu (licznik na pulpicie / mail) i dla klienta o statusie „W drodze” z ETA
 - [ ] Zmiana hasła przez klienta w portalu
+
+## Zakres biurowy — uzupełnienia po analizie porównawczej (2026-11-16)
+
+Decyzje właściciela: bez daty w nazwie trasy (nazwę ustawia dyspozytor), bez „cofnij/ponów” na tablicy, bez objętości towaru i parametru jednostki objętości, bez nośników i informacji zwrotnej do magazynu; słownik pojęć zostaje nasz (trasa stała, kurs dodatkowy, zamówienie).
+
+### Etap 1 — kartoteki, role, nazwa trasy i okno (migracje `0023`, `0024`)
+- [x] O1.1 Tablica tras: **nazwa trasy na dany dzień** (menu trasy; trasa stała bez zmian; do chwili wydania kierowcy)
+- [x] O1.2 Tablica tras: **jednorazowe okno dostawy** punktu (kliknięcie w okno; zapis na zamówieniach postoju, więc widzą je monitor, BOK, sortowanie i aplikacja kierowcy; „Przywróć okno z kartoteki”)
+- [x] O1.3 Pojazd: nr rej. przyczepy, gabaryty, stan licznika, skrzyniopalety, **wymagane kategorie prawa jazdy**
+- [x] O1.4 Kierowca: e-mail, **kategorie prawa jazdy**, stand-by; na trasie ostrzeżenie „kierowca bez kat. …” (nie blokuje)
+- [x] O1.5 Dane finansowe kierowców (rozliczenia, stawki, eksport) widzi tylko **administrator i zarząd**; zmienia administrator. Dyspozytor nadal zamyka trasę (opakowania, gotówka, licznik)
+- [x] O1.6 Rola **„Monitor tras”** — konto na telewizor: widzi wyłącznie Monitor tras
+- [ ] O1.7 Blokada danych finansowych także w bazie (RLS): wymaga przeniesienia przeliczenia wynagrodzeń przy zamknięciu trasy na stronę serwera — razem z Etapem 3
+- [ ] O1.8 Migracje `0023`–`0024` uruchomić na bazie dev i wygenerować typy (`npm run db:types`) — typy dopisane ręcznie
+
+### Etap 2 — tablica i zamówienia
+- [ ] O2.1 Zamówienia niezrealizowane przechodzą na kolejny dzień ze wskaźnikiem „z poprzednich dni”
+- [ ] O2.2 Zmiana kolejności niedostarczonych punktów także po starcie trasy (dostarczone zablokowane)
+- [ ] O2.3 Kurs dodatkowy jako kreator: kierowca i auto → punkty → konkretne zamówienia
+
+### Etap 3 — rozliczenia w biurze
+- [ ] O3.1 Nowe składniki wynagrodzenia: stawka za trasę, km wg kategorii prawa jazdy, grupa i waga punktu, czas trwania trasy, stand-by, ręczna kwota za kurs dodatkowy
+- [ ] O3.2 Zakładka „Raporty kierowców”: raport z każdej trasy, PDF, korekta po potwierdzeniu, ponowny wydruk
+- [ ] O3.3 Zakładki „Zwroty” i „Dokumenty kasowe” (per trasa, kierowca, punkt)
+
+### Etap 4 — monitor tras
+- [ ] O4.1 Gotowe widoki (podstawowy, zaawansowany, kompaktowy), podział tras na kilka ekranów, motyw ciemny
+
+### Etap 5 — mapa trasy
+- [ ] O5.1 Geokodowanie adresów, mapa trasy z przejazdem po drogach (wraca M1.2; wymaga kont i kluczy dostawców)

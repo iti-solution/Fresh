@@ -66,3 +66,12 @@ describe("validateExtraRoute", () => {
     expect(validateExtraRoute({ name: "Kurs", kind: "regular" })).toMatch(/rodzaj/);
   });
 });
+
+describe("ostrzeżenie o kategorii prawa jazdy", () => {
+  it("pokazuje brakujące kategorie jako ostrzeżenie, które nie blokuje przekazania do załadunku", () => {
+    const load = computeLoad([{ weight_kg: 100, pallets: 0, crates: 1, volume_m3: 0 }], van);
+    const issues = routeIssues({ vehicleId: "v", driverId: "d", stopsCount: 1, awaitingCount: 0, missingLicenses: ["C"], load });
+    expect(issues).toEqual([{ code: "license", label: "kierowca bez kat. C", severity: "info" }]);
+    expect(canMarkReady(issues).ok).toBe(true);
+  });
+});

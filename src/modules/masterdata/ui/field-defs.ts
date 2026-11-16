@@ -1,9 +1,12 @@
 // Konfiguracja formularzy kartotek (bez logiki — tylko pola i wartości domyślne).
 import type { FieldOption, SectionDef } from "@/components/forms/form-renderer";
+import { LICENSE_CATEGORIES } from "../domain/schemas";
 
 type Row = Record<string, unknown> | null | undefined;
 const s = (row: Row, key: string) => (row?.[key] as string | null | undefined) ?? "";
 const n = (row: Row, key: string) => (row?.[key] as number | string | null | undefined) ?? "";
+const arr = (row: Row, key: string) => (row?.[key] as string[] | null | undefined) ?? [];
+const LICENSE_OPTIONS: FieldOption[] = LICENSE_CATEGORIES.map((c) => ({ value: c, label: c }));
 
 export function customerSections(c?: Row): SectionDef[] {
   return [
@@ -215,6 +218,23 @@ export function vehicleSections(v: Row, carriers: FieldOption[]): SectionDef[] {
           defaultValue: s(v, "body_type"),
           placeholder: "chłodnia, izoterma",
         },
+        {
+          kind: "text",
+          name: "trailer_registration",
+          label: "Nr rej. przyczepy",
+          defaultValue: s(v, "trailer_registration"),
+          placeholder: "gdy jeździ z przyczepą",
+        },
+        { kind: "number", name: "odometer_km", label: "Stan licznika", defaultValue: n(v, "odometer_km"), suffix: "km" },
+        {
+          kind: "checks",
+          name: "required_licenses",
+          label: "Wymagane kategorie prawa jazdy",
+          options: LICENSE_OPTIONS,
+          defaultValue: arr(v, "required_licenses"),
+          span: 2,
+          hint: "Tablica tras ostrzeże, gdy kierowca przydzielony do auta nie ma którejś z nich.",
+        },
       ],
     },
     {
@@ -225,6 +245,22 @@ export function vehicleSections(v: Row, carriers: FieldOption[]): SectionDef[] {
         { kind: "number", name: "capacity_pallets", label: "Palety", defaultValue: n(v, "capacity_pallets"), suffix: "szt." },
         { kind: "number", name: "capacity_crates", label: "Skrzynki", defaultValue: n(v, "capacity_crates"), suffix: "szt." },
         { kind: "number", name: "capacity_m3", label: "Objętość", defaultValue: n(v, "capacity_m3"), suffix: "m³" },
+        {
+          kind: "number",
+          name: "capacity_box_pallets",
+          label: "Skrzyniopalety",
+          defaultValue: n(v, "capacity_box_pallets"),
+          suffix: "szt.",
+        },
+      ],
+    },
+    {
+      title: "Gabaryty zewnętrzne",
+      description: "Informacyjnie — przydają się przy wjazdach z ograniczeniem wysokości lub długości.",
+      fields: [
+        { kind: "number", name: "length_m", label: "Długość", defaultValue: n(v, "length_m"), suffix: "m", step: "0.01" },
+        { kind: "number", name: "width_m", label: "Szerokość", defaultValue: n(v, "width_m"), suffix: "m", step: "0.01" },
+        { kind: "number", name: "height_m", label: "Wysokość", defaultValue: n(v, "height_m"), suffix: "m", step: "0.01" },
       ],
     },
     {
@@ -268,6 +304,7 @@ export function driverSections(d: Row): SectionDef[] {
         { kind: "text", name: "first_name", label: "Imię", defaultValue: s(d, "first_name"), required: true },
         { kind: "text", name: "last_name", label: "Nazwisko", defaultValue: s(d, "last_name"), required: true },
         { kind: "tel", name: "phone", label: "Telefon", defaultValue: s(d, "phone") },
+        { kind: "text", name: "email", label: "E-mail", defaultValue: s(d, "email"), span: 2 },
         {
           kind: "select",
           name: "employment_type",
@@ -280,6 +317,21 @@ export function driverSections(d: Row): SectionDef[] {
             { value: "zlecenie", label: "zlecenie" },
             { value: "przewoźnik", label: "przewoźnik" },
           ],
+        },
+        {
+          kind: "checks",
+          name: "license_categories",
+          label: "Kategorie prawa jazdy",
+          options: LICENSE_OPTIONS,
+          defaultValue: arr(d, "license_categories"),
+          span: 2,
+        },
+        {
+          kind: "checkbox",
+          name: "standby",
+          label: "Stand-by",
+          defaultChecked: Boolean(d?.standby),
+          hint: "kierowca w gotowości, na innych warunkach rozliczenia",
         },
         { kind: "checkbox", name: "is_active", label: "Aktywny", defaultChecked: d ? Boolean(d.is_active) : true },
       ],

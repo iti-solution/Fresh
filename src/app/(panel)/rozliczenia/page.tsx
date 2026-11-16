@@ -11,7 +11,7 @@ import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain
 import { monthLabel, MONTH_RE, shiftMonth } from "@/modules/payroll/domain/month";
 import { monthRange } from "@/modules/payroll/domain/payroll";
 import { recomputeMonth } from "@/modules/payroll/server/actions";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canEditDriverPay } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Rozliczenia kierowców" };
@@ -68,7 +68,7 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
   }
   const rows = (drivers.data ?? []).filter((d) => d.is_active || routeCount.has(d.id) || byDriver.has(d.id));
   const total = rows.reduce((a, d) => a + toGrosze(byDriver.get(d.id)?.total_amount), 0);
-  const editable = canEdit(ctx.role);
+  const editable = canEditDriverPay(ctx.role);
   const href = (m: string) => `/rozliczenia?miesiac=${m}`;
 
   return (
