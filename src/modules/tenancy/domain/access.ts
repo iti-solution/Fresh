@@ -83,7 +83,12 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
   { href: "/start", label: "Pierwsze kroki", group: "System", milestone: "M6", built: true, roles: ["admin", "dispatcher"] },
-  { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia", label: "Ustawienia konta", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia/pracownicy", label: "Dostępny dla pracowników", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia/adresy", label: "Typy adresów dostaw", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia/opakowania", label: "Opakowania", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia/dni-wolne", label: "Dni wolne", group: "System", milestone: "M1", built: true, roles: ["admin"] },
+  { href: "/ustawienia/api", label: "Ustawienia API", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
 
 export const CLOSE_ROUTE_PATH = "/rozliczenia/zamkniecie";
@@ -131,7 +136,15 @@ const SECTION_DEFS: { key: NavSectionKey; label: string; divider?: boolean; inSi
     ],
   },
   // Ustawienia mają ikonę w stopce paska bocznego — nie zajmują miejsca na liście.
-  { key: "system", label: "Ustawienia", inSidebar: false, hrefs: ["/ustawienia", "/start"] },
+  { key: "system", label: "Ustawienia", inSidebar: false, hrefs: [
+      "/ustawienia",
+      "/ustawienia/pracownicy",
+      "/start",
+      "/ustawienia/adresy",
+      "/ustawienia/opakowania",
+      "/ustawienia/dni-wolne",
+      "/ustawienia/api",
+    ] },
 ];
 
 /** Działy menu dla roli: tylko gotowe ekrany, do których rola ma dostęp; puste działy znikają. */

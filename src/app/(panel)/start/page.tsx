@@ -29,6 +29,12 @@ export default async function OnboardingPage() {
     payRules,
     orders,
     routes,
+    pointTypes,
+    closures,
+    products,
+    carriers,
+    members,
+    apiKeys,
   ] = await Promise.all([
     count(db.from("customers").select("id", head).eq("tenant_id", t)),
     count(db.from("delivery_points").select("id", head).eq("tenant_id", t)),
@@ -41,6 +47,12 @@ export default async function OnboardingPage() {
     count(db.from("driver_pay_rules").select("id", head).eq("tenant_id", t)),
     count(db.from("orders").select("id", head).eq("tenant_id", t)),
     count(db.from("routes").select("id", head).eq("tenant_id", t)),
+    count(db.from("point_types").select("id", head).eq("tenant_id", t)),
+    count(db.from("delivery_point_exceptions").select("id", head).eq("tenant_id", t).is("delivery_point_id", null)),
+    count(db.from("products").select("id", head).eq("tenant_id", t)),
+    count(db.from("carriers").select("id", head).eq("tenant_id", t)),
+    count(db.from("memberships").select("user_id", head).eq("tenant_id", t)),
+    count(db.from("tenant_api_keys").select("id", head).eq("tenant_id", t).is("revoked_at", null)),
   ]);
   const steps = onboardingSteps({
     customers,
@@ -54,6 +66,12 @@ export default async function OnboardingPage() {
     payRules,
     orders,
     routes,
+    pointTypes,
+    closures,
+    products,
+    carriers,
+    members,
+    apiKeys,
   });
   const p = onboardingProgress(steps);
 
@@ -76,29 +94,41 @@ export default async function OnboardingPage() {
         </div>
         <Meter pct={p.pct} tone="success" className="mt-3" />
       </Panel>
-      <ol className="flex max-w-3xl flex-col gap-2">
+      <ol className="flex max-w-3xl flex-col gap-3">
         {steps.map((s, i) => (
           <li key={s.key}>
-            <Link
-              href={s.href}
+            <div
               className={cn(
-                "flex items-center gap-4 rounded-[var(--radius-panel)] border bg-surface px-5 py-4 shadow-[var(--shadow-panel)] transition-colors hover:border-border-strong",
-                p.next?.key === s.key ? "border-primary" : "border-border",
+                "rounded-[var(--radius-panel)] border px-5 py-4 shadow-[var(--shadow-panel)]",
+                s.done ? "border-success/50 bg-success/5" : p.next?.key === s.key ? "border-primary bg-surface" : "border-border bg-surface",
               )}
             >
-              {s.done ? (
-                <CircleCheck className="size-6 shrink-0 text-success" />
-              ) : (
-                <Circle className="size-6 shrink-0 text-subtle" />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 font-medium">
-                  {i + 1}. {s.title} {s.optional && <Pill dot={false}>opcjonalnie</Pill>}
-                </span>
-                <span className="block text-sm text-muted">{s.detail}</span>
-              </span>
-              <span className="text-sm font-medium text-primary-strong">{s.done ? "Popraw ›" : "Zrób ›"}</span>
-            </Link>
+              <div className="flex items-start gap-4">
+                {s.done ? (
+                  <CircleCheck className="mt-0.5 size-6 shrink-0 text-success" />
+                ) : (
+                  <Circle className="mt-0.5 size-6 shrink-0 text-subtle" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-center gap-2 font-medium">
+                    {i + 1}. {s.title}
+                    {s.optional && <Pill dot={false}>opcjonalnie</Pill>}
+                    {s.done && <Pill tone="success">gotowe</Pill>}
+                  </p>
+                  <p className={cn("text-sm", s.done ? "font-medium text-success" : "text-muted")}>{s.detail}</p>
+                  {!s.done && (
+                    <ul className="mt-2 list-disc space-y-0.5 pl-5 text-sm text-muted">
+                      {s.todo.map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <Link href={s.href} className={buttonVariants({ size: "sm", variant: s.done ? "outline" : "primary" })}>
+                  {s.done ? "Popraw" : "Zrób to"}
+                </Link>
+              </div>
+            </div>
           </li>
         ))}
       </ol>

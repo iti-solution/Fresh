@@ -13,6 +13,12 @@ const zero = {
   payRules: 0,
   orders: 0,
   routes: 0,
+  pointTypes: 0,
+  closures: 0,
+  products: 0,
+  carriers: 0,
+  members: 1,
+  apiKeys: 0,
 };
 
 describe("kreator uruchomienia", () => {
@@ -37,7 +43,18 @@ describe("kreator uruchomienia", () => {
       payRules: 1,
       orders: 1,
       routes: 1,
+      pointTypes: 0,
+      closures: 0,
+      products: 0,
+      carriers: 0,
+      members: 1,
+      apiKeys: 0,
     });
     expect(onboardingProgress(all).pct).toBe(100);
+  });
+  it("każdy krok ma polecenia do wykonania, a kroki dodatkowe są opcjonalne", () => {
+    const s = onboardingSteps(zero);
+    for (const st of s) expect(st.todo.length).toBeGreaterThan(0);
+    expect(s.filter((x) => !x.optional)).toHaveLength(7);
   });
 });
