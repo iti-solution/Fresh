@@ -6,7 +6,6 @@ import { canMarkReady, ROUTE_KIND_LABELS, ROUTE_STATUS_LABELS, type Dim } from "
 import type { BoardRoute, BoardUnassigned } from "../ui/board";
 import {
   backToDraft,
-  copyRoute,
   deleteEmptyRoute,
   markReady,
   renameRoute,
@@ -124,7 +123,6 @@ export function toBoardRoute(r: PlanRoute, day: string, now: string | null, edit
           markReadyForce: markReady.bind(null, r.id, day, true),
           backToDraft: backToDraft.bind(null, r.id),
           deleteEmpty: r.kind !== "regular" ? deleteEmptyRoute.bind(null, r.id) : undefined,
-          copy: copyRoute.bind(null, r.id, day),
         }
       : {},
   };

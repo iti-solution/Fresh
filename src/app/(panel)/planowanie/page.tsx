@@ -115,9 +115,7 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
       <h1 className="sr-only">Tablica tras — {formatDayLabel(day)}</h1>
       <PlanningBoard
         day={day}
-        dayLabel={formatDayLabel(day)}
-        prevHref={href(shiftDay(day, -1))}
-        nextHref={href(shiftDay(day, 1))}
+        dayNav={<DayNav day={day} today={today} href={href} />}
         routes={boardRoutes}
         unassigned={unassigned.map(toBoardUnassigned)}
         editable={editable}

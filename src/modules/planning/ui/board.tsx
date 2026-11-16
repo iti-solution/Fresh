@@ -3,14 +3,11 @@
 import {
   ArrowDownWideNarrow,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronsDownUp,
   ChevronsUpDown,
   CircleAlert,
   Clock,
   Columns3,
-  Copy,
   Hash,
   Inbox,
   ListOrdered,
@@ -144,11 +141,9 @@ const SORT_KEY = "driver.board.sort";
 
 export function PlanningBoard({
   day,
-  dayLabel,
-  prevHref,
-  nextHref,
-  routes,
-  unassigned,
+  dayNav,
+  routes: routesProp,
+  unassigned: unassignedProp,
   editable,
   vehicles,
   drivers,
@@ -158,9 +153,7 @@ export function PlanningBoard({
   notices,
 }: {
   day: string;
-  dayLabel: string;
-  prevHref: string;
-  nextHref: string;
+  dayNav: ReactNode;
   routes: BoardRoute[];
   unassigned: BoardUnassigned[];
   editable: boolean;
@@ -183,6 +176,17 @@ export function PlanningBoard({
   const [pending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
+  // natychmiastowy podgląd przeniesienia — do czasu, aż serwer odeśle świeży plan
+  const [optimistic, setOptimistic] = useState<{ orderIds: string[]; routeId: string | null } | null>(null);
+  const [prevRoutes, setPrevRoutes] = useState(routesProp);
+  if (prevRoutes !== routesProp) {
+    setPrevRoutes(routesProp);
+    setOptimistic(null);
+  }
+  const { routes, unassigned } = useMemo(
+    () => applyOptimisticMove(routesProp, unassignedProp, optimistic),
+    [routesProp, unassignedProp, optimistic],
+  );
 
   useEffect(() => {
     try {
@@ -207,15 +211,6 @@ export function PlanningBoard({
       /* ignorujemy */
     }
   };
-  const saveSort = (s: RouteSort) => {
-    setSort(s);
-    try {
-      localStorage.setItem(SORT_KEY, s);
-    } catch {
-      /* ignorujemy */
-    }
-  };
-
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), toast.tone === "error" ? 6000 : 2500);
@@ -236,13 +231,15 @@ export function PlanningBoard({
     (fn: () => Promise<{ error?: string; moved?: number }>, okText: string) => {
       startTransition(async () => {
         const res = await fn();
-        if (res.error) setToast({ text: `Nie udało się: ${res.error}`, tone: "error" });
-        else setToast({ text: okText, tone: "ok" });
+        // akcja serwerowa sama odświeża plan (revalidatePath) — drugi router.refresh() podwajał czas oczekiwania
+        if (res.error) {
+          setOptimistic(null);
+          setToast({ text: `Nie udało się: ${res.error}`, tone: "error" });
+        } else setToast({ text: okText, tone: "ok" });
         setSelected(new Set());
-        router.refresh();
       });
     },
-    [router],
+    [],
   );
 
   /** Upuszczenie: na trasę (koniec trasy), na punkt (kolejność w tej samej trasie), na „Nieprzypisane”. */
@@ -261,6 +258,7 @@ export function PlanningBoard({
       }
       if (!target.routeId && !payload.fromRouteId) return;
       const name = target.routeId ? (routes.find((r) => r.id === target.routeId)?.name ?? "trasę") : null;
+      setOptimistic({ orderIds, routeId: target.routeId });
       run(
         () => moveOrders(orderIds, target.routeId),
         name ? `Przeniesiono na trasę ${name}` : "Zdjęto z trasy — punkt jest w „Nieprzypisanych”",
@@ -323,17 +321,7 @@ export function PlanningBoard({
         <ToolButton label="Odśwież" onClick={() => router.refresh()} tone="primary">
           <RefreshCw className={cn(pending && "animate-spin")} />
         </ToolButton>
-        <div className="flex items-center">
-          <Link href={prevHref} aria-label="Poprzedni dzień" className={toolLink}>
-            <ChevronLeft />
-          </Link>
-          <span className="mx-1 inline-flex h-9 min-w-[150px] items-center justify-center rounded-lg border border-border-strong px-3 text-[13px] font-semibold capitalize">
-            {dayLabel}
-          </span>
-          <Link href={nextHref} aria-label="Następny dzień" className={toolLink}>
-            <ChevronRight />
-          </Link>
-        </div>
+        {dayNav}
         <LabeledSelect label="Pokaż trasy" value={filter} onChange={(v) => setFilter(v as RouteFilter)} options={ROUTE_FILTER_LABELS} />
         {problems > 0 && (
           <button
@@ -349,7 +337,6 @@ export function PlanningBoard({
             {problems} {problems === 1 ? "trasa" : problems < 5 ? "trasy" : "tras"} z problemami
           </button>
         )}
-        <LabeledSelect label="Kolejność tras" value={sort} onChange={(v) => saveSort(v as RouteSort)} options={ROUTE_SORT_LABELS} />
         <div className="relative">
           <ToolButton label="Widok tablicy" onClick={() => setSettingsOpen((o) => !o)} active={settingsOpen}>
             <SlidersHorizontal />
@@ -454,8 +441,6 @@ export function PlanningBoard({
 
 /* ───────────────────────────── elementy paska ───────────────────────────── */
 
-const toolLink =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong text-muted transition-colors hover:bg-surface-2 hover:text-foreground [&_svg]:size-4";
 
 function ToolButton({
   label,
@@ -1354,14 +1339,6 @@ function RouteMenu({
             </button>
           </form>
         )}
-        {a.copy && (
-          <form action={a.copy} className="flex items-center gap-2 px-2.5 py-1.5">
-            <Copy className="size-4 text-subtle" />
-            <span className="text-[13px]">Kopiuj na</span>
-            <input type="date" name="to" required className="h-8 flex-1 rounded-md border border-border-strong px-2 text-[13px]" aria-label="Na dzień" />
-            <button className="h-8 rounded-md bg-primary px-2.5 text-[12.5px] font-semibold text-primary-foreground">OK</button>
-          </form>
-        )}
         {r.canChange && a.deleteEmpty && r.stops.length === 0 && (
           <form action={a.deleteEmpty}>
             <button className={cn(item, "text-danger")}>
@@ -1427,4 +1404,74 @@ function readPayload(e: React.DragEvent): DragPayload | null {
   } catch {
     return null;
   }
+}
+
+
+/** Podgląd przeniesienia zamówień zanim serwer potwierdzi zmianę (UI nie czeka na bazę). */
+function applyOptimisticMove(
+  routes: BoardRoute[],
+  unassigned: BoardUnassigned[],
+  move: { orderIds: string[]; routeId: string | null } | null,
+): { routes: BoardRoute[]; unassigned: BoardUnassigned[] } {
+  if (!move) return { routes, unassigned };
+  const ids = new Set(move.orderIds);
+  const moved: BoardStop[] = [];
+  const nextRoutes = routes.map((r) => {
+    const keep = r.stops.filter((s) => {
+      const hit = s.orderIds.length > 0 && s.orderIds.every((o) => ids.has(o));
+      if (hit) moved.push(s);
+      return !hit;
+    });
+    return keep.length === r.stops.length ? r : { ...r, stops: keep };
+  });
+  const fromUnassigned = unassigned.filter((o) => ids.has(o.id));
+  const rest = unassigned.filter((o) => !ids.has(o.id));
+  if (move.routeId === null) {
+    const back: BoardUnassigned[] = moved.map((s) => ({
+      id: s.orderIds[0] ?? s.id,
+      ref: null,
+      customer: s.customer,
+      address: s.address,
+      phone: s.phone,
+      window: s.window,
+      kg: s.kg,
+      pallets: s.pallets,
+      crates: s.crates,
+      awaiting: s.awaiting,
+      priority: s.priority,
+    }));
+    return { routes: nextRoutes, unassigned: [...rest, ...back] };
+  }
+  const added: BoardStop[] = [
+    ...moved,
+    ...fromUnassigned.map((o) => ({
+      id: `tmp-${o.id}`,
+      seq: 0,
+      customer: o.customer,
+      address: o.address,
+      phone: o.phone,
+      window: o.window,
+      windowFrom: null,
+      windowTo: null,
+      windowOverride: false,
+      eta: null,
+      out: false,
+      done: false,
+      statusLabel: null,
+      kg: o.kg,
+      pallets: o.pallets,
+      crates: o.crates,
+      orderIds: [o.id],
+      awaiting: o.awaiting,
+      closed: false,
+      priority: o.priority,
+      note: null,
+    })),
+  ];
+  return {
+    routes: nextRoutes.map((r) =>
+      r.id === move.routeId ? { ...r, stops: [...r.stops, ...added.map((s, i) => ({ ...s, seq: r.stops.length + i + 1 }))] } : r,
+    ),
+    unassigned: rest,
+  };
 }
