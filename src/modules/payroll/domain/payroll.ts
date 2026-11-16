@@ -351,3 +351,23 @@ export function monthRange(month: string): { from: string; to: string } {
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, "0")}` };
 }
+
+export const PAY_CODES = Object.keys(LINE_LABELS) as PayLineCode[];
+
+type SummaryLine = { work_date: string; code: string | null; amount: number | string | null; is_manual?: boolean | null };
+
+/** Podsumowanie rozliczenia kierowcy: dni pracy i kwoty (w groszach) per składnik — te same kolumny w tabeli, XLSX i wydruku. */
+export function summarizeLines(lines: SummaryLine[]): { days: number; byCode: Record<PayLineCode, number> } {
+  const byCode = Object.fromEntries(PAY_CODES.map((c) => [c, 0])) as Record<PayLineCode, number>;
+  for (const l of lines) {
+    const c = (PAY_CODES.includes(l.code as PayLineCode) ? l.code : "manual") as PayLineCode;
+    byCode[c] += Math.round(Number(l.amount ?? 0) * 100);
+  }
+  const days = new Set(lines.filter((l) => !l.is_manual).map((l) => l.work_date)).size;
+  return { days, byCode };
+}
+
+/** Składniki, które wystąpiły choć raz — do kolumn tabeli i wydruku (puste kolumny pomijamy). */
+export function activeCodes(sums: { byCode: Record<PayLineCode, number> }[]): PayLineCode[] {
+  return PAY_CODES.filter((c) => sums.some((s) => s.byCode[c] !== 0));
+}

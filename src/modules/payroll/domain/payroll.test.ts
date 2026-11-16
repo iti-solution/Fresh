@@ -148,3 +148,20 @@ describe("formularz i odczyt", () => {
     expect(monthRange("2026-02")).toEqual({ from: "2026-02-01", to: "2026-02-28" });
   });
 });
+
+describe("summarizeLines / activeCodes", () => {
+  it("sumuje składniki w groszach i liczy dni bez dodatków ręcznych", async () => {
+    const { summarizeLines, activeCodes } = await import("./payroll");
+    const s = summarizeLines([
+      { work_date: "2026-11-02", code: "daily_rate", amount: "120.10" },
+      { work_date: "2026-11-02", code: "per_km", amount: 30.2 },
+      { work_date: "2026-11-03", code: "daily_rate", amount: 120.1 },
+      { work_date: "2026-11-30", code: null, amount: 50, is_manual: true },
+    ]);
+    expect(s.days).toBe(2);
+    expect(s.byCode.daily_rate).toBe(24020);
+    expect(s.byCode.per_km).toBe(3020);
+    expect(s.byCode.manual).toBe(5000);
+    expect(activeCodes([s])).toEqual(["daily_rate", "per_km", "manual"]);
+  });
+});

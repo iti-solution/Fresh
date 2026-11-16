@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { toGrosze } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { MONTH_RE } from "@/modules/payroll/domain/month";
-import { LINE_LABELS, monthRange, type PayLineCode } from "@/modules/payroll/domain/payroll";
+import { LINE_LABELS, monthRange, PAY_CODES, summarizeLines } from "@/modules/payroll/domain/payroll";
 import { canAccess } from "@/modules/tenancy/domain/access";
 import { getUserWithMemberships } from "@/modules/tenancy/server/context";
 import { TENANT_COOKIE } from "@/lib/env";
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     .eq("period_end", to);
   if (error) return NextResponse.json({ error: "db" }, { status: 500 });
 
-  const codes = Object.keys(LINE_LABELS) as PayLineCode[];
+  const codes = PAY_CODES;
   const bold = { fontWeight: "bold" as const };
   const head = (labels: string[]) => labels.map((value) => ({ value, ...bold }));
   const rows = (data ?? []).sort((a, b) => (a.drivers?.last_name ?? "").localeCompare(b.drivers?.last_name ?? "", "pl"));
@@ -38,15 +38,13 @@ export async function GET(request: NextRequest) {
   const summary = [
     head(["Kierowca", "Forma zatrudnienia", "Status", "Dni pracy", ...codes.map((c) => LINE_LABELS[c]), "Razem [zł]"]),
     ...rows.map((s) => {
-      const lines = s.driver_settlement_lines ?? [];
-      const sum = (c: string) =>
-        lines.filter((l) => (l.code ?? "manual") === c).reduce((a, l) => a + toGrosze(l.amount), 0) / 100;
+      const sum = summarizeLines(s.driver_settlement_lines ?? []);
       return [
         `${s.drivers?.last_name ?? ""} ${s.drivers?.first_name ?? ""}`.trim(),
         s.drivers?.employment_type ?? "",
         s.status === "draft" ? "robocze" : "zatwierdzone",
-        new Set(lines.filter((l) => !l.is_manual).map((l) => l.work_date)).size,
-        ...codes.map((c) => sum(c)),
+        sum.days,
+        ...codes.map((c) => sum.byCode[c] / 100),
         toGrosze(s.total_amount) / 100,
       ];
     }),
