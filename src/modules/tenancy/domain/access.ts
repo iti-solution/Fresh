@@ -1,7 +1,15 @@
 // Czysta logika dostępu: role, ścieżki publiczne, menu panelu.
 // Bez importów z Next.js / Supabase — testowane jednostkowo.
 
-export type Role = "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
+export type Role =
+  | "admin"
+  | "dispatcher"
+  | "driver"
+  | "viewer"
+  | "customer_service"
+  | "management"
+  | "customer"
+  | "monitor";
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrator",
@@ -11,6 +19,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   customer_service: "Obsługa klienta (BOK)",
   management: "Zarząd",
   customer: "Klient (portal zamówień)",
+  monitor: "Monitor tras (tylko podgląd)",
 };
 
 // /driver/login — ekran PIN na terminalu firmy (bez sesji; firma z podpisanego ciasteczka terminala)
@@ -36,7 +45,7 @@ const STAFF: Role[] = ["admin", "dispatcher", "viewer", "customer_service", "man
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/pulpit", label: "Pulpit", group: "Operacje", milestone: "M0", built: true, roles: STAFF },
-  { href: "/monitor", label: "Monitor tras", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
+  { href: "/monitor", label: "Monitor tras", group: "Operacje", milestone: "M6", built: true, roles: [...STAFF, "monitor"] },
   { href: "/centrum", label: "Centrum operacyjne", group: "Operacje", milestone: "M6", built: true, roles: STAFF },
   { href: "/planowanie", label: "Tablica tras", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/trasy", label: "Trasy", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
@@ -65,14 +74,96 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/kartoteki/produkty", label: "Katalog produktów", group: "Kartoteki", milestone: "P1", built: true, roles: STAFF },
   { href: "/kartoteki/szablony", label: "Szablony tras", group: "Kartoteki", milestone: "M3", built: true, roles: STAFF },
   { href: "/opakowania", label: "Opakowania i gotówka", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
-  { href: "/rozliczenia", label: "Rozliczenia kierowców", group: "Rozliczenia", milestone: "M5", built: true, roles: STAFF },
+  {
+    href: "/rozliczenia",
+    label: "Rozliczenia kierowców",
+    group: "Rozliczenia",
+    milestone: "M5",
+    built: true,
+    roles: ["admin", "management"],
+  },
   { href: "/audyt", label: "Audyt tras", group: "Zestawienia", milestone: "M2", roles: ["admin", "dispatcher"] },
   { href: "/start", label: "Pierwsze kroki", group: "System", milestone: "M6", built: true, roles: ["admin", "dispatcher"] },
   { href: "/ustawienia", label: "Ustawienia", group: "System", milestone: "M1", built: true, roles: ["admin"] },
 ];
 
+export const CLOSE_ROUTE_PATH = "/rozliczenia/zamkniecie";
+
+/** Dane finansowe kierowców (stawki, rozliczenia, wynagrodzenia): tylko administrator i zarząd. */
+export function canSeeDriverPay(role: Role): boolean {
+  return role === "admin" || role === "management";
+}
+
+/** Zmiany w rozliczeniach (przeliczenie, dodatki, zatwierdzenie): tylko administrator. */
+export function canEditDriverPay(role: Role): boolean {
+  return role === "admin";
+}
+
 export function navForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => item.roles.includes(role));
+}
+
+/**
+ * Menu boczne = kilka działów zamiast dwudziestu pozycji. Ekrany jednego działu są zakładkami
+ * u góry strony (ścieżki ekranów się nie zmieniają). `divider` = cienka kreska nad działem.
+ */
+export type NavSectionKey = "pulpit" | "zamowienia" | "planowanie" | "realizacja" | "rozliczenia" | "raporty" | "kartoteki" | "system";
+export type NavSection = { key: NavSectionKey; label: string; href: string; divider: boolean; inSidebar: boolean; items: NavItem[] };
+
+const SECTION_DEFS: { key: NavSectionKey; label: string; divider?: boolean; inSidebar?: boolean; hrefs: string[] }[] = [
+  { key: "pulpit", label: "Pulpit", hrefs: ["/pulpit"] },
+  { key: "zamowienia", label: "Zamówienia", divider: true, hrefs: ["/zlecenia", "/do-sprawdzenia"] },
+  { key: "planowanie", label: "Planowanie tras", hrefs: ["/planowanie", "/trasy"] },
+  { key: "realizacja", label: "Realizacja", hrefs: ["/centrum", "/monitor", "/bok"] },
+  { key: "rozliczenia", label: "Rozliczenia", divider: true, hrefs: ["/opakowania", "/rozliczenia"] },
+  { key: "raporty", label: "Raporty", hrefs: ["/raport", "/audyt"] },
+  {
+    key: "kartoteki",
+    label: "Kartoteki",
+    divider: true,
+    hrefs: [
+      "/kartoteki/klienci",
+      "/kartoteki/szablony",
+      "/kartoteki/pojazdy",
+      "/kartoteki/kierowcy",
+      "/kartoteki/przewoznicy",
+      "/kartoteki/produkty",
+    ],
+  },
+  // Ustawienia mają ikonę w stopce paska bocznego — nie zajmują miejsca na liście.
+  { key: "system", label: "Ustawienia", inSidebar: false, hrefs: ["/ustawienia", "/start"] },
+];
+
+/** Działy menu dla roli: tylko gotowe ekrany, do których rola ma dostęp; puste działy znikają. */
+export function sectionsForRole(role: Role): NavSection[] {
+  return SECTION_DEFS.flatMap((d) => {
+    const items = d.hrefs
+      .map((h) => NAV_ITEMS.find((i) => i.href === h))
+      .filter((i): i is NavItem => Boolean(i && i.built && i.roles.includes(role)));
+    if (items.length === 0) return [];
+    return [
+      {
+        key: d.key,
+        // dział z jednym ekranem nazywa się tak jak ten ekran (np. sam „Monitor tras”)
+        label: items.length === 1 ? items[0].label : d.label,
+        href: items[0].href,
+        divider: Boolean(d.divider),
+        inSidebar: d.inSidebar !== false,
+        items,
+      },
+    ];
+  });
+}
+
+const matchesPath = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+/** Dział i ekran, do których należy ścieżka (najdłuższe dopasowanie, np. /kartoteki/pojazdy/dziennik → Pojazdy). */
+export function sectionForPath(sections: NavSection[], pathname: string): { section: NavSection; item: NavItem } | null {
+  let best: { section: NavSection; item: NavItem } | null = null;
+  for (const section of sections)
+    for (const item of section.items)
+      if (matchesPath(pathname, item.href) && (!best || item.href.length > best.item.href.length)) best = { section, item };
+  return best;
 }
 
 /** Czy rola może wejść na ścieżkę panelu / aplikacji kierowcy. */
@@ -84,6 +175,10 @@ export function canAccess(role: Role, pathname: string): boolean {
     return role === "driver" || role === "admin";
   }
   if (role === "driver") return false;
+  // Konto „monitor” (telewizor w dyspozytorni) widzi wyłącznie Monitor tras.
+  if (role === "monitor") return pathname === "/monitor" || pathname.startsWith("/monitor/");
+  // Zamknięcie trasy (opakowania, gotówka, licznik) to praca dyspozytora — bez wglądu w wynagrodzenia.
+  if (pathname === CLOSE_ROUTE_PATH || pathname.startsWith(`${CLOSE_ROUTE_PATH}/`)) return STAFF.includes(role);
   const item = NAV_ITEMS.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
   return item ? item.roles.includes(role) : true;
 }
@@ -94,6 +189,7 @@ export function homePathForRole(role: Role): string {
   if (role === "customer") return "/portal";
   if (role === "customer_service") return "/bok";
   if (role === "management") return "/raport";
+  if (role === "monitor") return "/monitor";
   return "/pulpit";
 }
 

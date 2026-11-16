@@ -6,6 +6,8 @@ import {
   isNoteActive,
   noteSchema,
   pointSchema,
+  driverSchema,
+  missingLicenses,
   vehicleSchema,
   windowsToForm,
   templateSchema,
@@ -105,5 +107,46 @@ describe("templateSchema", () => {
   });
   it("wymaga nazwy i dni", () => {
     expect(templateSchema.safeParse({ name: "", weekdays: [] }).success).toBe(false);
+  });
+});
+
+describe("kartoteka pojazdu i kierowcy — pola z etapu „biuro”", () => {
+  it("pojazd: przyczepa, gabaryty, licznik, skrzyniopalety i wymagane kategorie", () => {
+    const r = vehicleSchema.parse({
+      registration: "KR 1AB23",
+      trailer_registration: " kr  9zz1 ",
+      length_m: "7,2",
+      height_m: "",
+      odometer_km: "182 450",
+      capacity_box_pallets: "6",
+      required_licenses: ["C", "nieznana", "B"],
+    });
+    expect(r.trailer_registration).toBe("KR 9ZZ1");
+    expect(r.length_m).toBe(7.2);
+    expect(r.height_m).toBeNull();
+    expect(r.odometer_km).toBe(182450);
+    expect(r.capacity_box_pallets).toBe(6);
+    expect(r.required_licenses).toEqual(["B", "C"]);
+  });
+  it("pojazd bez nowych pól zapisuje puste wartości", () => {
+    const r = vehicleSchema.parse({ registration: "KR 1AB23" });
+    expect(r.required_licenses).toEqual([]);
+    expect(r.trailer_registration).toBeNull();
+    expect(r.capacity_box_pallets).toBe(0);
+  });
+  it("kierowca: e-mail, kategorie i stand-by", () => {
+    const r = driverSchema.parse({ first_name: "Jan", last_name: "Testowy", email: " Jan@Example.PL ", license_categories: ["C+E", "B"], standby: "on" });
+    expect(r.email).toBe("jan@example.pl");
+    expect(r.license_categories).toEqual(["B", "C+E"]);
+    expect(r.standby).toBe(true);
+    expect(driverSchema.safeParse({ first_name: "Jan", last_name: "Testowy", email: "to-nie-mail" }).success).toBe(false);
+    expect(driverSchema.parse({ first_name: "Jan", last_name: "Testowy" }).email).toBeNull();
+  });
+  it("missingLicenses: brakujące kategorie, a przy pustej kartotece bez alarmu", () => {
+    expect(missingLicenses(["C", "C+E"], ["B", "C"])).toEqual(["C+E"]);
+    expect(missingLicenses(["C"], ["B", "C"])).toEqual([]);
+    expect(missingLicenses([], ["B"])).toEqual([]);
+    expect(missingLicenses(["C"], [])).toEqual([]);
+    expect(missingLicenses(null, undefined)).toEqual([]);
   });
 });

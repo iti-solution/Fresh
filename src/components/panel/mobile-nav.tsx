@@ -2,11 +2,11 @@
 
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import type { NavItem } from "@/modules/tenancy/domain/access";
+import type { NavSection } from "@/modules/tenancy/domain/access";
 import { Wordmark } from "./brand";
 import { SidebarNav } from "./sidebar-nav";
 
-export function MobileNav({ items }: { items: NavItem[] }) {
+export function MobileNav({ sections }: { sections: NavSection[] }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -29,7 +29,7 @@ export function MobileNav({ items }: { items: NavItem[] }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SidebarNav items={items} onNavigate={() => setOpen(false)} />
+              <SidebarNav sections={sections} onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>

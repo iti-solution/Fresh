@@ -1,8 +1,27 @@
 // Tablica tras: prognoza dojazdu na planie, punkty poza oknem, problemy tras, sortowanie i ustawienia widoku.
 // Czyste funkcje — bez Next/Supabase. Godziny lokalne „HH:MM”.
 
+import { TIME_RE } from "@/lib/forms";
+
 /** Domyślny wyjazd, gdy trasa nie ma godziny startu. */
 export const DEFAULT_DEPARTURE = "06:00";
+
+/** Nazwa trasy dziennej wpisana przez dyspozytora: przycięta, pojedyncze spacje, 2–120 znaków. Zła = null. */
+export function normalizeRouteName(raw: string): string | null {
+  const name = raw.replace(/\s+/g, " ").trim();
+  return name.length >= 2 && name.length <= 120 ? name : null;
+}
+
+export type OneTimeWindow = { ok: true; from: string | null; to: string | null } | { ok: false; error: string };
+
+/** Jednorazowe okno dostawy z formularza. Oba pola puste = powrót do okna z kartoteki adresu. */
+export function parseOneTimeWindow(from: string, to: string): OneTimeWindow {
+  if (!from && !to) return { ok: true, from: null, to: null };
+  if (!from || !to) return { ok: false, error: "Podaj godzinę od i do." };
+  if (!TIME_RE.test(from) || !TIME_RE.test(to)) return { ok: false, error: "Godziny w formacie GG:MM." };
+  if (to <= from) return { ok: false, error: "Godzina „do” musi być po „od”." };
+  return { ok: true, from, to };
+}
 
 export type BoardEtaOptions = { firstLegMinutes: number; minutesPerStop: number; earlyMinutes: number };
 export const BOARD_ETA: BoardEtaOptions = { firstLegMinutes: 35, minutesPerStop: 24, earlyMinutes: 15 };

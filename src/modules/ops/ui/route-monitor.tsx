@@ -105,7 +105,7 @@ export function RouteMonitor({
       ref={rootRef}
       className={cn(
         "flex flex-col bg-[#e4ebe6]",
-        full ? "h-screen p-3" : "-mx-3 -my-4 h-[calc(100vh-3rem)] p-3 md:-mx-5 md:-my-5",
+        full ? "h-screen p-3" : "-mx-3 -my-4 h-[calc(100vh-var(--chrome,3rem))] p-3 md:-mx-5 md:-my-5",
       )}
       style={{ fontSize: `${view.scale}rem` }}
     >

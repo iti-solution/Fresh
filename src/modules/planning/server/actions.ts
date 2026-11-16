@@ -5,6 +5,7 @@ import { DATE_RE, type FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
 import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
+import { normalizeRouteName, parseOneTimeWindow } from "../domain/board";
 import { canMarkReady, validateExtraRoute } from "../domain/load";
 import { getPlanningDay } from "./queries";
 
@@ -78,6 +79,33 @@ export async function setRouteResource(routeId: string, field: "vehicle_id" | "d
     .eq("id", routeId)
     .eq("tenant_id", p.ctx.tenantId)
     .in("status", ["draft", "planned"]);
+  done();
+}
+
+/** Nazwa trasy na dany dzień (R1/R3). Nie zmienia trasy stałej; dozwolone do chwili wydania kierowcy. */
+export async function renameRoute(routeId: string, fd: FormData): Promise<void> {
+  const p = await planner();
+  const name = normalizeRouteName(str(fd, "name"));
+  if (!p || !name) return;
+  await p.supabase
+    .from("routes")
+    .update({ name })
+    .eq("id", routeId)
+    .eq("tenant_id", p.ctx.tenantId)
+    .in("status", ["draft", "planned"]);
+  done();
+}
+
+/**
+ * Jednorazowe okno dostawy punktu na ten dzień (R3). Puste godziny przywracają okno z kartoteki adresu.
+ * Zapis przez funkcję bazy `set_stop_window` (sprawdza rolę, status punktu i kolejność godzin).
+ */
+export async function setStopWindow(stopId: string, fd: FormData): Promise<void> {
+  const p = await planner();
+  if (!p) return;
+  const w = parseOneTimeWindow(str(fd, "from"), str(fd, "to"));
+  if (!w.ok) return;
+  await p.supabase.rpc("set_stop_window", { p_stop: stopId, p_from: w.from, p_to: w.to });
   done();
 }
 

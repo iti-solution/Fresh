@@ -65,7 +65,14 @@ export function computeLoad(items: LoadItem[], vehicle: VehicleCapacity): RouteL
   return { totals, capacity, pct, overloaded, nearFull };
 }
 
-export type IssueCode = "no_vehicle" | "no_driver" | "empty" | "overloaded" | "awaiting_warehouse" | "closed_points";
+export type IssueCode =
+  | "no_vehicle"
+  | "no_driver"
+  | "empty"
+  | "overloaded"
+  | "awaiting_warehouse"
+  | "closed_points"
+  | "license";
 export type Issue = { code: IssueCode; label: string; severity: "block" | "confirm" | "info" };
 
 export type RouteForIssues = {
@@ -74,6 +81,8 @@ export type RouteForIssues = {
   stopsCount: number;
   awaitingCount: number;
   closedPointsCount?: number;
+  /** Kategorie prawa jazdy wymagane przez auto, których przydzielony kierowca nie ma. */
+  missingLicenses?: string[];
   load: RouteLoad;
 };
 
@@ -96,6 +105,8 @@ export function routeIssues(r: RouteForIssues): Issue[] {
     issues.push({ code: "awaiting_warehouse", label: `${r.awaitingCount} do realizacji w magazynie`, severity: "info" });
   if (r.closedPointsCount)
     issues.push({ code: "closed_points", label: `${r.closedPointsCount} adr. zamknięte tego dnia`, severity: "info" });
+  if (r.missingLicenses?.length)
+    issues.push({ code: "license", label: `kierowca bez kat. ${r.missingLicenses.join(", ")}`, severity: "info" });
   return issues;
 }
 

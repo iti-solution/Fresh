@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { vehicleOptionLabel } from "@/modules/masterdata/domain/format";
+import { missingLicenses } from "@/modules/masterdata/domain/schemas";
 import { computeLoad, routeIssues, type Issue, type RouteLoad } from "../domain/load";
 import { firmDay } from "@/modules/masterdata/domain/holidays";
 
@@ -31,6 +32,8 @@ export type PlanStop = {
   window: string;
   windowStart: string | null;
   windowEnd: string | null;
+  /** Okno zmienione jednorazowo na ten dzień (na zamówieniu), a nie z kartoteki adresu. */
+  windowOverride: boolean;
   status: string;
   arrivedAt: string | null;
   completedAt: string | null;
@@ -94,8 +97,8 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       .from("routes")
       .select(
         `id, name, kind, course_no, status, extra_reason, planned_start, vehicle_id, driver_id,
-         vehicles(registration, capacity_kg, capacity_pallets, capacity_crates, capacity_m3),
-         drivers(first_name, last_name, phone),
+         vehicles(registration, capacity_kg, capacity_pallets, capacity_crates, capacity_m3, required_licenses),
+         drivers(first_name, last_name, phone, license_categories),
          route_stops(id, sequence, delivery_point_id, status, arrived_at, completed_at, window_start, window_end,
            delivery_points(${pointCols}), route_stop_orders(orders(${orderCols})))`,
       )
@@ -196,6 +199,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
             : pointWindow(p?.delivery_point_windows) || "—",
           windowStart: bounds.start || null,
           windowEnd: bounds.end || null,
+          windowOverride: Boolean(override),
           status: s.status,
           arrivedAt: hhmm(s.arrived_at),
           completedAt: hhmm(s.completed_at),
@@ -211,6 +215,7 @@ export async function getPlanningDay(tenantId: string, day: string): Promise<Pla
       stopsCount: stops.length,
       awaitingCount: allOrders.filter((o) => o.readiness === "awaiting_warehouse").length,
       closedPointsCount: stops.filter((s) => s.closed).length,
+      missingLicenses: missingLicenses(r.vehicles?.required_licenses, r.drivers?.license_categories),
       load,
     });
     return {

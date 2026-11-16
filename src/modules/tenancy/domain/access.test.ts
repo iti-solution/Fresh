@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, homePathForRole, isPublicPath, navForRole, safeNextPath } from "./access";
+import { canAccess, canEditDriverPay, canSeeDriverPay, homePathForRole, isPublicPath, navForRole, safeNextPath, sectionForPath, sectionsForRole } from "./access";
 
 describe("isPublicPath", () => {
   it("traktuje logowanie i callback auth jako publiczne", () => {
@@ -86,5 +86,71 @@ describe("portal klienta", () => {
     for (const role of ["admin", "dispatcher", "driver", "viewer", "customer_service", "management"] as const) {
       expect(canAccess(role, "/portal")).toBe(false);
     }
+  });
+});
+
+describe("dane finansowe kierowców i konto monitora", () => {
+  it("rozliczenia kierowców widzi tylko administrator i zarząd", () => {
+    expect(canAccess("admin", "/rozliczenia")).toBe(true);
+    expect(canAccess("management", "/rozliczenia/stawki")).toBe(true);
+    for (const role of ["dispatcher", "viewer", "customer_service", "monitor"] as const) {
+      expect(canAccess(role, "/rozliczenia")).toBe(false);
+      expect(canAccess(role, "/rozliczenia/stawki")).toBe(false);
+      expect(canSeeDriverPay(role)).toBe(false);
+      expect(navForRole(role).some((i) => i.href === "/rozliczenia")).toBe(false);
+    }
+    expect(canEditDriverPay("admin")).toBe(true);
+    expect(canEditDriverPay("management")).toBe(false);
+  });
+  it("dyspozytor nadal zamyka trasę", () => {
+    expect(canAccess("dispatcher", "/rozliczenia/zamkniecie/abc")).toBe(true);
+    expect(canAccess("monitor", "/rozliczenia/zamkniecie/abc")).toBe(false);
+  });
+  it("konto monitora widzi wyłącznie Monitor tras", () => {
+    expect(homePathForRole("monitor")).toBe("/monitor");
+    expect(navForRole("monitor").map((i) => i.href)).toEqual(["/monitor"]);
+    expect(canAccess("monitor", "/monitor")).toBe(true);
+    for (const path of ["/pulpit", "/planowanie", "/kartoteki/klienci", "/driver", "/portal", "/nieznana"]) {
+      expect(canAccess("monitor", path)).toBe(false);
+    }
+  });
+});
+
+describe("działy menu", () => {
+  it("administrator ma 7 działów w menu zamiast 20 pozycji", () => {
+    const sidebar = sectionsForRole("admin").filter((s) => s.inSidebar);
+    expect(sidebar.map((s) => s.label)).toEqual([
+      "Pulpit",
+      "Zamówienia",
+      "Planowanie tras",
+      "Realizacja",
+      "Rozliczenia",
+      "Raport zarządu",
+      "Kartoteki",
+    ]);
+    expect(sidebar.every((s) => s.href === s.items[0].href)).toBe(true);
+  });
+  it("każdy gotowy ekran z menu należy do jakiegoś działu", () => {
+    const hrefs = sectionsForRole("admin").flatMap((s) => s.items.map((i) => i.href));
+    for (const item of navForRole("admin").filter((i) => i.built)) expect(hrefs).toContain(item.href);
+    expect(hrefs).not.toContain("/audyt"); // niegotowy ekran nie zaśmieca menu
+  });
+  it("dyspozytor: Rozliczenia to tylko opakowania i gotówka", () => {
+    const s = sectionsForRole("dispatcher").find((x) => x.key === "rozliczenia");
+    expect(s?.label).toBe("Opakowania i gotówka");
+    expect(sectionsForRole("dispatcher").some((x) => x.key === "system")).toBe(true); // Pierwsze kroki
+  });
+  it("konto monitora ma jeden dział bez zakładek", () => {
+    const s = sectionsForRole("monitor");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ label: "Monitor tras", href: "/monitor" });
+  });
+  it("sectionForPath wybiera najdłuższe dopasowanie", () => {
+    const all = sectionsForRole("admin");
+    expect(sectionForPath(all, "/kartoteki/pojazdy/dziennik")?.item.href).toBe("/kartoteki/pojazdy");
+    expect(sectionForPath(all, "/rozliczenia/stawki")?.section.key).toBe("rozliczenia");
+    expect(sectionForPath(all, "/trasy")?.section.key).toBe("planowanie");
+    expect(sectionForPath(all, "/nieznana")).toBeNull();
+    expect(sectionForPath(sectionsForRole("dispatcher"), "/rozliczenia/zamkniecie/1")).toBeNull();
   });
 });

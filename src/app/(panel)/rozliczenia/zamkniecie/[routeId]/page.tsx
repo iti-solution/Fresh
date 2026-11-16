@@ -11,13 +11,13 @@ import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/modules/orders/domain/orders";
 import { closeChecklist, type CloseInput } from "@/modules/packaging/domain/ledger";
 import { closeRoute } from "@/modules/packaging/server/actions";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canEdit, CLOSE_ROUTE_PATH } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Zamknięcie trasy" };
 
 export default async function CloseRoutePage({ params, searchParams }: PageProps<"/rozliczenia/zamkniecie/[routeId]">) {
-  const ctx = await requireAccess("/rozliczenia");
+  const ctx = await requireAccess(CLOSE_ROUTE_PATH);
   const { routeId } = await params;
   const sp = await searchParams;
   const db = await createClient();

@@ -12,7 +12,7 @@ import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { monthLabel, MONTH_RE } from "@/modules/payroll/domain/month";
 import { monthRange } from "@/modules/payroll/domain/payroll";
 import { addManualLine, approveSettlement, deleteManualLine, recomputeDriver } from "@/modules/payroll/server/actions";
-import { canEdit } from "@/modules/tenancy/domain/access";
+import { canEditDriverPay } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Rozliczenie kierowcy" };
@@ -51,7 +51,7 @@ export default async function DriverSettlementPage({ params, searchParams }: Pag
   const byCode = new Map<string, number>();
   for (const l of lines) byCode.set(l.label ?? l.code ?? "—", (byCode.get(l.label ?? l.code ?? "—") ?? 0) + toGrosze(l.amount));
   const draft = s?.status === "draft";
-  const editable = canEdit(ctx.role) && (!s || draft);
+  const editable = canEditDriverPay(ctx.role) && (!s || draft);
 
   return (
     <>

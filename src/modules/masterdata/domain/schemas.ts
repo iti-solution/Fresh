@@ -141,6 +141,37 @@ export function isNoteActive(note: { valid_from: string; valid_to: string | null
   return note.valid_from <= day && (note.valid_to === null || note.valid_to >= day);
 }
 
+/** Kategorie prawa jazdy używane w kartotekach pojazdów (wymagane) i kierowców (posiadane). */
+export const LICENSE_CATEGORIES = ["B", "B+E", "C1", "C1+E", "C", "C+E"] as const;
+export type LicenseCategory = (typeof LICENSE_CATEGORIES)[number];
+
+const licenses = z
+  .array(z.string())
+  .optional()
+  .transform((v) => LICENSE_CATEGORIES.filter((c) => (v ?? []).includes(c)) as string[]);
+
+const optionalEmail = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v, ctx) => {
+    if (!v) return null;
+    if (v.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      ctx.addIssue({ code: "custom", message: "Podaj poprawny adres e-mail" });
+      return z.NEVER;
+    }
+    return v.toLowerCase();
+  });
+
+/**
+ * Kategorie wymagane przez pojazd, których kierowca nie ma. Pusta lista = wszystko w porządku.
+ * Kierowca bez wpisanych kategorii nie jest sprawdzany (kartoteka nieuzupełniona — nie straszymy alarmem).
+ */
+export function missingLicenses(required: readonly string[] | null | undefined, held: readonly string[] | null | undefined): string[] {
+  if (!required?.length || !held?.length) return [];
+  return required.filter((c) => !held.includes(c));
+}
+
 export const vehicleSchema = z.object({
   registration: requiredText("numer rejestracyjny", 4, 15).transform((v) => v.toUpperCase().replace(/\s+/g, " ")),
   name: optionalText(60),
@@ -150,6 +181,13 @@ export const vehicleSchema = z.object({
   capacity_pallets: numberField({ min: 0, max: 40, fallback: 0 }),
   capacity_crates: numberField({ min: 0, max: 2000, int: true, fallback: 0 }),
   capacity_m3: numberField({ min: 0, max: 120, fallback: 0 }),
+  capacity_box_pallets: numberField({ min: 0, max: 200, int: true, fallback: 0 }),
+  trailer_registration: optionalText(15).transform((v) => (v ? v.toUpperCase().replace(/\s+/g, " ") : null)),
+  length_m: numberField({ min: 0, max: 25 }),
+  width_m: numberField({ min: 0, max: 4 }),
+  height_m: numberField({ min: 0, max: 5 }),
+  odometer_km: numberField({ min: 0, max: 5000000, int: true }),
+  required_licenses: licenses,
   is_own: checkbox,
   carrier_id: z
     .string()
@@ -165,7 +203,10 @@ export const driverSchema = z.object({
   first_name: requiredText("imię"),
   last_name: requiredText("nazwisko"),
   phone,
+  email: optionalEmail,
   employment_type: optionalText(60),
+  license_categories: licenses,
+  standby: checkbox,
   is_active: checkbox,
 });
 

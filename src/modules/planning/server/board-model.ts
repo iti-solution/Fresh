@@ -9,6 +9,8 @@ import {
   copyRoute,
   deleteEmptyRoute,
   markReady,
+  renameRoute,
+  setStopWindow,
   setRouteResource,
   sortByWindow,
 } from "./actions";
@@ -49,6 +51,9 @@ export function toBoardRoute(r: PlanRoute, day: string, now: string | null, edit
       address: [s.address, s.city].filter(Boolean).join(", ") || s.branch,
       phone: s.phone,
       window: s.window,
+      windowFrom: s.windowStart,
+      windowTo: s.windowEnd,
+      windowOverride: s.windowOverride,
       eta,
       out: outsideWindow(s.windowEnd, eta ?? undefined),
       done,
@@ -112,6 +117,8 @@ export function toBoardRoute(r: PlanRoute, day: string, now: string | null, edit
       ? {
           setVehicle: setRouteResource.bind(null, r.id, "vehicle_id"),
           setDriver: setRouteResource.bind(null, r.id, "driver_id"),
+          rename: renameRoute.bind(null, r.id),
+          setStopWindow,
           sortByWindow: sortByWindow.bind(null, r.id),
           markReady: markReady.bind(null, r.id, day, false),
           markReadyForce: markReady.bind(null, r.id, day, true),

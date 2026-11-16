@@ -3,11 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/panel/brand";
 import { MobileNav } from "@/components/panel/mobile-nav";
-import { SidebarNav } from "@/components/panel/sidebar-nav";
+import { SectionTabs, SidebarNav } from "@/components/panel/sidebar-nav";
 import { CurrentPathInput, FullscreenButton, TopbarTitle } from "@/components/panel/topbar";
 import { cn } from "@/lib/utils";
 import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
-import { navForRole, ROLE_LABELS } from "@/modules/tenancy/domain/access";
+import { ROLE_LABELS, sectionsForRole } from "@/modules/tenancy/domain/access";
 import { signOut, switchDataMode } from "@/modules/tenancy/server/actions";
 import { requireTenantContext } from "@/modules/tenancy/server/context";
 import { BRAND } from "@/lib/brand";
@@ -16,8 +16,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const ctx = await requireTenantContext();
   if (ctx.role === "driver") redirect("/driver");
   if (ctx.role === "customer") redirect("/portal");
-  const nav = navForRole(ctx.role);
-  const canSettings = nav.some((i) => i.href === "/ustawienia");
+  const sections = sectionsForRole(ctx.role);
+  // Ikona w stopce prowadzi do działu „Ustawienia” (administrator) albo samych „Pierwszych kroków” (dyspozytor).
+  const system = sections.find((s) => s.key === "system");
   const initials = (ctx.email ?? "?").slice(0, 2).toUpperCase();
 
   return (
@@ -29,7 +30,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-2.5 py-3">
-          <SidebarNav items={nav} />
+          <SidebarNav sections={sections} />
         </div>
         <div className="flex shrink-0 items-center gap-2.5 border-t border-white/[0.07] px-3.5 py-2.5">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[11px] font-bold text-primary">
@@ -39,12 +40,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <span className="block truncate text-[12px] text-white">{ctx.email}</span>
             <span className="block truncate text-[11px] text-ink-muted">{ROLE_LABELS[ctx.role]}</span>
           </span>
-          {canSettings && (
+          {system && (
             <Link
-              href="/ustawienia"
+              href={system.href}
               className="rounded-md p-1.5 text-ink-muted hover:bg-white/[0.06] hover:text-white"
-              title="Ustawienia"
-              aria-label="Ustawienia"
+              title={system.label}
+              aria-label={system.label}
             >
               <Settings className="size-4" />
             </Link>
@@ -63,7 +64,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-black/20 bg-ink px-3 text-ink-foreground md:px-5">
-          <MobileNav items={nav} />
+          <MobileNav sections={sections} />
           <div className="min-w-0 shrink-0 md:w-56">
             <TopbarTitle />
           </div>
@@ -92,7 +93,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <FullscreenButton className="hidden md:flex" />
           </div>
         </header>
-        <main className="w-full flex-1 px-3 py-4 md:px-5 md:py-5">{children}</main>
+        <SectionTabs sections={sections} />
+        {/* --chrome = wysokość pasków nad treścią; ekrany na pełną wysokość (tablica, monitor) odejmują ją od okna */}
+        <main className="w-full flex-1 px-3 py-4 [--chrome:3rem] peer-data-[tabs=on]:[--chrome:5.5rem] md:px-5 md:py-5">
+          {children}
+        </main>
       </div>
     </div>
   );

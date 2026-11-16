@@ -995,6 +995,9 @@ export type Database = {
           pin_failed_count: number;
           pin_hash: string | null;
           pin_locked_until: string | null;
+          email: string | null;
+          license_categories: string[];
+          standby: boolean;
           tenant_id: string;
           user_id: string | null;
         };
@@ -1010,6 +1013,9 @@ export type Database = {
           pin_failed_count?: number;
           pin_hash?: string | null;
           pin_locked_until?: string | null;
+          email?: string | null;
+          license_categories?: string[];
+          standby?: boolean;
           tenant_id: string;
           user_id?: string | null;
         };
@@ -1025,6 +1031,9 @@ export type Database = {
           pin_failed_count?: number;
           pin_hash?: string | null;
           pin_locked_until?: string | null;
+          email?: string | null;
+          license_categories?: string[];
+          standby?: boolean;
           tenant_id?: string;
           user_id?: string | null;
         };
@@ -2367,6 +2376,13 @@ export type Database = {
         Row: {
           body_type: string | null;
           capacity_crates: number;
+          capacity_box_pallets: number;
+          trailer_registration: string | null;
+          length_m: number | null;
+          width_m: number | null;
+          height_m: number | null;
+          odometer_km: number | null;
+          required_licenses: string[];
           capacity_kg: number;
           capacity_m3: number;
           capacity_pallets: number;
@@ -2387,6 +2403,13 @@ export type Database = {
         Insert: {
           body_type?: string | null;
           capacity_crates?: number;
+          capacity_box_pallets?: number;
+          trailer_registration?: string | null;
+          length_m?: number | null;
+          width_m?: number | null;
+          height_m?: number | null;
+          odometer_km?: number | null;
+          required_licenses?: string[];
           capacity_kg?: number;
           capacity_m3?: number;
           capacity_pallets?: number;
@@ -2407,6 +2430,13 @@ export type Database = {
         Update: {
           body_type?: string | null;
           capacity_crates?: number;
+          capacity_box_pallets?: number;
+          trailer_registration?: string | null;
+          length_m?: number | null;
+          width_m?: number | null;
+          height_m?: number | null;
+          odometer_km?: number | null;
+          required_licenses?: string[];
           capacity_kg?: number;
           capacity_m3?: number;
           capacity_pallets?: number;
@@ -2901,6 +2931,7 @@ export type Database = {
         Args: { p_driver: string; p_pin: string };
         Returns: undefined;
       };
+      set_stop_window: { Args: { p_from: string | null; p_stop: string; p_to: string | null }; Returns: undefined };
       sort_route_by_window: { Args: { p_route: string }; Returns: undefined };
       sort_template_by_window: {
         Args: { p_template: string };
@@ -3504,7 +3535,7 @@ export type Database = {
       draft_status: "needs_review" | "approved" | "rejected";
       geocode_status: "pending" | "ok" | "ambiguous" | "failed" | "manual";
       intake_channel: "sms" | "email" | "whatsapp" | "voice" | "phone" | "photo" | "other" | "portal";
-      member_role: "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer";
+      member_role: "admin" | "dispatcher" | "driver" | "viewer" | "customer_service" | "management" | "customer" | "monitor";
       order_readiness: "awaiting_warehouse" | "ready";
       order_status: "new" | "unmatched" | "planned" | "in_progress" | "delivered" | "partial" | "failed" | "cancelled";
       order_type: "delivery" | "pickup";
@@ -3644,7 +3675,7 @@ export const Constants = {
       draft_status: ["needs_review", "approved", "rejected"],
       geocode_status: ["pending", "ok", "ambiguous", "failed", "manual"],
       intake_channel: ["sms", "email", "whatsapp", "voice", "phone", "photo", "other", "portal"],
-      member_role: ["admin", "dispatcher", "driver", "viewer", "customer_service", "management", "customer"],
+      member_role: ["admin", "dispatcher", "driver", "viewer", "customer_service", "management", "customer", "monitor"],
       order_readiness: ["awaiting_warehouse", "ready"],
       order_status: ["new", "unmatched", "planned", "in_progress", "delivered", "partial", "failed", "cancelled"],
       order_type: ["delivery", "pickup"],
