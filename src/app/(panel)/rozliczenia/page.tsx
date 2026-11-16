@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Download, RefreshCw, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Printer, RefreshCw, Settings2 } from "lucide-react";
 import { EmptyState, Notice, PageHeader, Panel } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Pill } from "@/components/ui/status";
@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { todayInWarsaw } from "@/modules/orders/domain/orders";
 import { monthLabel, MONTH_RE, shiftMonth } from "@/modules/payroll/domain/month";
-import { monthRange } from "@/modules/payroll/domain/payroll";
+import { activeCodes, LINE_LABELS, monthRange, summarizeLines } from "@/modules/payroll/domain/payroll";
 import { recomputeMonth } from "@/modules/payroll/server/actions";
 import { canEditDriverPay } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
@@ -37,7 +37,7 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
       .order("last_name"),
     db
       .from("driver_settlements")
-      .select("id, driver_id, total_amount, status, approved_at")
+      .select("id, driver_id, total_amount, status, approved_at, driver_settlement_lines(work_date, code, amount, is_manual)")
       .eq("tenant_id", ctx.tenantId)
       .eq("period_start", from)
       .eq("period_end", to),
@@ -60,6 +60,9 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
   }
   const rows = (drivers.data ?? []).filter((d) => d.is_active || routeCount.has(d.id) || byDriver.has(d.id));
   const total = rows.reduce((a, d) => a + toGrosze(byDriver.get(d.id)?.total_amount), 0);
+  const sums = new Map(rows.map((d) => [d.id, summarizeLines(byDriver.get(d.id)?.driver_settlement_lines ?? [])]));
+  const codes = activeCodes([...sums.values()]);
+  const money = (g: number) => (g === 0 ? <span className="text-subtle">—</span> : formatPln(g));
   const editable = canEditDriverPay(ctx.role);
   const href = (m: string) => `/rozliczenia?miesiac=${m}`;
 
@@ -75,6 +78,15 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
             </Link>
             <a href={`/api/rozliczenia/eksport?miesiac=${month}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
               <Download /> Eksport XLSX
+            </a>
+            <a
+              href={`/druk/rozliczenia?miesiac=${month}`}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              title="Zbiorcze zestawienie wszystkich kierowców — dla księgowej"
+            >
+              <Printer /> Drukuj zestawienie
             </a>
             {editable && (
               <form action={recomputeMonth.bind(null, month)}>
@@ -127,8 +139,14 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
                 <tr>
                   <th className="px-4 py-2 font-medium">Kierowca</th>
                   <th className="px-4 py-2 font-medium">Dni / trasy</th>
-                  <th className="px-4 py-2 text-right font-medium">Kwota</th>
+                  {codes.map((c) => (
+                    <th key={c} className="px-4 py-2 text-right font-medium">
+                      {LINE_LABELS[c]}
+                    </th>
+                  ))}
+                  <th className="px-4 py-2 text-right font-medium">Razem</th>
                   <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2" />
                 </tr>
               </thead>
               <tbody>
@@ -149,11 +167,30 @@ export default async function SettlementsPage({ searchParams }: PageProps<"/rozl
                       <td className="px-4 py-2.5 tabular-nums">
                         {days.get(d.id)?.size ?? 0} / {routeCount.get(d.id) ?? 0}
                       </td>
+                      {codes.map((c) => (
+                        <td key={c} className="px-4 py-2.5 text-right tabular-nums">
+                          {money(sums.get(d.id)?.byCode[c] ?? 0)}
+                        </td>
+                      ))}
                       <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
                         {s ? formatPln(toGrosze(s.total_amount)) : "—"}
                       </td>
                       <td className="px-4 py-2.5">
                         {st ? <Pill tone={st[1]}>{st[0]}</Pill> : <span className="text-xs text-muted">nie przeliczono</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        {s && (
+                          <a
+                            href={`/druk/rozliczenia?miesiac=${month}&kierowca=${d.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Drukuj rozliczenie: ${d.first_name} ${d.last_name}`}
+                            title="Drukuj rozliczenie kierowcy"
+                            className={buttonVariants({ variant: "ghost", size: "sm" })}
+                          >
+                            <Printer />
+                          </a>
+                        )}
                       </td>
                     </tr>
                   );
