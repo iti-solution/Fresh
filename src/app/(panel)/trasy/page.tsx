@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Columns3, Inbox, Printer, Search } from "lucide-react";
+import { ChevronDown, CircleAlert, Columns3, Inbox, Printer, Search } from "lucide-react";
 import type { Metadata } from "next";
+import { DayNav } from "@/components/panel/day-nav";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DATE_RE } from "@/lib/forms";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { normalizeSearch } from "@/modules/ops/domain/reports";
 import { nowInWarsaw } from "@/modules/ops/server/queries";
 import { hasProblems, sortRoutes } from "@/modules/planning/domain/board";
@@ -57,17 +58,7 @@ export default async function RoutesPage({ searchParams }: PageProps<"/trasy">) 
     <div className="space-y-2.5">
       <h1 className="sr-only">Trasy — {formatDayLabel(day)}</h1>
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
-        <div className="flex items-center">
-          <Link href={link({ dzien: shiftDay(day, -1) })} aria-label="Poprzedni dzień" className={navBtn}>
-            <ChevronLeft />
-          </Link>
-          <span className="mx-1 inline-flex h-9 min-w-[150px] items-center justify-center rounded-lg border border-border-strong px-3 text-[13px] font-semibold capitalize">
-            {formatDayLabel(day)}
-          </span>
-          <Link href={link({ dzien: shiftDay(day, 1) })} aria-label="Następny dzień" className={navBtn}>
-            <ChevronRight />
-          </Link>
-        </div>
+        <DayNav day={day} today={today} href={(d) => link({ dzien: d })} />
         <form action="/trasy" className="relative w-full max-w-sm">
           <input type="hidden" name="dzien" value={day} />
           {onlyProblems && <input type="hidden" name="problemy" value="1" />}
@@ -150,8 +141,6 @@ export default async function RoutesPage({ searchParams }: PageProps<"/trasy">) 
   );
 }
 
-const navBtn =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong text-muted hover:bg-surface-2 hover:text-foreground [&_svg]:size-4";
 
 function LoadCell({ l }: { l: BoardLoad | undefined }) {
   if (!l) return <td />;
