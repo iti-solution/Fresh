@@ -142,27 +142,19 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
             submitLabel="Zamknij trasę"
             sections={[
               {
-                title: "Kilometry na koniec dnia",
+                title: "Licznik na koniec dnia",
                 description:
                   r.status === "in_progress"
-                    ? "Kierowca nie zakończył zmiany w aplikacji. Wpisz przejechane kilometry (albo stan licznika) — niepotwierdzone punkty zostaną oznaczone jako pominięte."
-                    : "Wpisz kilometry przejechane przez cały dzień, jeśli różnią się od tych z aplikacji kierowcy. Z nich liczy się koszt trasy i kilometrówka.",
+                    ? "Kierowca nie zakończył zmiany w aplikacji. Wpisz stan licznika na koniec — niepotwierdzone punkty zostaną oznaczone jako pominięte, a kilometry policzą się automatycznie."
+                    : "Stan licznika na koniec dnia. Kilometry trasy, jej koszt i wynagrodzenie kierowcy przeliczą się po zamknięciu.",
                 fields: [
                   {
                     kind: "number" as const,
-                    name: "km_driven",
-                    label: "Przejechane kilometry",
-                    suffix: "km",
-                    defaultValue: r.actual_km ?? undefined,
-                    hint: r.actual_km !== null ? `z aplikacji / licznika: ${r.actual_km} km` : "brak danych z aplikacji",
-                  },
-                  {
-                    kind: "number" as const,
                     name: "odometer_end",
-                    label: "Albo stan licznika na koniec",
+                    label: "Stan licznika na koniec",
                     suffix: "km",
                     defaultValue: r.odometer_end ?? undefined,
-                    hint: `start: ${r.odometer_start ?? "—"} km`,
+                    hint: `start: ${r.odometer_start ?? "—"} km${r.odometer_start !== null ? " · kilometry = licznik końcowy − początkowy" : ""}`,
                   },
                 ],
               },

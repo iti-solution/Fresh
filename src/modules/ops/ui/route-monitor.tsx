@@ -218,6 +218,7 @@ export function RouteMonitor({
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[1.05em] font-semibold text-ink">
           <LegendBox className="border-l-[5px] border-l-success bg-surface">Do dostarczenia</LegendBox>
           <LegendBox className="border-l-[5px] border-l-border-strong bg-foreground/[0.06]">Dostarczone</LegendBox>
+          <LegendBox className="border-2 border-success bg-surface">Trasa zrealizowana</LegendBox>
           <LegendBox className="border-2 border-danger bg-surface">Problem z pojazdem</LegendBox>
         </div>
         )}
@@ -287,14 +288,30 @@ function LegendBox({ className, children }: { className: string; children: React
   );
 }
 
-function Column({ width, children, problem, dashed }: { width: number; children: ReactNode; problem?: boolean; dashed?: boolean }) {
+function Column({
+  width,
+  children,
+  problem,
+  dashed,
+  complete,
+  onHover,
+}: {
+  width: number;
+  children: ReactNode;
+  problem?: boolean;
+  dashed?: boolean;
+  complete?: boolean;
+  onHover?: (h: boolean) => void;
+}) {
   return (
     <section
       className={cn(
         "flex shrink-0 flex-col overflow-hidden rounded-xl bg-surface/90 shadow-[var(--shadow-panel)]",
-        problem ? "border-2 border-danger" : dashed ? "border border-dashed border-border-strong" : "border border-border",
+        problem ? "border-2 border-danger" : complete ? "border-2 border-success" : dashed ? "border border-dashed border-border-strong" : "border border-border",
       )}
       style={{ width }}
+      onMouseEnter={onHover ? () => onHover(true) : undefined}
+      onMouseLeave={onHover ? () => onHover(false) : undefined}
     >
       {children}
     </section>
@@ -337,11 +354,14 @@ function Scroller({ children, top, density = "normal" }: { children: ReactNode; 
 
 function RouteColumn({ route: r, view }: { route: BoardRoute; view: MonitorView }) {
   const doneStops = r.stops.filter((s) => s.done);
-  const visibleStops = view.hideDone ? r.stops.filter((s) => !s.done) : r.stops;
+  const allDone = r.stops.length > 0 && doneStops.length === r.stops.length;
+  const [hover, setHover] = useState(false);
+  // trasa w całości zrealizowana: zielona obwódka, a po najechaniu rozwija się lista jej punktów
+  const visibleStops = view.hideDone && !(allDone && hover) ? r.stops.filter((s) => !s.done) : r.stops;
   const pct = r.stops.length ? Math.round((doneStops.length / r.stops.length) * 100) : 0;
   const problem = r.overloaded || r.missingResource;
   return (
-    <Column width={view.columnWidth} problem={problem}>
+    <Column width={view.columnWidth} problem={problem} complete={allDone && !problem} onHover={setHover}>
       <div className="border-b border-border px-3 pt-2.5 pb-2">
         <div className="flex items-start justify-between gap-2">
           {view.showRouteName ? (
