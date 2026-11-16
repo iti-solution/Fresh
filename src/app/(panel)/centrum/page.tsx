@@ -5,7 +5,7 @@ import { AutoRefresh } from "@/components/panel/auto-refresh";
 import { DayNav } from "@/components/panel/day-nav";
 import { EmptyState, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
-import { Dot, Plate, TONE_TEXT } from "@/components/ui/status";
+import { Dot, TONE_TEXT } from "@/components/ui/status";
 import { DATE_RE } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import {
@@ -19,9 +19,8 @@ import {
 import { getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { getDayReports } from "@/modules/ops/server/proof";
 import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
-import { RouteStatePill, RouteStrip } from "@/modules/ops/ui/route-strip";
 import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
-import { ROUTE_KIND_LABELS } from "@/modules/planning/domain/load";
+import { canEdit } from "@/modules/tenancy/domain/access";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Centrum operacyjne" };
@@ -49,24 +48,6 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
   const onRoad = routes.filter((r) => progress.get(r.id)!.state === "in_progress").length;
   const overdue = [...progress.values()].reduce((a, p) => a + p.overdue, 0);
   const atRisk = [...progress.values()].reduce((a, p) => a + p.atRisk, 0);
-  const sorted = [...routes].sort((a, b) => {
-    const pa = progress.get(a.id)!;
-    const pb = progress.get(b.id)!;
-    const score = (p: typeof pa) =>
-      p.startOverdue
-        ? 0
-        : p.overdue
-          ? 1
-          : p.state === "in_progress"
-            ? 2
-            : p.state === "done"
-              ? 3
-              : p.state === "not_started" || p.state === "draft"
-                ? 4
-                : 5;
-    return score(pa) - score(pb) || a.name.localeCompare(b.name, "pl");
-  });
-
   return (
     <>
       <PageHeader
@@ -168,101 +149,10 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
             }
             flush
           >
-            <DayForecastPanel routes={routes} now={now} future={day > today} />
+            <DayForecastPanel routes={routes} now={now} future={day > today} day={day} canClose={canEdit(ctx.role)} />
           </Panel>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-            <Panel
-              title="Trasy dnia"
-              description="Najpierw te, które wymagają reakcji. Kropki to punkty w kolejności dostaw — najedź, żeby zobaczyć szczegóły."
-              flush
-            >
-              <ul className="divide-y divide-border">
-                {sorted.map((r) => {
-                  const p = progress.get(r.id)!;
-                  const next = p.current ?? p.next;
-                  return (
-                    <li
-                      key={r.id}
-                      className={cn(
-                        "grid gap-x-6 gap-y-3 px-5 py-4 sm:grid-cols-[minmax(180px,1fr)_minmax(200px,1.4fr)] min-[1700px]:grid-cols-[minmax(200px,1.1fr)_minmax(220px,1.6fr)_minmax(200px,1fr)]",
-                        (p.startOverdue || p.overdue > 0) && "bg-danger-soft/40",
-                      )}
-                    >
-                      <div className="min-w-0 space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            href={`/planowanie?dzien=${day}`}
-                            className="truncate text-[15px] font-semibold hover:text-primary-strong"
-                          >
-                            {r.name}
-                          </Link>
-                          {r.kind !== "regular" && (
-                            <span className="rounded bg-foreground/[0.06] px-1.5 text-[11px] font-medium text-muted">
-                              {ROUTE_KIND_LABELS[r.kind] ?? r.kind}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted">
-                          <Plate>{r.vehicle}</Plate>
-                          <span className="truncate">{r.driver ?? "bez kierowcy"}</span>
-                          {r.driverPhone && (
-                            <a
-                              href={`tel:${r.driverPhone.replace(/\s/g, "")}`}
-                              className="inline-flex items-center gap-1 text-primary-strong hover:underline"
-                              title="Zadzwoń do kierowcy"
-                            >
-                              <Phone className="size-3.5" />
-                              {r.driverPhone}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <div className="min-w-0 space-y-2 self-center">
-                        <RouteStrip stops={r.stops} now={now} />
-                        <div className="flex justify-between text-xs text-muted">
-                          <span>start {r.plannedStart ?? "—"}</span>
-                          <span className="tabular-nums">
-                            <b className="font-semibold text-foreground">{p.finished}</b> z {p.total} punktów
-                            {p.late > 0 && <span className="text-warning"> · {p.late} po oknie</span>}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex min-w-0 flex-col justify-center gap-1.5 text-[13px] sm:col-span-2 sm:flex-row sm:items-center sm:gap-3 min-[1700px]:col-span-1 min-[1700px]:flex-col min-[1700px]:items-start min-[1700px]:gap-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <RouteStatePill state={p.state} alarm={p.startOverdue} />
-                          {p.overdue > 0 && <span className="text-xs font-semibold text-danger">{p.overdue} po oknie</span>}
-                          {p.exceptions > 0 && <span className="text-xs font-medium text-plum">{p.exceptions} wyjątki</span>}
-                        </div>
-                        {p.state === "in_progress" && next ? (
-                          <p className="truncate text-muted">
-                            {p.current ? "Teraz: " : "Następny: "}
-                            <span className="font-medium text-foreground">{next.customer}</span>
-                            {next.windowEnd && <span> · okno do {next.windowEnd}</span>}
-                          </p>
-                        ) : p.state === "done" || p.state === "closed" ? (
-                          <p className="text-muted">
-                            Ostatni punkt {p.lastCompletedAt ?? "—"}
-                            {r.km !== null && <span> · {r.km} km</span>}{" "}
-                            <Link
-                              href={`/rozliczenia/zamkniecie/${r.id}`}
-                              className="font-medium text-primary-strong hover:underline"
-                            >
-                              {p.state === "closed" ? "zamknięcie ›" : "zamknij trasę ›"}
-                            </Link>
-                          </p>
-                        ) : (
-                          <p className="text-muted">
-                            {p.startOverdue ? `Miała ruszyć o ${r.plannedStart}` : `Wyjazd ${r.plannedStart ?? "bez godziny"}`}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Panel>
-
+          <div className="grid gap-6">
             <div className="flex flex-col gap-6">
               <Panel
                 title="Wymaga uwagi"
@@ -274,7 +164,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                     Brak spóźnień, wyjątków i tras do zamknięcia.
                   </EmptyState>
                 ) : (
-                  <ul className="max-h-[520px] divide-y divide-border overflow-y-auto">
+                  <ul className="max-h-[480px] divide-y divide-border overflow-y-auto">
                     {alerts.map((a, i) => (
                       <AlertRow key={`${a.routeId}-${a.stopId ?? ""}-${i}`} alert={a} />
                     ))}
