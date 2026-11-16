@@ -1,7 +1,6 @@
 import { DayNav } from "@/components/panel/day-nav";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Copy, History, PackageCheck, Printer, Route, TriangleAlert } from "lucide-react";
+import { Copy, History, PackageCheck, Route, TriangleAlert } from "lucide-react";
 import { EmptyState, Panel } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DATE_RE } from "@/lib/forms";
@@ -126,13 +125,6 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
         notices={notices}
         toolbarActions={
           <>
-            <Link
-              href={`/druk/zaladunek?dzien=${day}`}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-              title="Listy załadunkowe wszystkich tras dnia"
-            >
-              <Printer /> Listy załadunkowe
-            </Link>
             {editable && (
               <>
                 <ExtraRouteForm action={createExtraRoute.bind(null, day)} vehicles={plan.vehicles} drivers={plan.drivers} />

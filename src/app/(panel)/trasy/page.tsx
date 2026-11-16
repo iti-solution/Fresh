@@ -1,6 +1,7 @@
 import { ChevronDown, CircleAlert, Columns3, Inbox, Printer } from "lucide-react";
 import type { Metadata } from "next";
 import { DayNav } from "@/components/panel/day-nav";
+import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/panel/page";
 import { SearchCard } from "@/components/panel/search-card";
 import Link from "next/link";
@@ -61,7 +62,18 @@ export default async function RoutesPage({ searchParams }: PageProps<"/trasy">) 
       <PageHeader
         title="Trasy"
         description="Ładunek względem limitu pojazdu, terminowość i postęp każdej trasy — rozwiń trasę, żeby zobaczyć jej punkty."
-        actions={<DayNav day={day} today={today} href={(d) => link({ dzien: d })} />}
+        actions={
+          <>
+            <Link
+              href={`/druk/zaladunek?dzien=${day}`}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              title="Listy załadunkowe wszystkich tras dnia"
+            >
+              <Printer /> Listy załadunkowe
+            </Link>
+            <DayNav day={day} today={today} href={(d) => link({ dzien: d })} />
+          </>
+        }
       />
 
       <SearchCard
