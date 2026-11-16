@@ -44,6 +44,19 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
   const total = rows.reduce((a, r) => a + toGrosze(r.s.total_amount), 0);
   const money = (g: number) => (g === 0 ? "" : formatPln(g));
   const single = only ? rows[0] : null;
+  const manualLines = rows
+    .flatMap((r) =>
+      (r.s.driver_settlement_lines ?? [])
+        .filter((l) => l.is_manual)
+        .map((l) => ({
+          name: r.name,
+          date: l.work_date,
+          label: l.label ?? "Dodatek ręczny",
+          amount: toGrosze(l.amount),
+          note: l.note ?? "",
+        })),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, "pl") || a.date.localeCompare(b.date));
 
   return (
     <div className="mx-auto max-w-[1100px] text-[12px]">
@@ -159,6 +172,34 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
             </tbody>
           </table>
         </>
+      )}
+
+      {!single && manualLines.length > 0 && (
+        <section className="mt-6 break-inside-avoid">
+          <h2 className="mb-1 font-bold">Pozycje wpisane ręcznie</h2>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-neutral-100 text-left">
+                <th className={cell}>Kierowca</th>
+                <th className={cell}>Dzień</th>
+                <th className={cell}>Rodzaj</th>
+                <th className={`${cell} text-right`}>Kwota</th>
+                <th className={cell}>Opis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {manualLines.map((m, i) => (
+                <tr key={i}>
+                  <td className={cell}>{m.name}</td>
+                  <td className={`${cell} whitespace-nowrap`}>{d(m.date)}</td>
+                  <td className={cell}>{m.label}</td>
+                  <td className={`${cell} text-right tabular-nums`}>{formatPln(m.amount)}</td>
+                  <td className={cell}>{m.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       )}
 
       <div className="mt-12 flex justify-between gap-10 text-[11px]">

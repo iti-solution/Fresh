@@ -163,5 +163,6 @@ describe("summarizeLines / activeCodes", () => {
     expect(s.byCode.per_km).toBe(3020);
     expect(s.byCode.manual).toBe(5000);
     expect(activeCodes([s])).toEqual(["daily_rate", "per_km", "manual"]);
+    expect(activeCodes([])).toEqual(["manual"]);
   });
 });
