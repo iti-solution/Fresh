@@ -1,4 +1,4 @@
-import { Building2, ChevronsUpDown, LogOut, Search, Settings } from "lucide-react";
+import { Building2, ChevronsUpDown, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/panel/brand";
@@ -79,16 +79,6 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <div className="min-w-0 shrink-0 md:w-56">
             <TopbarTitle />
           </div>
-          <form action="/bok" className="relative hidden w-full max-w-sm lg:block">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
-            <input
-              name="q"
-              type="search"
-              placeholder="Gdzie jest dostawa? Klient, zamówienie, telefon…"
-              aria-label="Szukaj dostawy"
-              className="h-8 w-full rounded-md border border-border bg-surface-2 pr-3 pl-9 text-[13px] text-foreground outline-none placeholder:text-subtle focus:border-primary-strong/50 focus:bg-surface"
-            />
-          </form>
           <div className="ml-auto flex items-center gap-2 text-sm">
             <span className="hidden text-[13px] text-muted capitalize 2xl:inline">{formatDayLabel(todayInWarsaw())}</span>
             <DataModeToggle isDemo={ctx.isDemo} />
