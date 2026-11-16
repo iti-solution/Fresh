@@ -39,9 +39,18 @@ export async function closeRoute(routeId: string, _prev: FormState, fd: FormData
   const cash = cashRaw === "" ? 0 : parseCash(cashRaw);
   if (cash === null) return { ok: false, fieldErrors: { cash_received: ["Kwota w zł, np. 640,50"] }, message: "Popraw kwotę." };
   const odoRaw = String(fd.get("odometer_end") ?? "").trim();
-  const odo = odoRaw === "" ? null : Number(odoRaw);
+  let odo = odoRaw === "" ? null : Number(odoRaw);
   if (odo !== null && (!Number.isInteger(odo) || odo < 0))
     return { ok: false, fieldErrors: { odometer_end: ["Same cyfry"] }, message: "Popraw licznik." };
+  // kilometry za cały dzień wpisane przez dyspozytora (gdy nie ma stanu licznika albo kierowca go nie podał)
+  const kmRaw = String(fd.get("km_driven") ?? "").trim().replace(",", ".");
+  const kmDriven = kmRaw === "" ? null : Number(kmRaw);
+  if (kmDriven !== null && (!Number.isFinite(kmDriven) || kmDriven < 0 || kmDriven > 3000))
+    return { ok: false, fieldErrors: { km_driven: ["Liczba km, np. 184,5"] }, message: "Popraw kilometry." };
+  if (kmDriven !== null && odo === null) {
+    const { data: start } = await db.from("routes").select("odometer_start").eq("id", routeId).eq("tenant_id", ctx.tenantId).maybeSingle();
+    odo = Math.round((start?.odometer_start ?? 0) + kmDriven);
+  }
   const note = String(fd.get("note") ?? "").slice(0, 500);
 
   const { data, error } = await db.rpc("close_route", {
@@ -57,6 +66,10 @@ export async function closeRoute(routeId: string, _prev: FormState, fd: FormData
     return { ok: false, message: code ? CLOSE_ERRORS[code] : "Nie udało się zamknąć trasy." };
   }
   const res = data as { driver_id: string; route_date: string };
+  if (kmDriven !== null) {
+    // dyspozytor podał kilometry za dzień — nadpisują wyliczone z licznika
+    await db.from("routes").update({ actual_km: kmDriven }).eq("id", routeId).eq("tenant_id", ctx.tenantId);
+  }
   // rozliczenie dzienne: od razu przeliczamy miesiąc kierowcy (kwoty widać w Rozliczeniach)
   await recomputeSettlement(db, ctx.tenantId, res.driver_id, res.route_date.slice(0, 7)).catch(() => undefined);
   revalidatePath("/centrum");

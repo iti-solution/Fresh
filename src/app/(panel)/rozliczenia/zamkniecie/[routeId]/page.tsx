@@ -24,7 +24,7 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
   const { data: r } = await db
     .from("routes")
     .select(
-      "id, name, route_date, status, odometer_start, odometer_end, close_report, closed_at, drivers(first_name, last_name), vehicles(registration), route_stops(id, status)",
+      "id, name, route_date, status, odometer_start, odometer_end, actual_km, close_report, closed_at, drivers(first_name, last_name), vehicles(registration), route_stops(id, status)",
     )
     .eq("id", routeId)
     .eq("tenant_id", ctx.tenantId)
@@ -141,24 +141,31 @@ export default async function CloseRoutePage({ params, searchParams }: PageProps
             action={closeRoute.bind(null, routeId)}
             submitLabel="Zamknij trasę"
             sections={[
-              ...(r.status === "in_progress"
-                ? [
-                    {
-                      title: "Licznik",
-                      description:
-                        "Kierowca nie zakończył zmiany w aplikacji. Wpisz stan licznika — niepotwierdzone punkty zostaną oznaczone jako pominięte.",
-                      fields: [
-                        {
-                          kind: "number" as const,
-                          name: "odometer_end",
-                          label: "Stan licznika na koniec",
-                          suffix: "km",
-                          hint: `start: ${r.odometer_start ?? "—"} km`,
-                        },
-                      ],
-                    },
-                  ]
-                : []),
+              {
+                title: "Kilometry na koniec dnia",
+                description:
+                  r.status === "in_progress"
+                    ? "Kierowca nie zakończył zmiany w aplikacji. Wpisz przejechane kilometry (albo stan licznika) — niepotwierdzone punkty zostaną oznaczone jako pominięte."
+                    : "Wpisz kilometry przejechane przez cały dzień, jeśli różnią się od tych z aplikacji kierowcy. Z nich liczy się koszt trasy i kilometrówka.",
+                fields: [
+                  {
+                    kind: "number" as const,
+                    name: "km_driven",
+                    label: "Przejechane kilometry",
+                    suffix: "km",
+                    defaultValue: r.actual_km ?? undefined,
+                    hint: r.actual_km !== null ? `z aplikacji / licznika: ${r.actual_km} km` : "brak danych z aplikacji",
+                  },
+                  {
+                    kind: "number" as const,
+                    name: "odometer_end",
+                    label: "Albo stan licznika na koniec",
+                    suffix: "km",
+                    defaultValue: r.odometer_end ?? undefined,
+                    hint: `start: ${r.odometer_start ?? "—"} km`,
+                  },
+                ],
+              },
               {
                 title: "Opakowania zdane do magazynu",
                 description:

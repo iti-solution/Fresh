@@ -1,5 +1,8 @@
+import { Phone } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Meter } from "@/components/panel/page";
+import { buttonVariants } from "@/components/ui/button";
 import { Plate } from "@/components/ui/status";
 import { formatPln, formatPlnCompact } from "@/lib/forms";
 import { cn } from "@/lib/utils";
@@ -13,7 +16,19 @@ const pct = (v: number | null) => (v === null ? "—" : `${v.toLocaleString("pl-
  * Plan dnia, bieżąca realizacja i prognoza końca dnia (przy założeniu, że pozostałe punkty zostaną dostarczone
  * w obecnym tempie tras). Dla zarządu — działa też dla dnia, który jeszcze się nie zaczął.
  */
-export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[]; now: string | null; future: boolean }) {
+export function DayForecastPanel({
+  routes,
+  now,
+  future,
+  day,
+  canClose = false,
+}: {
+  routes: ReportRoute[];
+  now: string | null;
+  future: boolean;
+  day?: string;
+  canClose?: boolean;
+}) {
   const f = dayForecast(routes, now);
   const byId = new Map(f.routes.map((r) => [r.routeId, r]));
   const planned = f.plannedValueGrosze || 1;
@@ -96,7 +111,8 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
               <th className="px-3 py-2.5 text-right font-medium">Dostarczono</th>
               <th className="px-3 py-2.5 text-right font-medium">Do dowiezienia</th>
               <th className="px-3 py-2.5 text-right font-medium">Zagrożone</th>
-              <th className="py-2.5 pr-5 pl-3 text-right font-medium">Koniec / powrót</th>
+              <th className="px-3 py-2.5 text-right font-medium">Koniec / powrót</th>
+              {canClose && <th className="py-2.5 pr-5 pl-3 text-right font-medium">Zamknięcie</th>}
             </tr>
           </thead>
           <tbody>
@@ -106,9 +122,17 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
               return (
                 <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                   <td className="py-2.5 pr-3 pl-5">
-                    <span className="font-medium">{r.name}</span>
-                    <span className="mt-0.5 block">
+                    {day ? (
+                      <Link href={`/planowanie?dzien=${day}`} className="font-medium hover:text-primary-strong">
+                        {r.name}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{r.name}</span>
+                    )}
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       <RouteStatePill state={p.state} alarm={p.startOverdue} />
+                      {p.overdue > 0 && <span className="text-xs font-semibold text-danger">{p.overdue} po oknie</span>}
+                      {p.exceptions > 0 && <span className="text-xs font-medium text-plum">{p.exceptions} wyjątki</span>}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
@@ -116,6 +140,15 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
                       <Plate>{r.vehicle}</Plate>
                       <span className="truncate text-muted">{r.driver ?? "bez kierowcy"}</span>
                     </span>
+                    {r.driverPhone && (
+                      <a
+                        href={`tel:${r.driverPhone.replace(/\s/g, "")}`}
+                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary-strong hover:underline"
+                        title="Zadzwoń do kierowcy"
+                      >
+                        <Phone className="size-3" /> {r.driverPhone}
+                      </a>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="flex items-center gap-2">
@@ -127,6 +160,20 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
                       <span className="text-xs tabular-nums text-muted">
                         {x.doneStops}/{x.plannedStops}
                       </span>
+                    </span>
+                    <span className="mt-1 block max-w-[260px] truncate text-xs text-muted">
+                      {p.state === "in_progress" && (p.current ?? p.next) ? (
+                        <>
+                          {p.current ? "Teraz: " : "Następny: "}
+                          <span className="font-medium text-foreground">{(p.current ?? p.next)!.customer}</span>
+                        </>
+                      ) : p.state === "not_started" || p.state === "draft" ? (
+                        p.startOverdue ? (
+                          <span className="font-semibold text-danger">Miała ruszyć o {r.plannedStart}</span>
+                        ) : (
+                          `Wyjazd ${r.plannedStart ?? "bez godziny"}`
+                        )
+                      ) : null}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-right tabular-nums">{formatPlnCompact(x.plannedValueGrosze)}</td>
@@ -142,7 +189,7 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
                   >
                     {x.forecastLate || "—"}
                   </td>
-                  <td className="py-2.5 pr-5 pl-3 text-right text-[13px] tabular-nums whitespace-nowrap">
+                  <td className="px-3 py-2.5 text-right text-[13px] tabular-nums whitespace-nowrap">
                     {p.state === "done" || p.state === "closed" ? (
                       <span className="text-muted">zakończona {x.lastStopAt ?? ""}</span>
                     ) : x.backAt ? (
@@ -153,6 +200,24 @@ export function DayForecastPanel({ routes, now, future }: { routes: ReportRoute[
                       "—"
                     )}
                   </td>
+                  {canClose && (
+                    <td className="py-2.5 pr-5 pl-3 text-right whitespace-nowrap">
+                      {p.state === "closed" ? (
+                        <Link href={`/rozliczenia/zamkniecie/${r.id}`} className="text-[13px] font-medium text-muted hover:underline">
+                          zamknięta ›
+                        </Link>
+                      ) : p.state === "done" || p.state === "in_progress" ? (
+                        <Link
+                          href={`/rozliczenia/zamkniecie/${r.id}`}
+                          className={buttonVariants({ variant: p.state === "done" ? "primary" : "outline", size: "sm" })}
+                        >
+                          Zamknij trasę
+                        </Link>
+                      ) : (
+                        <span className="text-subtle">—</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}
