@@ -10,7 +10,6 @@ import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Rozliczenie kierowców" };
 
-const STATUS = { draft: "robocze", approved: "zatwierdzone", exported: "wyeksportowane" } as const;
 const d = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
 const cell = "border border-black px-2 py-1";
 
@@ -19,27 +18,32 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
   const sp = await searchParams;
   const month = typeof sp.miesiac === "string" && MONTH_RE.test(sp.miesiac) ? sp.miesiac : todayInWarsaw().slice(0, 7);
   const only = typeof sp.kierowca === "string" ? sp.kierowca : null;
+  const picked = new Set([sp.k].flat().filter((x): x is string => typeof x === "string"));
   const { from, to } = monthRange(month);
   const db = await createClient();
-  let q = db
+  const { data, error } = await db
     .from("driver_settlements")
     .select(
-      "id, driver_id, status, total_amount, drivers(first_name, last_name, employment_type), driver_settlement_lines(work_date, code, label, quantity, rate, amount, note, is_manual, routes(name))",
+      "id, driver_id, total_amount, drivers(first_name, last_name, employment_type), driver_settlement_lines(work_date, code, label, quantity, rate, amount, note, is_manual, routes(name))",
     )
     .eq("tenant_id", ctx.tenantId)
     .eq("period_start", from)
     .eq("period_end", to);
-  if (only) q = q.eq("driver_id", only);
-  const { data, error } = await q;
   if (error) throw error;
 
-  const rows = (data ?? [])
+  const all = (data ?? [])
     .map((s) => ({
       s,
       name: `${s.drivers?.last_name ?? ""} ${s.drivers?.first_name ?? ""}`.trim(),
       sum: summarizeLines(s.driver_settlement_lines ?? []),
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "pl"));
+  // domyślnie wszyscy; ?kierowca= = jeden kierowca (ikona w tabeli); ?k=…&k=… = wybrani w formularzu
+  const rows = only
+    ? all.filter((r) => r.s.driver_id === only)
+    : picked.size
+      ? all.filter((r) => picked.has(r.s.driver_id))
+      : all;
   const codes = activeCodes(rows.map((r) => r.sum));
   const total = rows.reduce((a, r) => a + toGrosze(r.s.total_amount), 0);
   const money = (g: number) => (g === 0 ? "" : formatPln(g));
@@ -64,6 +68,28 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
         <p className="text-sm">{single ? "Rozliczenie kierowcy" : "Zestawienie zbiorcze"}</p>
         <PrintButton />
       </div>
+      {!only && all.length > 0 && (
+        <form method="get" className="mb-6 rounded-lg border border-neutral-300 p-3 print:hidden">
+          <input type="hidden" name="miesiac" value={month} />
+          <p className="mb-2 text-sm font-medium">Kierowcy na wydruku</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm">
+            {all.map((r) => (
+              <label key={r.s.driver_id} className="flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  name="k"
+                  value={r.s.driver_id}
+                  defaultChecked={picked.size === 0 || picked.has(r.s.driver_id)}
+                />
+                {r.name}
+              </label>
+            ))}
+          </div>
+          <button className="mt-3 rounded-md border border-neutral-400 px-3 py-1 text-sm font-medium hover:bg-neutral-100">
+            Zastosuj wybór
+          </button>
+        </form>
+      )}
       <header className="mb-4 border-b-2 border-black pb-2">
         <p className="text-[11px] uppercase tracking-wide">
           {single ? "Rozliczenie wynagrodzenia kierowcy" : "Zestawienie wynagrodzeń kierowców"} · {BRAND.full}
@@ -83,7 +109,6 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
             <tr className="bg-neutral-100 text-left">
               <th className={cell}>Kierowca</th>
               <th className={cell}>Forma</th>
-              <th className={cell}>Status</th>
               <th className={`${cell} text-right`}>Dni</th>
               {codes.map((c) => (
                 <th key={c} className={`${cell} text-right`}>
@@ -98,7 +123,6 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
               <tr key={r.s.id}>
                 <td className={`${cell} font-medium`}>{r.name}</td>
                 <td className={cell}>{r.s.drivers?.employment_type ?? ""}</td>
-                <td className={cell}>{STATUS[r.s.status as keyof typeof STATUS] ?? r.s.status}</td>
                 <td className={`${cell} text-right tabular-nums`}>{r.sum.days}</td>
                 {codes.map((c) => (
                   <td key={c} className={`${cell} text-right tabular-nums`}>
@@ -109,7 +133,7 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
               </tr>
             ))}
             <tr className="bg-neutral-100 font-bold">
-              <td className={cell} colSpan={4}>
+              <td className={cell} colSpan={3}>
                 Razem ({rows.length} kierowców)
               </td>
               {codes.map((c) => (
@@ -138,7 +162,7 @@ export default async function SettlementPrintPage({ searchParams }: PageProps<"/
                 </tr>
               ))}
               <tr className="bg-neutral-100 font-bold">
-                <td className={cell}>Razem ({STATUS[single.s.status as keyof typeof STATUS] ?? single.s.status})</td>
+                <td className={cell}>Razem</td>
                 <td className={`${cell} text-right tabular-nums`}>{formatPln(toGrosze(single.s.total_amount))}</td>
               </tr>
             </tbody>
