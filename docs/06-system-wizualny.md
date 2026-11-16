@@ -1,19 +1,19 @@
-# Driver — system wizualny (v4, 2026-11-05 — butelkowa zieleń + limonka)
+# Driver — system wizualny (v5, 2026-11-16 — granat + pomarańcz)
 
-> Nazwa produktu jest robocza i ustawiona w jednym miejscu: `src/lib/brand.ts`. v4 celowo odchodzi od barw ExpertWMS (granat + pomarańcz), żeby produkt nie wyglądał jak jego część.
+> Nazwa produktu jest robocza i ustawiona w jednym miejscu: `src/lib/brand.ts`. v5 zastępuje butelkową zieleń (v4) paletą granatu i pomarańczu — decyzja właściciela produktu.
 
 Cel: aplikacja wygląda jak jedno narzędzie, a nie zbiór ekranów. Dyspozytor pracuje na dużym monitorze o 5 rano, BOK odbiera telefony, zarząd ogląda raport na laptopie, kierowca trzyma terminal jedną ręką.
 
 ## Zasady
-1. **Marka: butelkowa zieleń + limonka.** Butelkowa zieleń (#12332b) to nawigacja i struktura, limonka (#6bbf2a) to akcje (przyciski, aktywna zakładka, aktywna pozycja menu) i wykresy sprzedaży. Limonka **nie** oznacza statusu. Na limonce zawsze ciemny tekst (`primary-foreground` #0d2a20) — biały ma za słaby kontrast. Tekst i linki na jasnym tle w `primary-strong` (#3b7a12).
-1a. **Statusy są znaczeniowe:** zieleń = w oknie / dostarczono / zapisano, bursztyn = uwaga, czerwień = alarm, błękit = w trasie / teraz, śliwka = reklamacje i zwroty. Wypełnienia „zwykłe” (ładowność) w stalowej zieleni (`steel`).
+1. **Marka: granat + pomarańcz.** Granat (#14275a, `ink`) to boczne menu i struktura, kobalt (#1f55b5, `primary-strong`) to linki, aktywne zakładki i tekst akcentowy, pomarańcz (#f28c1e, `primary`) to główne przyciski i znacznik aktywnej pozycji. Pomarańcz **nie** oznacza statusu. Na pomarańczu zawsze ciemny tekst (`primary-foreground` #2a1500). Górny pasek jest jasny — ciemne zostaje tylko menu boczne, żeby ekran nie był ciężki.
+1a. **Statusy są znaczeniowe:** zieleń = w oknie / dostarczono / zapisano, bursztyn = uwaga, czerwień = alarm, turkus = w trasie / teraz, śliwka = reklamacje i zwroty. Wypełnienia „zwykłe” (ładowność) w stalowym błękicie (`steel`).
 2. **Liczba przed etykietą.** Kafelki (`StatTile`) pokazują wartość dużą, opis mały pod spodem; zmiana r/r jako `Delta` (zielona, gdy dobra — także „w dół” dla kosztów i reklamacji).
 3. **Wersaliki tylko w logotypie i nazwach grup menu.** Etykiety, przyciski i nagłówki tabel zwykłymi literami.
 4. **Gęsto, ale czytelnie:** tabele z `tabular-nums`, nagłówek tabeli na tle `surface-2`, akcje w wierszu pojawiają się mocniej po najechaniu.
 5. **Znaki z branży:** tablica rejestracyjna (`Plate`) zamiast samego tekstu, trasa jako „linia metra” (`RouteStrip`) z kropką na każdy punkt.
 
 ## Tokeny (`src/app/globals.css`)
-`background` #f3f6f2 · `surface` #fff · `foreground` #13241f · `muted` #546660 · `border` #dfe7e2 · `primary` #6bbf2a (wypełnienia) / `primary-hover` #5daa22 / `primary-strong` #3b7a12 (tekst i linki — kontrast) · `accent` #eef7e3 / `accent-hover` #dcefc6 · `ink` #12332b (nawigacja) · `steel` #2f6b5a (paski ładowności, okna godzinowe na `steel-soft`) · statusy: `success` `warning` `danger` `info` `plum` + wersje `-soft`.
+`background` #f1f4fa · `surface` #fff · `foreground` #13203a · `muted` #55627a · `border` #dfe5ef · `primary` #f28c1e (przyciski) / `primary-hover` #dd7b10 / `primary-strong` #1f55b5 (tekst i linki) · `accent` #e8f0fc / `accent-hover` #d3e2f8 · `ink` #14275a (menu) · `steel` #2f5fa8 · statusy: `success` `warning` `danger` `info` `plum` + wersje `-soft`.
 Czcionka: IBM Plex Sans (cyfry tabelaryczne), IBM Plex Mono tylko dla tablic i numerów dokumentów.
 
 ## Menu

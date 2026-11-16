@@ -63,32 +63,32 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-black/20 bg-ink px-3 text-ink-foreground md:px-5">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-border bg-surface px-3 text-foreground md:px-5">
           <MobileNav sections={sections} />
           <div className="min-w-0 shrink-0 md:w-56">
             <TopbarTitle />
           </div>
           <form action="/bok" className="relative hidden w-full max-w-sm lg:block">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
             <input
               name="q"
               type="search"
               placeholder="Gdzie jest dostawa? Klient, zamówienie, telefon…"
               aria-label="Szukaj dostawy"
-              className="h-8 w-full rounded-md border border-white/10 bg-white/[0.06] pr-3 pl-9 text-[13px] text-white outline-none placeholder:text-ink-muted focus:border-primary/60 focus:bg-white/10"
+              className="h-8 w-full rounded-md border border-border bg-surface-2 pr-3 pl-9 text-[13px] text-foreground outline-none placeholder:text-subtle focus:border-primary-strong/50 focus:bg-surface"
             />
           </form>
           <div className="ml-auto flex items-center gap-2 text-sm">
-            <span className="hidden text-[13px] text-ink-muted capitalize 2xl:inline">{formatDayLabel(todayInWarsaw())}</span>
+            <span className="hidden text-[13px] text-muted capitalize 2xl:inline">{formatDayLabel(todayInWarsaw())}</span>
             <DataModeToggle isDemo={ctx.isDemo} />
             <Link
               href="/wybierz-firme"
               title="Zmień firmę"
-              className="hidden h-8 max-w-[240px] items-center gap-2 rounded-md border border-white/10 pr-2 pl-2.5 transition-colors hover:bg-white/[0.06] sm:flex"
+              className="hidden h-8 max-w-[240px] items-center gap-2 rounded-md border border-border pr-2 pl-2.5 transition-colors hover:bg-accent sm:flex"
             >
-              <Building2 className="size-4 shrink-0 text-ink-muted" />
-              <span className="truncate text-[13px] font-medium text-white">{ctx.tenantName}</span>
-              <ChevronsUpDown className="size-3.5 shrink-0 text-ink-muted" />
+              <Building2 className="size-4 shrink-0 text-subtle" />
+              <span className="truncate text-[13px] font-medium text-foreground">{ctx.tenantName}</span>
+              <ChevronsUpDown className="size-3.5 shrink-0 text-subtle" />
             </Link>
             <FullscreenButton className="hidden md:flex" />
           </div>
@@ -108,10 +108,10 @@ function DataModeToggle({ isDemo }: { isDemo: boolean }) {
   const item = (active: boolean) =>
     cn(
       "h-7 px-2.5 text-[11.5px] font-semibold tracking-[0.04em] uppercase transition-colors",
-      active ? "bg-primary text-primary-foreground" : "text-ink-foreground hover:bg-white/10 hover:text-white",
+      active ? "bg-primary text-primary-foreground" : "text-muted hover:bg-accent hover:text-primary-strong",
     );
   return (
-    <div className="flex overflow-hidden rounded-md border border-white/15" role="group" aria-label="Rodzaj danych">
+    <div className="flex overflow-hidden rounded-md border border-border-strong" role="group" aria-label="Rodzaj danych">
       <form action={switchDataMode.bind(null, "demo")}>
         <CurrentPathInput />
         <button

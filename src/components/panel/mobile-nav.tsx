@@ -13,7 +13,7 @@ export function MobileNav({ sections }: { sections: NavSection[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-foreground hover:bg-white/10 md:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground hover:bg-accent md:hidden"
         aria-label="Otwórz menu"
       >
         <Menu className="size-5" />

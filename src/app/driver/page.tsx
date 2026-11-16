@@ -46,7 +46,7 @@ export default async function DriverHome() {
   if (active) redirect(`/driver/trasa/${active.id}`);
 
   return (
-    <main className="flex min-h-screen flex-col gap-3 bg-[#e4ebe6] pb-6">
+    <main className="flex min-h-screen flex-col gap-3 bg-[#e2e8f3] pb-6">
       <header className="flex items-center justify-between bg-ink px-4 py-4 text-white">
         <div>
           <p className="text-[24px] leading-tight font-bold">Moje trasy</p>

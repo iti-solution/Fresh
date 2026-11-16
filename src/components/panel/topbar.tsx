@@ -22,7 +22,7 @@ export function TopbarTitle() {
     .sort((a, b) => b.href.length - a.href.length)
     .find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
   const title = extra?.[1] ?? item?.label ?? "";
-  return <p className="truncate text-[17px] font-semibold tracking-[-0.01em] text-white">{title}</p>;
+  return <p className="truncate text-[17px] font-semibold tracking-[-0.01em] text-foreground">{title}</p>;
 }
 
 /** Pełny ekran (dyspozytor na drugim monitorze, monitor tras na telewizorze). */
@@ -40,7 +40,7 @@ export function FullscreenButton({ className }: { className?: string }) {
       title={on ? "Zamknij pełny ekran" : "Pełny ekran"}
       aria-label={on ? "Zamknij pełny ekran" : "Pełny ekran"}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-md text-ink-foreground transition-colors hover:bg-white/10 hover:text-white [&_svg]:size-4",
+        "flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-accent hover:text-primary-strong [&_svg]:size-4",
         className,
       )}
     >

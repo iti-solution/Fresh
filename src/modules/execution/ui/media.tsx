@@ -89,7 +89,7 @@ export function SignaturePad({ onChange }: { onChange: (png: Blob | null) => voi
     ctx.scale(ratio, ratio);
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#13241f";
+    ctx.strokeStyle = "#13203a";
   }, []);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {

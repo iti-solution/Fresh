@@ -104,7 +104,7 @@ export function RouteMonitor({
     <div
       ref={rootRef}
       className={cn(
-        "flex flex-col bg-[#e4ebe6]",
+        "flex flex-col bg-[#e2e8f3]",
         full ? "h-screen p-3" : "-mx-3 -my-4 h-[calc(100vh-var(--chrome,3rem))] p-3 md:-mx-5 md:-my-5",
       )}
       style={{ fontSize: `${view.scale}rem` }}
@@ -437,7 +437,7 @@ function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1.5 w-full accent-[#2f6b5a]"
+        className="mt-1.5 w-full accent-[#2f5fa8]"
       />
     </label>
   );
