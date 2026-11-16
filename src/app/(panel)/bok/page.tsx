@@ -1,7 +1,9 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Headset, Search } from "lucide-react";
+import { ChevronDown, Headset, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoRefresh } from "@/components/panel/auto-refresh";
+import { DayNav } from "@/components/panel/day-nav";
+import { ExpandAll } from "@/components/panel/expand-all";
 import { EmptyState, PageHeader, Panel, Segmented } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DocRef, Pill } from "@/components/ui/status";
@@ -20,11 +22,11 @@ import {
 } from "@/modules/ops/domain/reports";
 import { getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { CustomerAnswer, RouteHeader, StopList } from "@/modules/ops/ui/bok";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { getDayOrders } from "@/modules/orders/server/queries";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
-export const metadata: Metadata = { title: "Dostawy dla BOK" };
+export const metadata: Metadata = { title: "Śledzenie dostaw" };
 
 const FILTERS = [
   { key: "wszystkie", label: "Wszystkie trasy" },
@@ -115,33 +117,12 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
   return (
     <>
       <PageHeader
-        title="Dostawy dla BOK"
+        title="Śledzenie dostaw"
         description="Gdzie jest dostawa klienta, gdzie jest teraz kierowca, ile punktów ma przed sobą i kiedy dojedzie."
         actions={
           <>
             {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} tenantId={ctx.tenantId} />}
-            <div className="flex items-center gap-1">
-              <Link
-                href={href({ dzien: shiftDay(day, -1) })}
-                aria-label="Poprzedni dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronLeft />
-              </Link>
-              <Link
-                href={href({ dzien: today })}
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-40 capitalize")}
-              >
-                {day === today ? `Dziś, ${formatDayLabel(day).split(", ")[1]}` : formatDayLabel(day)}
-              </Link>
-              <Link
-                href={href({ dzien: shiftDay(day, 1) })}
-                aria-label="Następny dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronRight />
-              </Link>
-            </div>
+            <DayNav day={day} today={today} href={(d) => href({ dzien: d })} />
           </>
         }
       />
@@ -194,7 +175,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
                     <CustomerAnswer key={s.id} route={route} stop={s} now={now} eta={eta} />
                   ))}
                 </div>
-                <details open={wholeRoute} className="group border-t border-border">
+                <details data-stops open={wholeRoute} className="group border-t border-border">
                   <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-2.5 text-[13px] font-medium text-primary-strong hover:bg-surface-2">
                     <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                     {wholeRoute ? "Punkty trasy" : "Cała trasa kierowcy"} ({route.stops.length})
@@ -238,14 +219,17 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
               {routes.length} trasach
               {notPlanned.length > 0 && <>, {notPlanned.length} zamówień jeszcze bez trasy</>}.
             </p>
-            <Segmented
-              items={FILTERS.map((f) => ({
-                href: href({ f: f.key }),
-                label: f.label,
-                active: filter === f.key,
-                count: counts[f.key],
-              }))}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <ExpandAll />
+              <Segmented
+                items={FILTERS.map((f) => ({
+                  href: href({ f: f.key }),
+                  label: f.label,
+                  active: filter === f.key,
+                  count: counts[f.key],
+                }))}
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-4">
             {routes.filter(routeMatchesFilter).map((r) => {
@@ -257,7 +241,7 @@ export default async function CustomerServicePage({ searchParams }: PageProps<"/
                   <div className="px-5 py-4">
                     <RouteHeader route={r} now={now} eta={eta} />
                   </div>
-                  <details open={p.state === "in_progress" || filter === "problemy"} className="group border-t border-border">
+                  <details data-stops open={p.state === "in_progress" || filter === "problemy"} className="group border-t border-border">
                     <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-2.5 text-[13px] font-medium text-primary-strong hover:bg-surface-2">
                       <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                       {filter === "problemy"

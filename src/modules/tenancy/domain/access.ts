@@ -50,7 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/trasy", label: "Trasy", group: "Operacje", milestone: "M3", built: true, roles: STAFF },
   { href: "/do-sprawdzenia", label: "Do sprawdzenia", group: "Operacje", milestone: "P1", built: true, roles: STAFF },
   { href: "/zlecenia", label: "Zamówienia", group: "Operacje", milestone: "M1", built: true, roles: STAFF },
-  { href: "/bok", label: "Gdzie jest dostawa", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
+  { href: "/bok", label: "Śledzenie dostaw", group: "Zestawienia", milestone: "M6", built: true, roles: STAFF },
   {
     href: "/raport",
     label: "Rentowność",
@@ -112,7 +112,7 @@ export type NavSection = { key: NavSectionKey; label: string; href: string; divi
 const SECTION_DEFS: { key: NavSectionKey; label: string; divider?: boolean; inSidebar?: boolean; hrefs: string[] }[] = [
   { key: "centrum", label: "Centrum operacyjne", hrefs: ["/centrum"] },
   { key: "monitor", label: "Monitor tras", hrefs: ["/monitor"] },
-  { key: "bok", label: "Gdzie jest dostawa", hrefs: ["/bok"] },
+  { key: "bok", label: "Śledzenie dostaw", hrefs: ["/bok"] },
   { key: "zamowienia", label: "Zamówienia", divider: true, hrefs: ["/zlecenia", "/do-sprawdzenia"] },
   { key: "planowanie", label: "Planowanie tras", hrefs: ["/planowanie", "/trasy"] },
   { key: "rozliczenia", label: "Rozliczenia", divider: true, hrefs: ["/opakowania", "/rozliczenia"] },

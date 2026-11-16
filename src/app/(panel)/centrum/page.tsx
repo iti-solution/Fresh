@@ -1,7 +1,8 @@
-import { Banknote, ChevronLeft, ChevronRight, CircleCheck, Clock, Package, Phone, Radar, TriangleAlert } from "lucide-react";
+import { Banknote, CircleCheck, Clock, Package, Phone, Radar, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoRefresh } from "@/components/panel/auto-refresh";
+import { DayNav } from "@/components/panel/day-nav";
 import { EmptyState, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Dot, Plate, TONE_TEXT } from "@/components/ui/status";
@@ -19,7 +20,7 @@ import {
 import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { getDayReports } from "@/modules/ops/server/proof";
 import { RouteStatePill, RouteStrip } from "@/modules/ops/ui/route-strip";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { ROUTE_KIND_LABELS } from "@/modules/planning/domain/load";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -90,25 +91,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
         actions={
           <>
             {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} tenantId={ctx.tenantId} />}
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/centrum?dzien=${shiftDay(day, -1)}`}
-                aria-label="Poprzedni dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronLeft />
-              </Link>
-              <Link href="/centrum" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-40 capitalize")}>
-                {day === today ? `Dziś, ${formatDayLabel(day).split(", ")[1]}` : formatDayLabel(day)}
-              </Link>
-              <Link
-                href={`/centrum?dzien=${shiftDay(day, 1)}`}
-                aria-label="Następny dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronRight />
-              </Link>
-            </div>
+            <DayNav day={day} today={today} href={(d) => (d === today ? "/centrum" : `/centrum?dzien=${d}`)} />
           </>
         }
       />

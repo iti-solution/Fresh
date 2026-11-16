@@ -1,3 +1,4 @@
+import { DayNav } from "@/components/panel/day-nav";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Copy, History, PackageCheck, Printer, Route, TriangleAlert } from "lucide-react";
@@ -62,7 +63,7 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
   if (routes.length === 0) {
     return (
       <div className="space-y-4">
-        <DayNav day={day} href={href} />
+        <DayNav day={day} today={today} href={href} />
         <Panel className="max-w-2xl">
           <EmptyState
             icon={<Route />}
@@ -174,20 +175,4 @@ export default async function PlanningPage({ searchParams }: PageProps<"/planowa
 async function defaultDay(tenantId: string, today: string): Promise<string> {
   const todayPlan = await getPlanningDay(tenantId, today);
   return todayPlan.routes.length > 0 ? today : nextWorkingDay(today);
-}
-
-function DayNav({ day, href }: { day: string; href: (d: string) => string }) {
-  return (
-    <div className="flex items-center gap-1">
-      <Link href={href(shiftDay(day, -1))} className={buttonVariants({ variant: "outline", size: "sm" })} aria-label="Poprzedni dzień">
-        ‹
-      </Link>
-      <span className="inline-flex h-8 min-w-40 items-center justify-center rounded-lg border border-border-strong bg-surface px-3 text-[13px] font-semibold capitalize">
-        {formatDayLabel(day)}
-      </span>
-      <Link href={href(shiftDay(day, 1))} className={buttonVariants({ variant: "outline", size: "sm" })} aria-label="Następny dzień">
-        ›
-      </Link>
-    </div>
-  );
 }

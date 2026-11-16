@@ -122,7 +122,7 @@ describe("działy menu", () => {
     expect(sidebar.map((s) => s.label)).toEqual([
       "Centrum operacyjne",
       "Monitor tras",
-      "Gdzie jest dostawa",
+      "Śledzenie dostaw",
       "Zamówienia",
       "Planowanie tras",
       "Rozliczenia",
