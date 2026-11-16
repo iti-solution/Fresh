@@ -1,25 +1,26 @@
-import { Banknote, ChevronLeft, ChevronRight, CircleCheck, Clock, Package, Phone, Radar, TriangleAlert } from "lucide-react";
+import { CircleCheck, Clock, Phone, Radar, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoRefresh } from "@/components/panel/auto-refresh";
+import { DayNav } from "@/components/panel/day-nav";
 import { EmptyState, PageHeader, Panel, StatTile } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { Dot, Plate, TONE_TEXT } from "@/components/ui/status";
-import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
+import { DATE_RE } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import {
   dayKpis,
   dispatcherAlerts,
   miniKpis,
   nowForDay,
-  packagingSummary,
   routeProgress,
   type Alert,
 } from "@/modules/ops/domain/reports";
-import { getDriverCash, getPackagingBalances, getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
+import { getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
 import { getDayReports } from "@/modules/ops/server/proof";
+import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
 import { RouteStatePill, RouteStrip } from "@/modules/ops/ui/route-strip";
-import { formatDayLabel, shiftDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
 import { ROUTE_KIND_LABELS } from "@/modules/planning/domain/load";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
@@ -36,10 +37,8 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
   const nowHHMM = nowInWarsaw();
   const now = nowForDay(day, today, nowHHMM);
 
-  const [routes, cash, pack, reports] = await Promise.all([
+  const [routes, reports] = await Promise.all([
     getReportRoutes(ctx.tenantId, day, day, { withNotes: true }),
-    getDriverCash(ctx.tenantId),
-    getPackagingBalances(ctx.tenantId),
     getDayReports(ctx.tenantId, day),
   ]);
 
@@ -50,16 +49,6 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
   const onRoad = routes.filter((r) => progress.get(r.id)!.state === "in_progress").length;
   const overdue = [...progress.values()].reduce((a, p) => a + p.overdue, 0);
   const atRisk = [...progress.values()].reduce((a, p) => a + p.atRisk, 0);
-  const cashTotal = cash.reduce((a, c) => a + Math.max(0, c.cashGrosze), 0);
-  const pkg = packagingSummary(pack.rows);
-  const driverPkg = pkg.drivers
-    .map((d) => ({ ...d, name: pack.driverNames.get(d.partyId) ?? "—" }))
-    .sort(
-      (a, b) =>
-        Object.values(a.byType).reduce((x, y) => x + Math.abs(y), 0) -
-        Object.values(b.byType).reduce((x, y) => x + Math.abs(y), 0),
-    )
-    .reverse();
   const sorted = [...routes].sort((a, b) => {
     const pa = progress.get(a.id)!;
     const pb = progress.get(b.id)!;
@@ -90,25 +79,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
         actions={
           <>
             {day === today && <AutoRefresh seconds={60} stamp={nowHHMM} tenantId={ctx.tenantId} />}
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/centrum?dzien=${shiftDay(day, -1)}`}
-                aria-label="Poprzedni dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronLeft />
-              </Link>
-              <Link href="/centrum" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-40 capitalize")}>
-                {day === today ? `Dziś, ${formatDayLabel(day).split(", ")[1]}` : formatDayLabel(day)}
-              </Link>
-              <Link
-                href={`/centrum?dzien=${shiftDay(day, 1)}`}
-                aria-label="Następny dzień"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                <ChevronRight />
-              </Link>
-            </div>
+            <DayNav day={day} today={today} href={(d) => (d === today ? "/centrum" : `/centrum?dzien=${d}`)} />
           </>
         }
       />
@@ -129,7 +100,7 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
         </Panel>
       ) : (
         <>
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             <StatTile
               label="Trasy w drodze"
               value={`${onRoad} z ${routes.length}`}
@@ -160,12 +131,6 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
               sub={exceptionSummary(k) || "bez reklamacji i odmów"}
               tone={k.exceptions ? "plum" : undefined}
             />
-            <StatTile
-              label="Gotówka u kierowców"
-              value={formatPlnCompact(cashTotal)}
-              sub={`${cash.filter((c) => c.cashGrosze > 0).length} kierowców do rozliczenia`}
-              icon={<Banknote />}
-            />
           </div>
           <p className="-mt-3 mb-6 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
             {(() => {
@@ -192,6 +157,19 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
               );
             })()}
           </p>
+
+          <Panel
+            className="mb-6"
+            title={day > today ? `Plan na ${formatDayLabel(day)}` : day === today ? "Dziś: plan, realizacja i prognoza końca dnia" : `Plan i realizacja — ${formatDayLabel(day)}`}
+            description={
+              day > today
+                ? "Co zaplanował dyspozytor i jak skończy się dzień, jeśli trasy wyjadą o czasie."
+                : "Prognoza zakłada, że pozostałe punkty zostaną dostarczone w obecnym tempie każdej trasy."
+            }
+            flush
+          >
+            <DayForecastPanel routes={routes} now={now} future={day > today} />
+          </Panel>
 
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
             <Panel
@@ -354,61 +332,6 @@ export default async function OperationsCenterPage({ searchParams }: PageProps<"
                             <Phone className="size-4" />
                           </a>
                         )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Panel>
-
-              <Panel title="Gotówka u kierowców" description="Pobrania do przyjęcia w kasie przy zamknięciu trasy" flush>
-                {cash.length === 0 ? (
-                  <p className="px-5 py-6 text-sm text-muted">Cała gotówka rozliczona.</p>
-                ) : (
-                  <ul className="divide-y divide-border text-sm">
-                    {cash.map((c) => (
-                      <li key={c.driverId} className="flex items-center justify-between gap-3 px-5 py-2.5">
-                        <span className="truncate">{c.name}</span>
-                        <span className={cn("font-semibold tabular-nums", c.cashGrosze < 0 && "text-danger")}>
-                          {formatPln(c.cashGrosze)}
-                        </span>
-                      </li>
-                    ))}
-                    <li className="flex items-center justify-between bg-surface-2 px-5 py-2.5 text-[13px] font-semibold">
-                      <span>Razem do przyjęcia</span>
-                      <span className="tabular-nums">{formatPln(cashTotal)}</span>
-                    </li>
-                  </ul>
-                )}
-              </Panel>
-
-              <Panel
-                title="Opakowania u kierowców"
-                description="Dodatnie: do zdania na magazyn. Ujemne: brak — różnica do wyjaśnienia."
-                flush
-              >
-                {driverPkg.length === 0 ? (
-                  <p className="px-5 py-6 text-sm text-muted">Wszystkie opakowania zdane.</p>
-                ) : (
-                  <ul className="divide-y divide-border text-sm">
-                    {driverPkg.map((d) => (
-                      <li key={d.partyId} className="flex gap-3 px-5 py-2.5">
-                        <Package className="mt-0.5 size-4 shrink-0 text-subtle" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate">{d.name}</span>
-                          <span className="flex flex-wrap gap-x-3 text-[13px] tabular-nums">
-                            {Object.entries(d.byType)
-                              .filter(([, q]) => q !== 0)
-                              .map(([code, q]) => (
-                                <span key={code} className={q < 0 ? "font-semibold text-danger" : "text-foreground"}>
-                                  {q > 0 ? "+" : "−"}
-                                  {Math.abs(q)}{" "}
-                                  <span className="text-muted">
-                                    {pack.types.find((t) => t.code === code)?.name.toLowerCase() ?? code}
-                                  </span>
-                                </span>
-                              ))}
-                          </span>
-                        </span>
                       </li>
                     ))}
                   </ul>

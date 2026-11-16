@@ -1,13 +1,15 @@
-import { ChartNoAxesCombined } from "lucide-react";
+import { ChartNoAxesCombined, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Delta, EmptyState, PageHeader, Panel, Segmented, StatTile } from "@/components/panel/page";
-import { formatPln, formatPlnCompact } from "@/lib/forms";
+import { buttonVariants } from "@/components/ui/button";
+import { DATE_RE, formatPln, formatPlnCompact } from "@/lib/forms";
 import { cn } from "@/lib/utils";
-import { dayKpis, groupByLane, nowForDay, pctChange, routeCostGrosze } from "@/modules/ops/domain/reports";
-import { PERIOD_KEYS, PERIOD_LABELS, parsePeriod, resolvePeriod } from "@/modules/ops/domain/period";
-import { getReportRoutes, nowInWarsaw } from "@/modules/ops/server/queries";
-import { DayForecastPanel } from "@/modules/ops/ui/day-forecast";
-import { formatDayLabel, nextWorkingDay, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { dayKpis, groupByLane, pctChange, routeCostGrosze } from "@/modules/ops/domain/reports";
+import { VIEW_KEYS, VIEW_LABELS, daysBetween, parseView, resolveView } from "@/modules/ops/domain/period";
+import { getReportRoutes } from "@/modules/ops/server/queries";
+import { formatDayLabel, todayInWarsaw } from "@/modules/orders/domain/orders";
+import { monthLabel } from "@/modules/payroll/domain/month";
 import { requireAccess } from "@/modules/tenancy/server/context";
 
 export const metadata: Metadata = { title: "Rentowność" };
@@ -19,20 +21,33 @@ export default async function ProfitabilityPage({ searchParams }: PageProps<"/ra
   const ctx = await requireAccess("/raport");
   const sp = await searchParams;
   const today = todayInWarsaw();
-  const periodKey = parsePeriod(sp.okres);
-  const period = resolvePeriod(periodKey, today);
-  const planKey = sp.plan === "jutro" ? "jutro" : "dzis";
-  const planDate = planKey === "jutro" ? nextWorkingDay(today) : today;
-  const planNow = nowForDay(planDate, today, nowInWarsaw());
+  const view = parseView(sp.widok);
+  const anchor = typeof sp.data === "string" && DATE_RE.test(sp.data) ? sp.data : today;
+  const period = resolveView(view, anchor);
 
-  const [current, previous, planRoutes] = await Promise.all([
+  const [current, previous] = await Promise.all([
     getReportRoutes(ctx.tenantId, period.start, period.end),
     getReportRoutes(ctx.tenantId, period.prevStart, period.prevEnd),
-    getReportRoutes(ctx.tenantId, planDate, planDate),
   ]);
   const cur = dayKpis(current);
   const prev = dayKpis(previous);
-  const rangeLabel = period.start === period.end ? formatDayLabel(period.end) : `${short(period.start)} – ${short(period.end)}`;
+  const rangeLabel =
+    view === "dzien"
+      ? formatDayLabel(period.end)
+      : view === "miesiac"
+        ? monthLabel(period.start.slice(0, 7))
+        : `${short(period.start)} – ${short(period.end)}`;
+
+  // pasek dni (tydzień i miesiąc): wynik każdego dnia, kliknięcie otwiera widok dnia
+  const byDay = new Map<string, typeof current>();
+  for (const r of current) byDay.set(r.date, [...(byDay.get(r.date) ?? []), r]);
+  const strip = daysBetween(period.start, period.end).map((d) => {
+    const rs = byDay.get(d) ?? [];
+    const k = dayKpis(rs);
+    const cost = rs.reduce((a, r) => a + (r.km !== null ? routeCostGrosze(r) : 0), 0);
+    const share = k.deliveredValueGrosze ? (cost / k.deliveredValueGrosze) * 100 : null;
+    return { day: d, has: rs.length > 0 && k.stops > 0, k, cost, share };
+  });
 
   const netCur = cur.deliveredValueGrosze - cur.costGrosze;
   const netPrev = prev.deliveredValueGrosze - prev.costGrosze;
@@ -49,68 +64,82 @@ export default async function ProfitabilityPage({ searchParams }: PageProps<"/ra
     .sort((a, b) => b.k.deliveredValueGrosze - a.k.deliveredValueGrosze);
   const problemLanes = [...lanes].filter((l) => l.k.exceptions > 0).sort((a, b) => b.k.exceptions - a.k.exceptions);
 
-  const href = (p: { okres?: string; plan?: string }) => {
+  const href = (v: string, d: string) => {
     const u = new URLSearchParams();
-    const pl = p.plan ?? planKey;
-    if (pl !== "dzis") u.set("plan", pl);
-    const o = p.okres ?? periodKey;
-    if (o !== "7") u.set("okres", o);
-    const s = u.toString();
-    return `/raport${s ? `?${s}` : ""}`;
+    if (v !== "dzien") u.set("widok", v);
+    if (d !== today) u.set("data", d);
+    const q = u.toString();
+    return `/raport${q ? `?${q}` : ""}`;
   };
 
   return (
     <>
       <PageHeader
         title="Rentowność"
-        description="Ile dowieźliśmy, ile to kosztowało i gdzie tracimy. Wybierz okres; plan i prognoza dnia są zawsze na górze."
+        description="Ile dowieźliśmy, ile to kosztowało i gdzie tracimy — dla dowolnego dnia, tygodnia albo całego miesiąca."
+        actions={
+          <>
+            <Segmented
+              items={VIEW_KEYS.map((v) => ({ href: href(v, anchor), label: VIEW_LABELS[v], active: v === view }))}
+            />
+            <div className="flex items-center gap-1">
+              <Link href={href(view, period.prevAnchor)} aria-label="Poprzedni okres" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                <ChevronLeft />
+              </Link>
+              <Link
+                href={href(view, today)}
+                aria-label="Wróć do dzisiaj"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-44 font-semibold capitalize")}
+              >
+                {rangeLabel}
+              </Link>
+              <Link href={href(view, period.nextAnchor)} aria-label="Następny okres" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                <ChevronRight />
+              </Link>
+            </div>
+          </>
+        }
       />
 
-      <Panel
-        className="mb-6"
-        title={planKey === "jutro" ? `Plan na ${formatDayLabel(planDate)}` : "Dziś: plan, realizacja i prognoza końca dnia"}
-        description={
-          planKey === "jutro"
-            ? "Co zaplanował dyspozytor i jak skończy się dzień, jeśli trasy wyjadą o czasie."
-            : "Prognoza zakłada, że pozostałe punkty zostaną dostarczone w obecnym tempie każdej trasy."
-        }
-        actions={
-          <Segmented
-            items={[
-              { href: href({ plan: "dzis" }), label: "Dziś", active: planKey === "dzis" },
-              {
-                href: href({ plan: "jutro" }),
-                label: formatDayLabel(nextWorkingDay(today)).split(",")[0],
-                active: planKey === "jutro",
-              },
-            ]}
-          />
-        }
-        flush
-      >
-        {planRoutes.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted">
-            Na {formatDayLabel(planDate)} nie ma jeszcze tras — plan pojawi się, gdy dyspozytor utworzy dzień.
-          </p>
-        ) : (
-          <DayForecastPanel routes={planRoutes} now={planNow} future={planKey === "jutro"} />
-        )}
-      </Panel>
+      <p className="mb-3 text-xs text-subtle">Porównanie: {period.compare}.</p>
 
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex flex-wrap items-baseline gap-x-2 text-[17px] font-semibold">
-          Wyniki <span className="font-normal text-muted capitalize">{rangeLabel}</span>
-          <span className="text-xs font-normal text-subtle">— porównanie: {period.compare}</span>
-        </h2>
-        <Segmented
-          items={PERIOD_KEYS.map((k) => ({ href: href({ okres: k }), label: PERIOD_LABELS[k], active: k === periodKey }))}
-        />
-      </div>
+      {view !== "dzien" && (
+        <Panel
+          className="mb-6"
+          title={view === "miesiac" ? "Dni miesiąca" : "Dni tygodnia"}
+          description="Kolor pokazuje, ile sprzedaży zjadł transport (koszt / sprzedaż). Kliknij dzień, aby zobaczyć jego wynik."
+        >
+          <div className={cn("grid gap-1.5", view === "miesiac" ? "grid-cols-4 sm:grid-cols-7" : "grid-cols-7")}>
+            {strip.map((d) => (
+              <Link
+                key={d.day}
+                href={href("dzien", d.day)}
+                className={cn(
+                  "rounded-lg border px-2 py-1.5 text-center transition-colors hover:border-primary-strong",
+                  !d.has
+                    ? "border-border bg-surface-2 text-subtle"
+                    : d.share !== null && d.share > 15
+                      ? "border-danger/40 bg-danger-soft"
+                      : d.share !== null && d.share > 10
+                        ? "border-warning/40 bg-warning-soft"
+                        : "border-success/30 bg-success-soft",
+                )}
+                title={d.has ? `${formatDayLabel(d.day)}: sprzedaż ${formatPln(d.k.deliveredValueGrosze)}, transport ${formatPln(d.cost)}` : formatDayLabel(d.day)}
+              >
+                <span className="block text-[11px] text-muted capitalize">{formatDayLabel(d.day).split(",")[0].slice(0, 3)}</span>
+                <span className="block text-sm font-semibold tabular-nums">{Number(d.day.slice(8, 10))}</span>
+                <span className="block text-[11px] tabular-nums">{d.has ? formatPlnCompact(d.k.deliveredValueGrosze) : "—"}</span>
+                <span className="block text-[11px] text-muted tabular-nums">{d.share === null ? "" : pct(Math.round(d.share * 10) / 10)}</span>
+              </Link>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       {cur.stops === 0 ? (
         <Panel>
           <EmptyState icon={<ChartNoAxesCombined />} title="Brak tras w tym okresie">
-            Wyniki liczą się z tras realizowanych w aplikacji kierowcy. Wybierz inny okres.
+            Wyniki liczą się z tras realizowanych w aplikacji kierowcy. Wybierz inny dzień, tydzień lub miesiąc.
           </EmptyState>
         </Panel>
       ) : (

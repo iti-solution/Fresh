@@ -45,3 +45,38 @@ describe("resolvePeriod", () => {
     expect(parsePeriod("miesiac")).toBe("miesiac");
   });
 });
+
+import { daysBetween, resolveView, weekStart } from "./period";
+
+describe("resolveView", () => {
+  it("tydzień zaczyna się w poniedziałek (także dla niedzieli)", () => {
+    expect(weekStart("2026-11-16")).toBe("2026-11-16");
+    expect(weekStart("2026-11-22")).toBe("2026-11-16");
+    expect(weekStart("2026-11-18")).toBe("2026-11-16");
+  });
+  it("dzień: porównanie z tym samym dniem tydzień wcześniej, strzałki o 1 dzień", () => {
+    expect(resolveView("dzien", "2026-11-16")).toMatchObject({
+      start: "2026-11-16",
+      end: "2026-11-16",
+      prevStart: "2026-11-09",
+      prevAnchor: "2026-11-15",
+      nextAnchor: "2026-11-17",
+    });
+  });
+  it("tydzień: pn–nd, porównanie z poprzednim tygodniem", () => {
+    expect(resolveView("tydzien", "2026-11-18")).toMatchObject({
+      start: "2026-11-16",
+      end: "2026-11-22",
+      prevStart: "2026-11-09",
+      prevEnd: "2026-11-15",
+      nextAnchor: "2026-11-25",
+    });
+  });
+  it("miesiąc: cały miesiąc kalendarzowy, porównanie z poprzednim (także lut. i przez styczeń)", () => {
+    expect(resolveView("miesiac", "2026-03-15")).toMatchObject({ start: "2026-03-01", end: "2026-03-31", prevStart: "2026-02-01", prevEnd: "2026-02-28" });
+    expect(resolveView("miesiac", "2026-01-10")).toMatchObject({ prevStart: "2025-12-01", prevEnd: "2025-12-31", prevAnchor: "2025-12-01" });
+  });
+  it("daysBetween zwraca wszystkie dni włącznie", () => {
+    expect(daysBetween("2026-11-28", "2026-12-02")).toEqual(["2026-11-28", "2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02"]);
+  });
+});

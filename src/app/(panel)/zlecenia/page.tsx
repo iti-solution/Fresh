@@ -1,6 +1,7 @@
+import { DayNav } from "@/components/panel/day-nav";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Plus, Search, Upload } from "lucide-react";
+import { ChevronDown, ClipboardList, Plus, Search, Upload } from "lucide-react";
 import { EmptyState, Notice, Panel, Segmented } from "@/components/panel/page";
 import { buttonVariants } from "@/components/ui/button";
 import { DocRef, Pill } from "@/components/ui/status";
@@ -96,17 +97,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
     <div className="space-y-2.5">
       <h1 className="sr-only">Zamówienia — {formatDayLabel(day)}</h1>
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-panel)]">
-        <div className="flex items-center">
-          <Link href={href(shiftDay(day, -1))} aria-label="Poprzedni dzień" className={navBtn}>
-            <ChevronLeft />
-          </Link>
-          <span className="mx-1 inline-flex h-9 min-w-[150px] items-center justify-center rounded-lg border border-border-strong px-3 text-[13px] font-semibold capitalize">
-            {formatDayLabel(day)}
-          </span>
-          <Link href={href(shiftDay(day, 1))} aria-label="Następny dzień" className={navBtn}>
-            <ChevronRight />
-          </Link>
-        </div>
+        <DayNav day={day} today={today} href={(d) => href(d)} />
         <form action="/zlecenia" className="relative w-full max-w-sm">
           <input type="hidden" name="dzien" value={day} />
           {filter && <input type="hidden" name="filtr" value={filter} />}
@@ -210,9 +201,6 @@ export default async function OrdersPage({ searchParams }: PageProps<"/zlecenia"
     </div>
   );
 }
-
-const navBtn =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-strong text-muted hover:bg-surface-2 hover:text-foreground [&_svg]:size-4";
 
 function PointRows({ orders, editable }: { orders: DayOrder[]; editable: boolean }) {
   const o0 = orders[0];
